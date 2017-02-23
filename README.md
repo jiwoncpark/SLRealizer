@@ -26,9 +26,9 @@ Watch this space!
 
 ## People
 * [Phil Marshall](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@drphilmarshall) (SLAC)
-* [Jenny Kim Marshall](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@jennykim1016 (Stanford)
-* [Mike Baumer](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@mbaumer (SLAC)
-* [Steve Kahn](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@stevkahn (SLAC)
+* [Jenny Kim](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@jennykim1016) (Stanford)
+* [Mike Baumer](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@mbaumer) (SLAC)
+* [Steve Kahn](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@stevkahn) (SLAC)
 
 
 ## License, etc.
