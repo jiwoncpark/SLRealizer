@@ -29,6 +29,7 @@ Watch this space!
 * [Jenny Kim](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@jennykim1016) (Stanford)
 * [Mike Baumer](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@mbaumer) (SLAC)
 * [Steve Kahn](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@stevkahn) (SLAC)
+* [Rahul Biswas](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@rbiswas4) (UW)
 
 
 ## License, etc.
