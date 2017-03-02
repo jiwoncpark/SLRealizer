@@ -6,7 +6,16 @@ import matplotlib.pyplot as plt
 def plot_lens(lens, obsHist, convolve=False):
     #obsHist has MJD Filter FWHM 5sigmag
     filterQuasar = obsHist[1] + '_SDSS_quasar'
-    filterLens = obsHist[1] + '_SDSS_Lens'
+    filterLens = obsHist[1] + '_SDSS_lens'
+    lens_mag = lens[filterLens]
+    quasar_mag = lens[filterQuasar]
+    mag_ratio = math.pow(2.5, -lens_mag+quasar_mag)
+    if(mag_ratio>1):
+        quasar_alpha = 1/mag_ratio
+        lens_alpha = 1
+    else:
+        quasar_alpha = 1
+        lens_alpha = mag_ratio
     scale_factor = 2
     sourceX = lens['XSRC'][0]
     sourceY = lens['YSRC'][0]
@@ -24,16 +33,20 @@ def plot_lens(lens, obsHist, convolve=False):
 
     if(True):
         for i in range(4):
+            if(obsHist[1]=='g'):
+                circleColor = 'g'
+            else:
+                circleColor = 'r'
             plotNumStr = "4"+"1"+str(i+1)
             plotNum = int(plotNumStr)
             sub = fig.add_subplot(plotNum)
             sub.set_ylim(-plotY-2*obsHist[2]/scale_factor, plotY+2*obsHist[2]/scale_factor)
             sub.set_xlim(-plotX-2*obsHist[2]/scale_factor, plotX+2*obsHist[2]/scale_factor)
-            source = plt.Circle((sourceX, sourceY), radius=obsHist[2]/scale_factor, alpha=0.1, fc='r')
-            lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY), radius=obsHist[2]/scale_factor, alpha=0.1, fc='b')
+            source = plt.Circle((sourceX, sourceY), radius=obsHist[2]/scale_factor, alpha=quasar_alpha, fc=circleColor, linewidth=0)
+            lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY), radius=obsHist[2]/scale_factor, alpha=lens_alpha, fc=circleColor, linewidth=0)
             fig.gca().add_patch(lens)
             fig.gca().add_patch(source)
-            seeing = plt.Circle((-plotY+(obsHist[2]*0.7)/scale_factor, -plotX-(obsHist[2]*0.8)/scale_factor), radius=obsHist[2]/scale_factor, alpha=0.1, fc='g')
-            sub.set_title('Observation ' + str(i+1) + ' with ' + 'filter')
+            seeing = plt.Circle((-plotY/scale_factor, -plotX-1.5*obsHist[2]/scale_factor), radius=obsHist[2]/scale_factor, alpha=0.1, fc='k')
+            sub.set_title('Observation ' + str(i+1) + ' with ' + 'filter ' + obsHist[1])
             sub.legend((source, seeing, lens),('source', 'seeing', 'lens'))
             plt.gca().add_patch(seeing)
