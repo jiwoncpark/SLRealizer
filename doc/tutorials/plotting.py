@@ -46,7 +46,8 @@ def plot_lens(lens, obsHist, convolve=False):
             lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY), radius=obsHist[2]/scale_factor, alpha=lens_alpha, fc=circleColor, linewidth=0)
             fig.gca().add_patch(lens)
             fig.gca().add_patch(source)
-            seeing = plt.Circle((-plotY/scale_factor, -plotX-1.5*obsHist[2]/scale_factor), radius=obsHist[2]/scale_factor, alpha=0.1, fc='k')
             sub.set_title('Observation ' + str(i+1) + ' with ' + 'filter ' + obsHist[1])
+            seeing = plt.Circle(((-plotY-2*obsHist[2])/scale_factor, (plotX-2*obsHist[2])/scale_factor), radius=obsHist[2]/scale_factor, alpha=0.1, fc='k')
             sub.legend((source, seeing, lens),('source', 'seeing', 'lens'))
             plt.gca().add_patch(seeing)
+
