@@ -58,9 +58,14 @@ class SLRealizer(object):
                 circleColor = 'r'
             plotNumStr = "4"+"1"+str(i+1)
             plotNum = int(plotNumStr)
+            fig.subplots_adjust(top=1.5)
             sub = fig.add_subplot(plotNum)
-            sub.set_ylim(-plotY-2*currObs[2]/scale_factor, plotY+2*currObs[2]/scale_factor)
-            sub.set_xlim(-plotX-2*currObs[2]/scale_factor, plotX+2*currObs[2]/scale_factor)
+            #sub.set_ylim(-plotY-2*currObs[2]/scale_factor, plotY+2*currObs[2]/scale_factor)
+            sub.set_ylim(-3, 3)
+            #sub.set_xlim(-plotX-2*currObs[2]/scale_factor, plotX+2*currObs[2]/scale_factor)
+            sub.set_xlim(-3, 3)
+            sub.set_xlabel('xPosition')
+            sub.set_ylabel('yPosition')
             source = plt.Circle((sourceX, sourceY), radius=currObs[2]/scale_factor, alpha=quasar_alpha, fc=circleColor, linewidth=0)
             if(convolve):
                 lensFWHM = 0.0
@@ -69,8 +74,9 @@ class SLRealizer(object):
                 lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY), radius=currObs[2]/scale_factor, alpha=lens_alpha, fc=circleColor, linewidth=0)
             fig.gca().add_patch(lens)
             fig.gca().add_patch(source)
-            sub.set_title('Observation ' + str(i+1) + ' with ' + 'filter ' + currObs[1])
-            seeing = plt.Circle(((-plotY-2*currObs[2])/scale_factor, (plotX-2*currObs[2])/scale_factor), radius=currObs[2]/scale_factor, alpha=0.1, fc='k')
+            sub.set_title('Observation ' + str(i+1) + ' with ' + 'filter ' + currObs[1] + ' on MJD ' + str(currObs[0]))
+            #seeing = plt.Circle(((-plotY-2*currObs[2])/scale_factor, (plotX-2*currObs[2])/scale_factor), radius=currObs[2]/scale_factor, alpha=0.1, fc='k')
+            seeing = plt.Circle((-2.5, -2.5), radius=currObs[2]/scale_factor, alpha=0.1, fc='k')
             sub.legend((source, seeing, lens),('source', 'seeing', 'lens'))
             plt.gca().add_patch(seeing)
 
@@ -88,10 +94,6 @@ class SLRealizer(object):
         sourceY = currLens['YSRC'][0]
         lensX = currLens['XIMG'][0]
         lensY = currLens['YIMG'][0]
-        print sourceY
-        print sourceY
-        print lensX
-        print lensY
         plotX, plotY = self.determineScale(lensX, sourceX, lensY, sourceY)
         self.plotFigureOnMatplotlib(currObs, convolve, quasar_alpha, lens_alpha, sourceX, sourceY, lensX, lensY, plotX, plotY)
 
