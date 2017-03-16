@@ -8,9 +8,10 @@ import math
 class SLRealizer(object):
     
     scale_factor = 2
-    '''
-    Example class for SLRealizer package.
-    '''
+    
+    # Maybe make a separate method for it
+    # Best OOP practice?
+
     def __init__(self, lens = None, observation = "../../data/twinkles_observation_history.csv"):
         """
             Reads in a lens sample catalog and observation data.
@@ -68,6 +69,8 @@ class SLRealizer(object):
             sub.set_ylabel('yPosition')
             source = plt.Circle((sourceX, sourceY), radius=currObs[2]/scale_factor, alpha=quasar_alpha, fc=circleColor, linewidth=0)
             if(convolve):
+                # For now, we just let lensFWHM to be zero.
+                #lensFWHM = currLens['REFF']
                 lensFWHM = 0.0
                 lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY), radius=convolve(currObs[2], lensFWHM)/scale_factor, alpha=lens_alpha, fc=circleColor, linewidth=0)
             else:
