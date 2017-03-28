@@ -42,6 +42,7 @@ def plotFigureOnMatplotlib(currObs, convolve, quasar_alpha, lens_alpha, sourceX,
         circleColor = 'g'
     else:
         circleColor = 'r'
+    plt.axis('scaled')
     plt.ylim(-3, 3)
     plt.xlim(-3, 3)
     plt.xlabel('xPosition')
