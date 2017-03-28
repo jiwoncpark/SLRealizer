@@ -20,15 +20,10 @@ class SLRealizer(object):
         self.lens = lens
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
     
-    def plot_random_lens_date(self, lensID = 7176527, convolve=False):
-        import random
-        randomIndex = random.randint(0, 200)
-        if(self.observation[randomIndex][1]!='y'):
-            self.drawPlot(self.observation[randomIndex], lensID, convolve)
-        else:
-            # recursive call
-            self.plot_random_lens_date()
+    def plot_lens_random_date(self, lensID = 7176527, convolve=False):
+        plotting.plot_lens_random_date(self, lensID, convolve)
 
+"""
     def determineAlpha(self, mag_ratio):
         if(mag_ratio>1):
             quasar_alpha = 1/mag_ratio
@@ -112,3 +107,4 @@ class SLRealizer(object):
 
     def sigmaTofwhm(self, sigma):
         return sigma * np.sqrt(8 * np.log(2))
+"""
