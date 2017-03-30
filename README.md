@@ -13,16 +13,26 @@ model lenses as mixtures of Gaussians. Our goals are to
 
 
 ## Set-up and testing
-For now, this is done using the DM stack-style setup from the `desc_package_template`: from `bash`
+
+To use (and not develop) `SLRealizer`, you can pip install it with
 ```
-$ source <SLRealizer install directory>/setup/setup.sh
-$ nosetests <SLRealizer install directory>
+pip install git+git://github.com/LSSTDESC/SLRealizer.git#egg=slrealizer
 ```
-We'd like to switch to `setup.py` soon, as this is likely to be a pure python, stack-free analysis project.
+
+To help develop it, fork and clone the repo, `cd` there, and then install the package with
+```
+python setup.py develop
+```
+To run the tests, do
+```
+nosetests <SLRealizer install directory>
+```
+
 
 ## Demo
 
 Watch this space!
+
 
 ## People
 * [Phil Marshall](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@drphilmarshall) (SLAC)
