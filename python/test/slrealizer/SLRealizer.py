@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import pylab
 import matplotlib
 import math
-import moment
 
 class SLRealizer(object):
     
@@ -23,9 +22,6 @@ class SLRealizer(object):
     
     def plot_lens_random_date(self, lensID = 7176527, convolve=False):
         plotting.plot_lens_random_date(self, lensID, convolve)
-
-    def plot_zeroth_moment(self, lensID = 7176527):
-        moment.zeroMoment(self, lensID)
 
 """
     def determineAlpha(self, mag_ratio):
