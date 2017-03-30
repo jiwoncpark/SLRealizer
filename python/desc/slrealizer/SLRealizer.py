@@ -6,19 +6,20 @@ import matplotlib
 
 class SLRealizer(object):
     '''
-    Example class for SLRealizer package.
+    Worker class for SLRealizer package.
     '''
-    def __init__(self, lens = None, observation = "../../data/twinkles_observation_history.csv"):
+    def __init__(self, lens=None,
+                 observation="../../data/twinkles_observation_history.csv"):
         """
-            Reads in a lens sample catalog and observation data.
-            We assume lenses are OM10 lenses and observation file is .csv file
+        Reads in a lens sample catalog and observation data.
+        We assume lenses are OM10 lenses and observation file is .csv file.
         """
         self.lens = lens
         self.observation = observation
         self.currObs = None
         self.currLens = None
-        obsHist = pd.read_csv(observation,index_col=0).as_matrix()
-    
+        self.obsHist = pd.read_csv(observation,index_col=0).as_matrix()
+
     def plot_random_lens_date(lensID = 7176527):
         import random
         randomIndex = random.randint(0, 200)
