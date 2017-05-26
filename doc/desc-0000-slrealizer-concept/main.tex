@@ -14,12 +14,13 @@
 
 % Custom commands from LSST DESC, see texmf/styles/lsstdesc_macros.sty
 \usepackage{lsstdesc_macros}
-
 \usepackage{graphicx}
 \graphicspath{{./}{./figures/}}
 \bibliographystyle{apj}
 
 % Add your own macros here:
+    \usepackage{etoolbox}
+    \usepackage{stackengine}
 
 
 
@@ -53,6 +54,12 @@ large-scale sample simulation and direct model inference.
 \section{Introduction}
 \label{sec:intro}
 
+WHAT WHY HOW 
+
+LSST will produce the deepest and the widest data. We anticipate the sky survey with LSST 
+
+Going through the entire pixel data would be really costly. 
+
 Very short summary of problem.
 
 Short discussion of previous attempts to solve it.
@@ -70,13 +77,21 @@ Note on any conventions and assumptions made throughout the paper (magnitude sys
 
 % ----------------------------------------------------------------------
 
-\section{XXX}
-\label{sec:xxx}
+\section{Catalog Generation}
+\subsection{Synthetic magnitude calculation}
+Previous work done - synthesizing the magnitude of OM10 lenses
+\subsection{Visualization}
+Image needed?
+\subsection{Mock Catalog Generation}
+Fitting gausian, etc
+\label{sec:catalog_generation}
 
 % ----------------------------------------------------------------------
 
-\section{YYY}
-\label{sec:yyy}
+\section{Train SL Realizer}
+\label{sec:sl_realizer_train}
+
+Hello
 
 % ----------------------------------------------------------------------
 
