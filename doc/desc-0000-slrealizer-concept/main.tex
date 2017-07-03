@@ -57,7 +57,7 @@ The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with t
 
 LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 7000 strongly lensed systems that will procide useful information such as cosmological time delay or lense mass distribution \cite{DESC_overall} \citep{time_delay_overall} \cite{Twinkles}. In order to do so, finding the lensed system among the enormous set of data is crucial. However, considering the amount of the data that LSST will produce, pixel-level data searching will be really inefficient and expensive. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques.
 
-The attempt to use Machine Learning to detect lensed system is not a new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) would be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system. Most of the previous attemps involved single-band image classification \cite{LensExtractor} \cite{convolution_neural_network}.
+The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) would be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system. Most of the previous attemps involved single-band image classification \cite{LensExtractor} \cite{convolution_neural_network}.
 
 We here propose to build a software 'SL Realizer' that does catalog-level lens search to detect lensed system. The 'SL Realizer' project largely consists of two major parts: producing large-sized catalogs of lensed systems and making the software to classify objects in the catalog as lenses or non-lenses. 
 
@@ -156,14 +156,14 @@ Using the OM10 lenses whose magnitude was calculated in
         \caption{Visualizing the lensed system with a filter $g$ on MJD 60501.}
         \label{fig:vis_lens_d}
     \end{subfigure}
-    \caption{Visualizing the lensed system in different epochs.}
+    \caption{Visualizing the lensed system(ID $12255151$) in different epochs.}
     \label{fig:visualization}
 \end{figure}
 
 \subsection{Mock Catalog Generation}
 \label{subsection:MCG}
 
-By realizing the OM10 lenses as mixed gaussians, we were able to generate the mock LSST catalog. $SL Realizer$ was able to calculate the zeroth, first, and second moment given OM10 lenses. This massive catalog will serve as a test set for $SL Realizer$. The full code for the catalog generation could be viewed here : \url{https://github.com/jennykim1016/SLRealizer/blob/momentCalc/python/desc/slrealizer/moment.py}.
+If we interpret the images of OM10's lensing galaxies and quasars as mixed gaussians, we can simply calculate the zeroth, first, and the second moment of the lensed system. We included these moments in the catalog. The full code for the moment calculation and the catalog generation could be viewed here : \url{https://github.com/jennykim1016/SLRealizer/blob/momentCalc/python/desc/slrealizer/moment.py}.
 
 \subsection{Twinkles Catalog}
 
@@ -193,7 +193,7 @@ The twinkles project also provides the simulation of LSST data \cite{Twinkles}. 
 \section{Training SL Realizer}
 \label{sec:sl_realizer_train}
 
-Using the catalog level lenses, we would like to train SL Realizer to find the lenses based on the catalog properties. OM10 catalog will provide the zeroth, first, and the second moment of the lensed system for each filter. We are aiming to train SL Realizer with the data set and check the precision with Twinkles data set.
+Using the catalog level lenses, we would like to train SL Realizer to find the lenses based on the catalog properties. We are aiming to train SL Realizer with the OM10 data set from \ref{sec:catalog_generation} and check the precision with Twinkles data set.
 
 \textit{Some helpful articles...}
 
@@ -209,6 +209,14 @@ Using the catalog level lenses, we would like to train SL Realizer to find the l
 \end{itemize}
 
 I think Artificial Neural Network might overfit.
+
+The followings discuss GMM.
+
+\begin{itemize}
+
+\item \url{http://scikit-learn.org/stable/modules/mixture.html}[Gaussian Mixture Model]
+\item \url{https://arxiv.org/pdf/1205.6221.pdf}[application of GMM to find pulsars. Nice P-P diagram included]
+\end{itemize}
 
 
 
