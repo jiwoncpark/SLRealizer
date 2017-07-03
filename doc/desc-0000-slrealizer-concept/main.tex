@@ -63,6 +63,8 @@ We here propose to build a software 'SL Realizer' that does catalog-level lens s
 
 We first generated a huge, complete catalog using OM10 lenses \citep{OM10} by calculating the synthetic magnitude of the simulated OM10 lenses. The results are included in \ref{sssec:Synthetic}. Overall, the mock lenses did represent the popluation of the real lenses. We then also calculated the zeroth, first, and the second moment for the OM10 lenses. We used the gaussian fitting method to calculate those moments. The visualization of the lensed system using the moments can be viewed in \ref{fig:visualization}. These OM10 lenses were used as our test set.
 
+We first fitted the model parameters to the catalog-level data using Gaussian Mixture Modeling method. Gaussian Mixture Modeling 
+
 \textit{we should include short summary from the SL Realizer training method}.
 
 In order to validate our model, we used the catalog from the twinkel project \cite{Twinkles}.
@@ -193,9 +195,11 @@ The twinkles project also provides the simulation of LSST data \cite{Twinkles}. 
 \section{Training SL Realizer}
 \label{sec:sl_realizer_train}
 
-Using the catalog level lenses, we would like to train SL Realizer to find the lenses based on the catalog properties. We are aiming to train SL Realizer with the OM10 data set from \ref{sec:catalog_generation} and check the precision with Twinkles data set.
+Using the catalog level lenses, we would like to train SL Realizer to find the lenses based on the catalog properties. We are aiming to train SL Realizer with the OM10 data set from \ref{sec:catalog_generation} and check the precision with Twinkles data set. 
 
-\textit{Some helpful articles...}
+We can first train the SL Realizer with the known machine learning algorithms. Choosing the right algorithm that will give enough precision without overfitting will be crucial in this step. 
+
+\textit{Some helpful articles for this}
 
 \begin{itemize}
   \item \url{https://www.lsst.org/sites/default/files/docs/137.25_Borne_Data_Mining_Research_8x10.pdf}[LSST data mining overview]
@@ -204,13 +208,19 @@ Using the catalog level lenses, we would like to train SL Realizer to find the l
   \item \url{http://www.mpia.de/homes/calj/amla_ss2009/introduction.pdf} [Applications of Machine Learning in Astronomy]
   \item \url{https://arxiv.org/pdf/0906.2173.pdf}[DATA MINING AND MACHINE LEARNING IN ASTRONOMY]
   \item \url{https://academic.oup.com/mnras/article-lookup/doi/10.1093/mnras/stu642}[Skynet]
-  
+  \item \url{https://www.analyticsvidhya.com/blog/2015/08/common-machine-learning-algorithms/} [Machien learning techniques]
   
 \end{itemize}
 
-I think Artificial Neural Network might overfit.
+We can also use GMM (Gaussian Mixture Model) to link the fitted parameters and the catalog properties. We could also produce a diagram such as \ref{fig:example} that shows how the lensed systems are distributed.
 
-The followings discuss GMM.
+\begin{figure}
+\includegraphics[width=0.3\columnwidth]{PPDiagram.png}
+\caption{An example of a diagram that we can produce after GMM.}
+ \label{fig:example}
+\end{figure}
+
+\textit{The followings discuss GMM.}
 
 \begin{itemize}
 
