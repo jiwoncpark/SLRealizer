@@ -41,6 +41,23 @@ class SLRealizer(object):
                                    convolve)
         return
 
+    def deblend(self, lensID=None):
+        if lensID is None:
+            print 'No lens system selected for plotting.'
+            return
+        import random
+        # Keep randomly selecting epochs until we get one that is not           
+        # in the 'y' filter:                                                    
+        filter = 'y'
+        while filter == 'y':
+            randomIndex = random.randint(0, 200)
+            filter = self.observation[randomIndex][1]
+        # Now visualize the lens system at the epoch defined by the             
+        # randomIndex:                                                          
+        desc.slrealizer.deblend(self.observation[randomIndex],
+                                   self.catalog.get_lens(lensID))
+        return
+
 """
     def determineAlpha(self, mag_ratio):
         if(mag_ratio>1):
