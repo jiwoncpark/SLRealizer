@@ -48,8 +48,11 @@ def blend_all_objects(currObs, currLens):
     for i in xrange(4):
         print currLens['XIMG'][0][i]
         print currLens['YIMG'][0][i]
+        print currLens['MAG'][0][i]
+        filterLens = currObs[1] + '_SDSS_lens'
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
-        image = image + rv.pdf(pos)
+        image = image + rv.pdf(pos)*math.pow(2.5, -currLens[filterLens]+currLens['MAG'][0][i]) #scale
+        #lens_mag = currLens[filterLens]
     cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list('my_colormap', ['black', 'green', 'yellow'], 256)
     img2 = plt.imshow(image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[-3, 3, -3, 3], aspect = "auto")
     plt.colorbar(img2,cmap=cmap2)
@@ -74,6 +77,6 @@ def blend_all_objects(currObs, currLens):
     apertures.plot(color='red', lw=3.0, alpha=1.0)
     print sources
 
-
+# my guess is : https://www.google.de/search?q=2d+gaussian+area&start=10&sa=N&tbm=isch&imgil=2DtvXl3-AibpvM%253A%253Bkgo2jfIP68y8RM%253Bhttps%25253A%25252F%25252Fstackoverflow.com%25252Fquestions%25252F13658799%25252Fplot-a-grid-of-gaussians-with-matlab&source=iu&pf=m&fir=2DtvXl3-AibpvM%253A%252Ckgo2jfIP68y8RM%252C_&usg=__RmeCJMcLu03ro5YjgKk9fGZ53U8%3D&biw=1183&bih=588&ved=0ahUKEwj6wur9yZTVAhXrhlQKHT54DXo4ChDKNwgz&ei=UuluWfrRLOuN0gK-8LXQBw#imgrc=Puj8GXmbAPS6nM: so amplitude is proportional to the flux...?
 
 #https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
