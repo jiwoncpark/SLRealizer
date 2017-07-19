@@ -17,7 +17,7 @@ import math
 def deblend(currObs, currLens):
     print 'Deblending starts.....'
     print 'The system looks like this....'
-    #plotting.draw_model(currObs, currLens)
+    plotting.draw_model(currObs, currLens)
     blend_all_objects(currObs, currLens)
 
 def blend_all_objects(currObs, currLens):
