@@ -1,3 +1,5 @@
+# ======================================================================
+
 from scipy.stats import multivariate_normal
 import plotting
 import numpy as np
@@ -14,10 +16,13 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils import CircularAperture
 from photutils import DAOStarFinder
 
-"""
-    
-    deblend.py deblends the light sources for OM10. This assumes null deblender where all the sources are observed as a single object. All the sources are assumed to have Gaussian PSFs.
-"""
+# ======================================================================
+
+ """
+ Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.
+ Assumes null deblender where all the sources are assumed to be observed as single objects. 
+ All the sources are assumed to have Gaussian PSFs.
+ """
 
 #global variable that controls the size of the plot
 x_min = -10
@@ -30,6 +35,10 @@ number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
 
 def deblend(currObs, currLens, debug):
+    """
+    If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
+    Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
+    """
     print 'Deblending starts.....'
     if debug:
         print 'This is the simple plot of the system'
@@ -38,6 +47,11 @@ def deblend(currObs, currLens, debug):
     blend_all_objects(currObs, currLens, debug)
 
 def blend_all_objects(currObs, currLens, debug):
+    """
+    Given a current observation epoch details and a lensed system, this method blends all the light sources, assuming the gaussian PSF. 
+    The blending is done by generating a 2d-gaussian and adding the values to the 2d array.
+    Then, that 2d array is passed to the deblending method to find the discrete sources.
+    """
     #obsHist has MJD Filter FWHM 5sigmag
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
@@ -70,12 +84,18 @@ def blend_all_objects(currObs, currLens, debug):
     print 'these are the objects that I identified: ', sources
 
 def show_color_map():
+    """
+    Only called in debug mode. Draws the color map to represent the 2d array of the mock lensed system.
+    """
     cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list('my_colormap', ['black', 'green', 'yellow'], 256)
     img2 = plt.imshow(image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect = "auto")
     plt.colorbar(img2,cmap=cmap2)
     plt.show()
 
 def show_source_position(sources):
+    """
+    Only called in debug mode. Draws the 2d image and mark where the sources are detected.
+    """
     positions = (sources['xcentroid'], sources['ycentroid'])
     apertures = CircularAperture(positions, r=4.)
     norm = ImageNormalize(stretch=SqrtStretch())
