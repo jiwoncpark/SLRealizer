@@ -17,7 +17,7 @@ import math
 def deblend(currObs, currLens):
     print 'Deblending starts.....'
     print 'The system looks like this....'
-    plotting.draw_model(currObs, currLens)
+    #plotting.draw_model(currObs, currLens)
     blend_all_objects(currObs, currLens)
 
 def blend_all_objects(currObs, currLens):
@@ -50,8 +50,8 @@ def blend_all_objects(currObs, currLens):
         print currLens['YIMG'][0][i]
         print currLens['MAG'][0][i]
         filterLens = currObs[1] + '_SDSS_lens'
-        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
-        image = image + rv.pdf(pos)*math.pow(2.5, -currLens[filterLens]+currLens['MAG'][0][i]) #scale
+        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[0.1, 0], [0, 0.1]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
+        image = image + rv.pdf(pos)*math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i]) #scale
         #lens_mag = currLens[filterLens]
     cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list('my_colormap', ['black', 'green', 'yellow'], 256)
     img2 = plt.imshow(image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect = "auto")
@@ -65,7 +65,7 @@ def blend_all_objects(currObs, currLens):
 
     from photutils import DAOStarFinder
 
-    daofind = DAOStarFinder(fwhm=1.5, threshold=0.00001)
+    daofind = DAOStarFinder(fwhm=PSF_HWHM, threshold=0.0001)
     sources = daofind(image)
     from astropy.visualization import SqrtStretch
     from astropy.visualization.mpl_normalize import ImageNormalize
