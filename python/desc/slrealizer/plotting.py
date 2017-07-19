@@ -5,6 +5,11 @@ import pylab
 import matplotlib
 import math
 
+x_min = -10
+x_max = 10
+y_min = -10
+y_max = 10
+
 def determine_alpha(mag_ratio):
     """
     Bug: No docstring
@@ -50,12 +55,12 @@ def draw_model(currObs, currLens, convolve=False):
     else:
         raise ValueError('Unknown filter name '+currObs[1])
     
-    scale_factor = 2
-    PSF_HWHM = currObs[2]/scale_factor
+    #scale_factor = 2
+    PSF_HWHM = currObs[2] #/scale_factor
                     
     plt.axis('scaled')
-    plt.ylim(-3, 3)
-    plt.xlim(-3, 3)
+    plt.ylim(y_min, y_max)
+    plt.xlim(x_min, x_max)
     plt.xlabel('xPosition')
     plt.ylabel('yPosition')
     plt.title('Observation with ' + 'filter ' + currObs[1] + ' on MJD ' + str(currObs[0]))
@@ -65,36 +70,41 @@ def draw_model(currObs, currLens, convolve=False):
     # For now, we just let lensFWHM to be zero.
     #lensFWHM = currLens['REFF']
         lensFWHM = 0.0
-        galaxyHWHM = convolve(currObs[2], lensFWHM)/scale_factor
+        galaxyHWHM = convolve(currObs[2], lensFWHM) #/scale_factor
             # Bug: the LENS position is in the CENTER of the field.
             #      The SOURCE position is UNOBSERVABLE.
             #      The IMAGE positions are in teh OM10 catalog in the
             #      XIMG and YIMG columns.
-        source = plt.Circle((0, 0),
-                            radius=galaxy_HWHM, alpha=1.0, fc=circleColor, linewidth=0)
+        galaxy = plt.Circle((0, 0),
+                            radius=galaxy_HWHM, alpha=1.0, fc='c', linewidth=0)
     else:
-        source = plt.Circle((0, 0),
-                              radius=PSF_HWHM,alpha=1.0,fc=circleColor, linewidth=0,edgecolor='b', linestyle='dashed')
-    plt.gca().add_patch(source)
+        galaxy = plt.Circle((0, 0),
+                            radius=PSF_HWHM,alpha=1.0,fc='c', linewidth=0,edgecolor='b', linestyle='dashed')
+    plt.gca().add_patch(galaxy)
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
 
+    #sort array to find brightest image
+    brightest_image_magnitude = min(filter(lambda a: a != 2, currLens['MAG'][0]))
+    print 'brightest_image_magnitude : ',
+    print brightest_image_magnitude
+
     # Draw quasar images:
-    for i in range(4):
+    for i in xrange(currLens['NIMG']):
         sourceX = currLens['XIMG'][0][i]
         sourceY = currLens['YIMG'][0][i]
-        quasar_mag = currLens['MAG'][0][i]
-        print quasar_mag
-        print lens_mag
-        mag_ratio = math.pow(2.5, -lens_mag+quasar_mag)
-        quasar_alpha, lens_alpha = determine_alpha(mag_ratio)
-        if determine_alpha < 0.1:
-            quasar_alpha = 0.1
-        print "In 'draw_model', mag_ratio, quasar_alpha, lens_alpha =", \
-            mag_ratio, quasar_alpha, lens_alpha
+        image_mag = currLens['MAG'][0][i]
+        print 'quasar image mag:', image_mag, 'FWHM:', PSF_HWHM, 'Quasar X:', sourceX, 'Quasar Y: ', sourceY
+        # image alpha no longer in use
+        #mag_ratio = math.pow(2.5, -lens_mag+image_mag)
+        #image_alpha, lens_alpha = determine_alpha(mag_ratio)
+        #if image_alpha < 0.1:
+        #    image_alpha = 0.1
+        image_alpha = math.pow(2.5, brightest_image_magnitude-image_mag)
+        #print "In 'draw_model', mag_ratio, quasar_alpha, lens_alpha =", mag_ratio, image_alpha, lens_alpha
         image = plt.Circle((sourceX, sourceY),
                             radius=PSF_HWHM,
-                            alpha=quasar_alpha,
+                            alpha=image_alpha,
                             fc=circleColor, linewidth=0)
                             # Draw lens galaxy:
         plt.gca().add_patch(image)
@@ -104,7 +114,7 @@ def draw_model(currObs, currLens, convolve=False):
                 radius=PSF_HWHM,
                 alpha=0.1,
                 fc='black')
-    plt.legend((source, seeing, image), ('QSO images', 'PSF', 'Lens galaxy'), fontsize=10)
+    plt.legend((galaxy, seeing, image), ('Lens Galaxy', 'PSF', 'QSO images'), fontsize=10)
     plt.gca().add_patch(seeing)
 
 

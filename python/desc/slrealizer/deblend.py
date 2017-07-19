@@ -30,31 +30,31 @@ def blend_all_objects(currObs, currLens):
     mag_ratio = math.pow(2.5, -lens_mag+quasar_mag)
     sourceX = currLens['XSRC'][0]
     sourceY = currLens['YSRC'][0]
-    x_min = -3
-    x_max = 3
-    y_min = -3
-    y_max = 3
+    x_min = -10
+    x_max = 10
+    y_min = -10
+    y_max = 10
     distance = 0.01
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
     PSF_HWHM = currObs[2]
     number_of_rows = int((x_max - x_min)/distance)
     number_of_columns = int((y_max - y_min)/distance)
-    rv = scipy.stats.multivariate_normal([sourceX,sourceY], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
+    #rv = scipy.stats.multivariate_normal([sourceX,sourceY], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)
+    #image = image + rv.pdf(pos)
     print 'PSF_HWHM: ',
     print PSF_HWHM
-    for i in xrange(4):
+    for i in xrange(currLens['NIMG']):
         print currLens['XIMG'][0][i]
         print currLens['YIMG'][0][i]
         print currLens['MAG'][0][i]
         filterLens = currObs[1] + '_SDSS_lens'
-        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
+        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
         image = image + rv.pdf(pos)*math.pow(2.5, -currLens[filterLens]+currLens['MAG'][0][i]) #scale
         #lens_mag = currLens[filterLens]
     cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list('my_colormap', ['black', 'green', 'yellow'], 256)
-    img2 = plt.imshow(image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[-3, 3, -3, 3], aspect = "auto")
+    img2 = plt.imshow(image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect = "auto")
     plt.colorbar(img2,cmap=cmap2)
     plt.show()
 
