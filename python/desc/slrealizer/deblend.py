@@ -1,5 +1,5 @@
 # ======================================================================
-
+from __future__ import print_function
 from scipy.stats import multivariate_normal
 import plotting
 import numpy as np
@@ -39,9 +39,9 @@ def deblend(currObs, currLens, debug):
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
     """
-    print 'Deblending starts.....'
+    print('Deblending starts.....')
     if debug:
-        print 'This is the simple plot of the system'
+        print('This is the simple plot of the system')
         plotting.draw_model(currObs, currLens)
         plt.clf()
     blend_all_objects(currObs, currLens, debug)
@@ -57,7 +57,7 @@ def blend_all_objects(currObs, currLens, debug):
     lens_mag = currLens[filterLens]
     galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
     if debug:
-        print 'galaxy_x, galaxy_y, PSF_HWHM:', galaxy_x, galaxy_y, PSF_HWHM
+        print ('galaxy_x, galaxy_y, PSF_HWHM:'), galaxy_x, galaxy_y, PSF_HWHM
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
     rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
@@ -67,7 +67,7 @@ def blend_all_objects(currObs, currLens, debug):
     # iterate for the lens
     for i in xrange(currLens['NIMG']):
         if debug:
-            print 'XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i]
+            print ('XIMG, YIMG, MAG: '), currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i]
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
         image = image + rv.pdf(pos)*math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i]) #scale
 
@@ -81,7 +81,7 @@ def blend_all_objects(currObs, currLens, debug):
     sources = daofind(image)
     if debug:
         show_source_position(sources)
-    print 'these are the objects that I identified: ', sources
+    print ('these are the objects that I identified: '), sources
 
 def show_color_map():
     """
