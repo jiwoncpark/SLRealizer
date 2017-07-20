@@ -18,11 +18,11 @@ from photutils import DAOStarFinder
 
 # ======================================================================
 
- """
- Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.
- Assumes null deblender where all the sources are assumed to be observed as single objects. 
- All the sources are assumed to have Gaussian PSFs.
- """
+"""
+Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.
+Assumes null deblender where all the sources are assumed to be observed as single objects.
+All the sources are assumed to have Gaussian PSFs.
+"""
 
 #global variable that controls the size of the plot
 x_min = -10
@@ -42,8 +42,8 @@ def deblend(currObs, currLens, debug):
     print('Deblending starts.....')
     if debug:
         print('This is the simple plot of the system')
-        plotting.draw_model(currObs, currLens)
-        plt.clf()
+        plotting.draw_model(currObs, currLens, debug)
+        #plt.clf()
     blend_all_objects(currObs, currLens, debug)
 
 def blend_all_objects(currObs, currLens, debug):
@@ -55,7 +55,8 @@ def blend_all_objects(currObs, currLens, debug):
     #obsHist has MJD Filter FWHM 5sigmag
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
-    galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
+    #galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
+    galaxy_x, galaxy_y, PSF_HWHM = 0, 0, currObs[2] # lens centered at 0,0
     if debug:
         print ('galaxy_x, galaxy_y, PSF_HWHM:'), galaxy_x, galaxy_y, PSF_HWHM
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
