@@ -34,7 +34,7 @@ distance = 0.01
 number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
 
-def deblend(currObs, currLens, debug):
+def deblend(currObs, currLens, debug, null_deblender):
     """
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
@@ -44,7 +44,13 @@ def deblend(currObs, currLens, debug):
         print('This is the simple plot of the system')
         plotting.draw_model(currObs, currLens, debug)
         #plt.clf()
-    blend_all_objects(currObs, currLens, debug)
+    if null_deblender:
+        null_deblending()
+    else:
+        blend_all_objects(currObs, currLens, debug)
+
+def null_deblending():
+
 
 def blend_all_objects(currObs, currLens, debug):
     """
@@ -68,10 +74,11 @@ def blend_all_objects(currObs, currLens, debug):
     # iterate for the lens
     for i in xrange(currLens['NIMG']):
         if debug:
-            print ('XIMG, YIMG, MAG: '), currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i]
+            print ('XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i])
+            mag_ratio = math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i])
+            print ('Magnitude ratio is : ', mag_ratio)
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
         image = image + rv.pdf(pos)*math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i]) #scale
-
     if debug:
         show_color_map()
     # detect sources using IRAF routine
@@ -82,7 +89,7 @@ def blend_all_objects(currObs, currLens, debug):
     sources = daofind(image)
     if debug:
         show_source_position(sources)
-    print ('these are the objects that I identified: '), sources
+    print ('these are the objects that I identified: ', sources)
 
 def show_color_map():
     """
