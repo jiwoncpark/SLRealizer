@@ -1,3 +1,5 @@
+# ====================================================================
+
 import plotting
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,14 +7,99 @@ import pylab
 import matplotlib
 import math
 
-def determineAlpha(mag_ratio):
+# ======================================================================
+
+# global variable for the plot scaling
+x_min = -10
+x_max = 10
+y_min = -10
+y_max = 10
+
+
+def draw_model(curr_obs, curr_lens, debug, convolve=False):
+    
     """
-    Bug: No docstring
-    Bug: Each image should have its own alpha, because the different
-         images have different magnifications (these are in the OM10 "MAG" columns, and need to be applied to each image's sourceX
-         magnitude.)
-    Bug: function name should be "determine_alpha" to be PEP8 compliant
+        given a lensed system and a observation epoch, this visualize how the system would look like.
     """
+    #obsHist has MJD Filter FWHM 5sigmag
+    circle_color = choose_color(curr_obs)
+    filter_lens = curr_obs[1] + '_SDSS_lens'
+    #scale_factor = 2
+    PSF_HWHM = curr_obs[2] #/scale_factor
+    
+    init_plot(curr_obs)
+    
+    #draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug)
+    
+    lens_mag = curr_lens[filter_lens]
+    
+    # Draw quasar images:
+    galaxy_alpha = draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, lens_mag)
+    draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, galaxy_alpha)
+    # Draw circle that shows how big seeing(FWHM) is
+    #seeing = plt.Circle(((-plotY-2*curr_obs[2])/scale_factor, (plotX-2*curr_obs[2])/scale_factor), radius=PSF_HWHM, alpha=0.1, fc='k')
+    seeing = plt.Circle((-2.5, -2.5),
+                        radius=PSF_HWHM,
+                        alpha=0.1,
+                        fc='black')
+    plt.legend((galaxy, seeing, image), ('Lens Galaxy', 'PSF', 'QSO images'), fontsize=10)
+    plt.gca().add_patch(seeing)
+
+def draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, lens_mag):
+    """
+        This function draws the images of a quasar onto the plot.
+        """
+    #sort array to find brightest image
+    brightest_image_magnitude = min(filter(lambda a: a != 2, curr_lens['MAG'][0]))
+    if debug:
+        print 'brightest_image_magnitude : ',
+        print brightest_image_magnitude
+    global image
+    for i in xrange(curr_lens['NIMG']):
+        sourceX = curr_lens['XIMG'][0][i]
+        sourceY = curr_lens['YIMG'][0][i]
+        image_mag = curr_lens['MAG'][0][i]
+        if debug:
+            print 'quasar image mag:', image_mag, 'FWHM:', PSF_HWHM, 'Quasar X:', sourceX, 'Quasar Y: ', sourceY
+        # image alpha no longer in use
+        mag_ratio = math.pow(2.5, -lens_mag+image_mag)
+        image_alpha, galaxy_alpha = determine_alpha(mag_ratio)
+        #if image_alpha < 0.1:
+        #    image_alpha = 0.1
+        image_alpha = math.pow(2.5, brightest_image_magnitude-image_mag)
+        #print "In 'draw_model', mag_ratio, quasar_alpha, lens_alpha =", mag_ratio, image_alpha, lens_alpha
+        image = plt.Circle((sourceX, sourceY),
+                           radius=PSF_HWHM,
+                           alpha=image_alpha,
+                           fc=circle_color, linewidth=0)
+                           # Draw lens galaxy:
+        plt.gca().add_patch(image)
+    return galaxy_alpha
+
+def draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, galaxy_alpha):
+    """
+        This function draws the images of a galaxy onto the plot.
+        """
+    global galaxy
+    #Draw lensing galaxy' images:
+    if(convolve):
+        # For now, we just let lensFWHM to be zero.
+        #lensFWHM = curr_lens['REFF']
+        lensFWHM = 0.0
+        galaxyHWHM = convolve(curr_obs[2], lensFWHM) #/scale_factor
+        galaxy = plt.Circle((0, 0),
+                            radius=galaxy_HWHM, alpha=galaxy_alpha, fc='c', linewidth=0)
+    else:
+        galaxy = plt.Circle((0, 0),
+                            radius=PSF_HWHM,alpha=galaxy_alpha,fc='c', linewidth=0,edgecolor='b', linestyle='dashed')
+    plt.gca().add_patch(galaxy)
+
+
+
+def determine_alpha(mag_ratio):
+    """
+        Given the magnitude ratio (which is given by 2.5^(m1-m2)), calculate the alpha values for each patch that represents a quasar image
+        """
     if(mag_ratio>1):
         quasar_alpha = 1/mag_ratio
         lens_alpha = 1
@@ -21,107 +108,69 @@ def determineAlpha(mag_ratio):
         lens_alpha = mag_ratio
     return quasar_alpha, lens_alpha
 
-def determineScale(lensX, sourceX, lensY, sourceY):
-    if (abs(lensX[0]+sourceX))>(abs(sourceX)):
-        plotX = abs(lensX[0]+sourceX)
+def choose_color(curr_obs):
+    """
+        Given a filter, this method choose an appropriate color for the patches (which have a shape of circles)
+        """
+    if (curr_obs[1]=='u'):
+        circle_color = 'violet'
+    elif (curr_obs[1]=='g'):
+        circle_color = 'blue'
+    elif (curr_obs[1]=='r'):
+        circle_color = 'green'
+    elif (curr_obs[1]=='i'):
+        circle_color = 'orange'
+    elif (curr_obs[1]=='z'):
+        circle_color = 'red'
     else:
-        plotX = abs(sourceX)
-    if (abs(lensY[0]+sourceY))>(abs(sourceY)):
-        plotY = abs(lensY[0]+sourceY)
-    else:
-        plotY = abs(sourceY)
-    return plotX, plotY
+        raise ValueError('Unknown filter name '+curr_obs[1])
+    return circle_color
 
-def plotFigureOnMatplotlib(currObs, convolve, quasar_alpha, lens_alpha, sourceX, sourceY, lensX, lensY, plotX, plotY):
-    #fig = plt.figure(1)
-    if (currObs[1]=='u'):
-        circleColor = 'violet'
-    elif (currObs[1]=='g'):
-        circleColor = 'blue'
-    elif (currObs[1]=='r'):
-        circleColor = 'green'
-    elif (currObs[1]=='i'):
-        circleColor = 'orange'
-    elif (currObs[1]=='z'):
-        circleColor = 'red'
-    else:
-        raise ValueError('Unknown filter name '+currObs[1])
-
+def init_plot(curr_obs):
+    
+    """
+        initialize the plot by setting axis and labels
+        """
+    
     plt.axis('scaled')
-    plt.ylim(-3, 3)
-    plt.xlim(-3, 3)
+    plt.ylim(y_min, y_max)
+    plt.xlim(x_min, x_max)
     plt.xlabel('xPosition')
     plt.ylabel('yPosition')
-    plt.title('Observation with ' + 'filter ' + currObs[1] + ' on MJD ' + str(currObs[0]))
+    plt.title('Observation with ' + 'filter ' + curr_obs[1] + ' on MJD ' + str(curr_obs[0]))
 
-    scale_factor = 2
-    PSF_HWHM = currObs[2]/scale_factor
+def convolve(obs_FWHM, initialFWHM=0.0):
+    """
+        Given observation date's FWHM and the galaxy's size, compute the convolved gaussian's FWHM.
+        """
+    seeing = obs_FWHM
+    seeing_sigma = fwhm_to_sig(seeing)
+    init_sigma = fwhm_to_sig(initialFWHM)
+    convolve_sigma = seeing_sigma + init_sigma
+    return convolve_sigma
 
-    # Draw quasar images:
-    for i in range(4):
-        source = plt.Circle((sourceX, sourceY),
-                            radius=PSF_HWHM,
-                            alpha=quasar_alpha,
-                            fc=circleColor, linewidth=0)
-    # Draw lens galaxy:
-    if(convolve):
-        # For now, we just let lensFWHM to be zero.
-        #lensFWHM = currLens['REFF']
-        lensFWHM = 0.0
-        galaxyHWHM = convolve(currObs[2], lensFWHM)/scale_factor
-        # Bug: the LENS position is in the CENTER of the field.
-        #      The SOURCE position is UNOBSERVABLE.
-        #      The IMAGE positions are in teh OM10 catalog in the
-        #      XIMG and YIMG columns.
-        lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY),
-                          radius=galaxy_HWHM,
-                          alpha=lens_alpha,
-                          fc=circleColor, linewidth=0)
-    else:
-        lens = plt.Circle((lensX[i]+sourceX, lensY[i]+sourceY),
-                          radius=PSF_HWHM,
-                          alpha=lens_alpha,
-                          fc=circleColor, linewidth=0,
-                          edgecolor='b', linestyle='dashed')
-    plt.gca().add_patch(lens)
-    plt.gca().add_patch(source)
-
-        #seeing = plt.Circle(((-plotY-2*currObs[2])/scale_factor, (plotX-2*currObs[2])/scale_factor), radius=PSF_HWHM, alpha=0.1, fc='k')
-    seeing = plt.Circle((-2.5, -2.5),
-                        radius=PSF_HWHM,
-                        alpha=0.1,
-                        fc='black')
-    plt.legend((source, seeing, lens),
-               ('QSO images', 'PSF', 'Lens galaxy'), fontsize=10)
-    plt.gca().add_patch(seeing)
-
-
-def draw_model(currObs, currLens, convolve=False):
-    #obsHist has MJD Filter FWHM 5sigmag
-    filterQuasar = currObs[1] + '_SDSS_quasar'
-    filterLens = currObs[1] + '_SDSS_lens'
-    lens_mag = currLens[filterLens]
-    quasar_mag = currLens[filterQuasar]
-    mag_ratio = math.pow(2.5, -lens_mag+quasar_mag)
-    quasar_alpha, lens_alpha = determineAlpha(mag_ratio)
-    print "In 'draw_model', mag_ratio, quasar_alpha, lens_alpha =", \
-          mag_ratio, quasar_alpha, lens_alpha
-    sourceX = currLens['XSRC'][0]
-    sourceY = currLens['YSRC'][0]
-    lensX = currLens['XIMG'][0]
-    lensY = currLens['YIMG'][0]
-    plotX, plotY = determineScale(lensX, sourceX, lensY, sourceY)
-    plotFigureOnMatplotlib(currObs, convolve, quasar_alpha, lens_alpha, sourceX, sourceY, lensX, lensY, plotX, plotY)
-
-def convolve(obsFWHM, initialFWHM=0.0):
-    seeing = obsFWHM
-    seeingsigma = seeingToSig(seeing)
-    initSigma = seeingToSig(initialFWHM)
-    convolveSigma = seeingsigma + initSigma
-    return convolveSigma
-
-def seeingToSig(seeing):
+def fwhm_to_sig(seeing):
+    """
+        Given the FWHM, return the sigma value
+        """
     return seeing / np.sqrt(8 * np.log(2))
 
-def sigmaTofwhm(sigma):
+def sigma_to_fwhm(sigma):
+    """
+        Given the sigma value, return FWHM
+        """
     return sigma * np.sqrt(8 * np.log(2))
+
+"""
+    Will be eventually deleted, keeping just in case
+def determine_scale(lens_X, source_X, lens_Y, source_Y):
+    if (abs(lens_X[0]+source_X))>(abs(source_X)):
+        plot_X = abs(lens_X[0]+source_X)
+    else:
+        plot_X = abs(source_X)
+    if (abs(lens_Y[0]+source_Y))>(abs(source_Y)):
+        plot_Y = abs(lens_Y[0]+source_Y)
+    else:
+        plot_Y = abs(source_Y)
+    return plot_X, plot_Y
+"""
