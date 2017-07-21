@@ -15,6 +15,7 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils import CircularAperture
 from photutils import DAOStarFinder
+import moment
 
 # ======================================================================
 
@@ -34,7 +35,7 @@ distance = 0.01
 number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
 
-def deblend(currObs, currLens, debug):
+def deblend(currObs, currLens, null_deblend = False, debug=False):
     """
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
@@ -42,9 +43,33 @@ def deblend(currObs, currLens, debug):
     print('Deblending starts.....')
     if debug:
         print('This is the simple plot of the system')
-        plotting.draw_model(currObs, currLens, debug)
+        #plotting.draw_model(currObs, currLens, debug)
         #plt.clf()
-    blend_all_objects(currObs, currLens, debug)
+    if null_deblend:
+        print('null deblender')
+        null_deblending(currObs, currLens, debug)
+    else:
+        blend_all_objects(currObs, currLens, debug)
+
+def null_deblending(currObs, currLens, debug):
+    filterLens = currObs[1] + '_SDSS_lens'
+    lens_mag = currLens[filterLens]
+    #galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
+    galaxy_x, galaxy_y, PSF_HWHM = 0, 0, currObs[2] # lens centered at 0,0
+    total_zeroth_moment = moment.zeroth_moment(currObs, currLens)[0]
+    x_first_moment, y_first_moment = moment.first_moment(currObs, currLens)
+    x_center_of_mass = x_first_moment[0] / total_zeroth_moment
+    y_center_of_mass = y_first_moment[0] / total_zeroth_moment
+    print(x_center_of_mass, y_center_of_mass)
+    x_second_moment, y_second_moment = moment.second_moment(currObs, currLens)
+    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
+    pos = np.dstack((x, y))
+    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
+    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, 0], [0, y_second_moment]])
+    global image
+    image = [[0]*number_of_rows for _ in range(number_of_columns)]
+    image = image + rv.pdf(pos) * total_zeroth_moment
+    show_color_map()
 
 def blend_all_objects(currObs, currLens, debug):
     """

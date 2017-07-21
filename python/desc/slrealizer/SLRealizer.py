@@ -23,7 +23,7 @@ class SLRealizer(object):
     # def plot_lens_random_date(self, lensID = 7176527, convolve=False):
     #     plotting.plot_lens_random_date(self, lensID, convolve)
 
-    def plot_lens_random_date(self, lensID=None, convolve=False):
+    def plot_lens_random_date(self, lensID=None, debug=False, convolve=False):
         if lensID is None:
             print 'No lens system selected for plotting.'
             return
@@ -38,10 +38,11 @@ class SLRealizer(object):
         # randomIndex:
         desc.slrealizer.draw_model(self.observation[randomIndex],
                                    self.catalog.get_lens(lensID),
+                                   debug,
                                    convolve)
         return
 
-    def deblend(self, lensID=None):
+    def deblend(self, lensID=None, null_deblend = False, debug=False):
         if lensID is None:
             print 'No lens system selected for plotting.'
             return
@@ -55,7 +56,7 @@ class SLRealizer(object):
         # Now visualize the lens system at the epoch defined by the             
         # randomIndex:                                                          
         desc.slrealizer.deblend(self.observation[randomIndex],
-                                   self.catalog.get_lens(lensID))
+                                   self.catalog.get_lens(lensID), null_deblend, debug)
         return
 
 """
