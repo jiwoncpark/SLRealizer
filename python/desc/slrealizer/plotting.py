@@ -20,7 +20,7 @@ def draw_model(curr_obs, curr_lens, debug, convolve=False):
     
     """
         given a lensed system and a observation epoch, this visualize how the system would look like.
-        """
+    """
     #obsHist has MJD Filter FWHM 5sigmag
     circle_color = choose_color(curr_obs)
     filter_lens = curr_obs[1] + '_SDSS_lens'
@@ -29,13 +29,13 @@ def draw_model(curr_obs, curr_lens, debug, convolve=False):
     
     init_plot(curr_obs)
     
-    draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug)
+    #draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug)
     
     lens_mag = curr_lens[filter_lens]
     
     # Draw quasar images:
-    draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, lens_mag)
-    
+    galaxy_alpha = draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, lens_mag)
+    draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, galaxy_alpha)
     # Draw circle that shows how big seeing(FWHM) is
     #seeing = plt.Circle(((-plotY-2*curr_obs[2])/scale_factor, (plotX-2*curr_obs[2])/scale_factor), radius=PSF_HWHM, alpha=0.1, fc='k')
     seeing = plt.Circle((-2.5, -2.5),
@@ -62,8 +62,8 @@ def draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, len
         if debug:
             print 'quasar image mag:', image_mag, 'FWHM:', PSF_HWHM, 'Quasar X:', sourceX, 'Quasar Y: ', sourceY
         # image alpha no longer in use
-        #mag_ratio = math.pow(2.5, -lens_mag+image_mag)
-        #image_alpha, lens_alpha = determine_alpha(mag_ratio)
+        mag_ratio = math.pow(2.5, -lens_mag+image_mag)
+        image_alpha, galaxy_alpha = determine_alpha(mag_ratio)
         #if image_alpha < 0.1:
         #    image_alpha = 0.1
         image_alpha = math.pow(2.5, brightest_image_magnitude-image_mag)
@@ -74,8 +74,9 @@ def draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, len
                            fc=circle_color, linewidth=0)
                            # Draw lens galaxy:
         plt.gca().add_patch(image)
+    return galaxy_alpha
 
-def draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug):
+def draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, galaxy_alpha):
     """
         This function draws the images of a galaxy onto the plot.
         """
@@ -87,10 +88,10 @@ def draw_lensing_galaxy(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, d
         lensFWHM = 0.0
         galaxyHWHM = convolve(curr_obs[2], lensFWHM) #/scale_factor
         galaxy = plt.Circle((0, 0),
-                            radius=galaxy_HWHM, alpha=1.0, fc='c', linewidth=0)
+                            radius=galaxy_HWHM, alpha=galaxy_alpha, fc='c', linewidth=0)
     else:
         galaxy = plt.Circle((0, 0),
-                            radius=PSF_HWHM,alpha=1.0,fc='c', linewidth=0,edgecolor='b', linestyle='dashed')
+                            radius=PSF_HWHM,alpha=galaxy_alpha,fc='c', linewidth=0,edgecolor='b', linestyle='dashed')
     plt.gca().add_patch(galaxy)
 
 
