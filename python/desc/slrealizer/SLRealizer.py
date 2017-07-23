@@ -23,7 +23,7 @@ class SLRealizer(object):
     # def plot_lens_random_date(self, lensID = 7176527, convolve=False):
     #     plotting.plot_lens_random_date(self, lensID, convolve)
 
-    def plot_lens_random_date(self, lensID=None, convolve=False, debug=False):
+    def plot_lens_random_date(self, lensID=None, debug=False, convolve=False):
         if lensID is None:
             print 'No lens system selected for plotting.'
             return
@@ -41,7 +41,7 @@ class SLRealizer(object):
                                    convolve, debug)
         return
 
-    def deblend(self, lensID=None, debug=False):
+    def deblend(self, lensID=None, null_deblend = False, debug=False):
         if lensID is None:
             print 'No lens system selected for plotting.'
             return
@@ -52,8 +52,34 @@ class SLRealizer(object):
         while filter == 'y':
             randomIndex = random.randint(0, 200)
             filter = self.observation[randomIndex][1]
-        # Now visualize the lens system at the epoch defined by the             
-        # randomIndex:                                                          
-        desc.slrealizer.deblend(self.observation[randomIndex],
-                                   self.catalog.get_lens(lensID), debug)
+            # Now visualize the lens system at the epoch defined by the             
+            # randomIndex:                                                          
+        desc.slrealizer.deblend_test(self.observation[randomIndex],
+                                   self.catalog.get_lens(lensID), null_deblend, debug)
         return
+
+    # For now set all to true so that we can debug easily
+    def deblend_distance(self, lensID=None, null_deblend=True, debug=True, show_plot=True):
+        if lensID is None:
+            print 'No lens system selected for calculating the statistics'
+            return
+        import random
+        # Keep randomly selecting epochs until we get one that is not                                       
+        # in the 'y' filter:                                         
+        filter = 'y'
+        while filter == 'y':
+            randomIndex = random.randint(0, 200)
+            filter = self.observation[randomIndex][1]
+            # Now visualize the lens system at the epoch defined by the                                      
+            # randomIndex:                                          
+        #if show_plot:
+            #deblend(lensID, null_deblend, debug, randomIndex)
+        if null_deblend:
+            image1 = desc.slrealizer.null_deblending(self.observation[randomIndex], self.catalog.get_lens(lensID), debug)
+        if show_plot:
+            desc.slrealizer.show_color_map(image1)
+        image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID), debug)
+        if show_plot:
+            desc.slrealizer.show_color_map(image2)
+        print('Chi squared distance is : ', desc.slrealizer.chi_square_distance(image1, image2))
+        print('KL distance is : ', desc.slrealizer.KL_distance(image1, image2))
