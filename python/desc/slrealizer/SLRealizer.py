@@ -7,8 +7,6 @@ import math
 
 class SLRealizer(object):
 
-    scale_factor = 2
-
     # Maybe make a separate method for it
     # Best OOP practice?
 
@@ -54,8 +52,9 @@ class SLRealizer(object):
             filter = self.observation[randomIndex][1]
             # Now visualize the lens system at the epoch defined by the             
             # randomIndex:                                                          
-        desc.slrealizer.deblend_test(self.observation[randomIndex],
-                                   self.catalog.get_lens(lensID), null_deblend, debug)
+        covariance_matrix = desc.slrealizer.covariance_matrix(self.observation[randomIndex], self.catalog.get_lens(lensID))
+        #print covariance_matrix
+        desc.slrealizer.deblend_test(self.observation[randomIndex], self.catalog.get_lens(lensID), null_deblend, debug)
         return
 
     # For now set all to true so that we can debug easily

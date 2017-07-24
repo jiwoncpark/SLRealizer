@@ -16,6 +16,7 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils import CircularAperture
 from photutils import DAOStarFinder
 import moment
+import desc.slrealizer
 
 # ======================================================================
 
@@ -32,6 +33,8 @@ y_min = -10
 y_max = 10
 distance = 0.01
 
+magnitude_zeropoint = -10
+
 number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
 
@@ -40,13 +43,14 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
     """
-    print('Deblending starts.....')
+    #print('Deblending starts.....')
     if debug:
-        print('This is the simple plot of the system')
+        pass
+        #print('This is the simple plot of the system')
         #plotting.draw_model(currObs, currLens, debug)
         #plt.clf()
     if null_deblend:
-        print('null deblender')
+        #print('null deblender')
         image = null_deblending(currObs, currLens, debug)
         show_color_map(image)
     else:
@@ -62,14 +66,23 @@ def null_deblending(currObs, currLens, debug):
     x_first_moment, y_first_moment = moment.first_moment(currObs, currLens)
     x_center_of_mass = x_first_moment[0] / total_zeroth_moment
     y_center_of_mass = y_first_moment[0] / total_zeroth_moment
-    print(x_center_of_mass, y_center_of_mass)
+    print('x_center_of_mass:', x_center_of_mass, 'y_center_of_mass: ', y_center_of_mass)
     x_second_moment, y_second_moment = moment.second_moment(currObs, currLens)
+    #print("x_second_moment: ",  x_second_moment, "y_second_moment: ", y_second_moment)
+#    x_sigma = math.pow(x_second_moment, 0.5)
+#    y_sigma = math.pow(y_second_moment, 0.5)
+#    xy_variance = x_sigma*y_sigma
+    #print("xy_variance : ", xy_variance)
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
     #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
-    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, 0], [0, y_second_moment]])
+    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, xy_variance], [xy_variance, y_second_moment]], allow_singular=True)
+#    covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
+    ## test
+    covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
+    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], covariance_matrix)
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos) * total_zeroth_moment
+    image = image + (rv.pdf(pos) * total_zeroth_moment)
     return image
 
 def plot_all_objects(currObs, currLens, debug):
@@ -86,18 +99,18 @@ def plot_all_objects(currObs, currLens, debug):
     if debug:
         print ('galaxy_x, galaxy_y, PSF_HWHM:'), galaxy_x, galaxy_y, PSF_HWHM
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y))
-    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
+    pos = np.dstack((x, y)) 
+    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #FIX BUG    
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)
+    image = image + rv.pdf(pos)*math.pow(2.5, magnitude_zeropoint - currLens[filterLens])
     # iterate for the lens
     for i in xrange(currLens['NIMG']):
         if debug:
-            print ('XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i])
+            #print ('XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i])
             mag_ratio = math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i])
-            print ('Magnitude ratio is : ', mag_ratio)
+            #print ('Magnitude ratio is : ', mag_ratio)
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
-        image = image + rv.pdf(pos)*math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i]) #scale
+        image = image + rv.pdf(pos)*math.pow(2.5, magnitude_zeropoint-currLens['MAG'][0][i]) #scale
     return image
 
 def blend_all_objects(currObs, currLens, debug, input_image):
@@ -111,7 +124,7 @@ def blend_all_objects(currObs, currLens, debug, input_image):
     sources = daofind(input_image)
     if debug:
         show_source_position(sources, input_image)
-    print ('these are the objects that I identified: ', sources)
+    # print ('these are the objects that I identified: ', sources)
 
 def show_color_map(input_image):
     """

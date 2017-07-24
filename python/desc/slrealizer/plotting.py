@@ -15,6 +15,7 @@ x_max = 10
 y_min = -10
 y_max = 10
 
+magnitude_zeropoint = -10
 
 def draw_model(curr_obs, curr_lens, debug, convolve=False):
     
@@ -52,14 +53,16 @@ def draw_image(PSF_HWHM, circle_color, curr_obs, curr_lens, convolve, debug, len
     #sort array to find brightest image
     brightest_image_magnitude = min(filter(lambda a: a != 2, curr_lens['MAG'][0]))
     if debug:
-        print('brightest_image_magnitude : ', brightest_image_magnitude)
+#        print('brightest_image_magnitude : ', brightest_image_magnitude)
+        pass
     global image
     for i in xrange(curr_lens['NIMG']):
         sourceX = curr_lens['XIMG'][0][i]
         sourceY = curr_lens['YIMG'][0][i]
         image_mag = curr_lens['MAG'][0][i]
         if debug:
-            print('quasar image mag:', image_mag, 'FWHM:', PSF_HWHM, 'Quasar X:', sourceX, 'Quasar Y: ', sourceY)
+            pass
+#            print('quasar image mag:', image_mag, 'FWHM:', PSF_HWHM, 'Quasar X:', sourceX, 'Quasar Y: ', sourceY)
         # image alpha no longer in use
         mag_ratio = math.pow(2.5, -lens_mag+image_mag)
         image_alpha, galaxy_alpha = determine_alpha(mag_ratio)
