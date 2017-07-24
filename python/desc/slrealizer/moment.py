@@ -17,12 +17,14 @@ def calculate_image_zeroth_moment(currObs, currLens):
     """
         Given a lensed system, calculate the zeroth moment(total flux) of quasar's images.
     """
+    print('calculating images zeroth moment')
     # Initialize the flux
     imageFlux=0
     for i in range(int(currLens['NIMG'][0])):
 #        print(currLens['MAG'])
         imageMag = currLens['MAG'][0][i]
-        imageFlux += pow(2.5, magnitude_zeropoint-imageMag)
+        print(pow(2.5, magnitude_zeropoint-imageMag))
+        imageFlux = imageFlux+ pow(2.5, magnitude_zeropoint-imageMag)
     return imageFlux
 
 def return_image_first_moment(currObs, currLens):
@@ -35,7 +37,7 @@ def return_image_first_moment(currObs, currLens):
         #    imageMag = currLens[filterQuasar]                                                                
         #else:                                                                                               
         imageMag= currLens['MAG'][0][i]
-        imageFlux += pow(2.5, magnitude_zeropoint-imageMag)
+        imageFlux= imageFlux + pow(2.5, magnitude_zeropoint-imageMag)
         # position * flux = moment                                                                             
         imageCurrXMoment = currLens['XIMG'][0][i] * imageFlux
         imageCurrYMoment = currLens['YIMG'][0][i] * imageFlux
@@ -59,7 +61,7 @@ def calculate_image_second_moment(currObs, currLens):
     imageFlux = 0
     for i in xrange(currLens['NIMG']):
         imageMag= currLens['MAG'][0][i]
-        imageFlux += pow(2.5, magnitude_zeropoint-imageMag)
+        imageFlux=imageFlux+ pow(2.5, magnitude_zeropoint-imageMag)
         imageCurrXMoment = currLens['XIMG'][0][i] * currLens['XIMG'][0][i] * imageFlux
         imageCurrYMoment = currLens['YIMG'][0][i] * currLens['YIMG'][0][i] * imageFlux
         imageXMoment += imageCurrXMoment
@@ -109,9 +111,7 @@ def second_moment(currObs, currLens, convolved=False):
     """
         Given a lens system, returns the second moment for each x and y axis
     """
-    
-    
-    
+
     filterLens = currObs[1] + '_SDSS_lens'
     filterQuasar = currObs[1] + '_SDSS_quasar'
     # Initialize the moment                                                                                      
@@ -166,20 +166,20 @@ def covariance_matrix(currObs, currLens, convolved=False):
     x_first_moment, y_first_moment = first_moment(currObs, currLens)
     x_mu, y_mu = x_first_moment/flux, y_first_moment/flux
     lens_flux = calculate_lens_zeroth_moment(currObs, currLens)
-    lens_array = [-x_mu*lens_flux, -y_mu*lens_flux]
-    data_minus_mu = np.matmul(np.asarray(lens_array), np.transpose(np.asarray(lens_array)))
+    lens_array = [-x_mu, -y_mu]
+    data_minus_mu = np.matmul(np.asarray(lens_array), np.transpose(np.asarray(lens_array))) * lens_flux
     #data_minus_mu.append([-x_mu*lens_flux, -y_mu*lens_flux])
     #x_minus_mu_array.append(-x_mu*lens_flux)
     #y_minus_mu_array.append(-y_mu*lens_flux)
     for i in xrange(currLens['NIMG']):
         imageMag= currLens['MAG'][0][i]
         imageFlux= pow(2.5, magnitude_zeropoint-imageMag)
-        image_array = [(currLens['XIMG'][0][i]-x_mu) * imageFlux, (currLens['YIMG'][0][i]-y_mu)*imageFlux]
-        data_minus_mu = data_minus_mu + np.matmul(np.asarray(image_array), np.transpose(np.asarray(image_array)))
+        image_array = [(currLens['XIMG'][0][i]-x_mu), (currLens['YIMG'][0][i]-y_mu)]
+        data_minus_mu = data_minus_mu + (np.matmul(np.asarray(image_array), np.transpose(np.asarray(image_array))) * imageFlux)
 
     #print(data_minus_mu)
     #    print(data_minus_mu.shape)
-    covariance_matrices = data_minus_mu # /flux
+    covariance_matrices = data_minus_mu / flux
     print(covariance_matrices)
     return covariance_matrices
 

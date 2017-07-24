@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pylab
 import matplotlib
 import math
+import numpy as np
 #from __future__ import print_function
 # ======================================================================
 

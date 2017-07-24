@@ -27,10 +27,10 @@ All the sources are assumed to have Gaussian PSFs.
 """
 
 #global variable that controls the size of the plot
-x_min = -10
-x_max = 10
-y_min = -10
-y_max = 10
+x_min = -10.0
+x_max = 10.0
+y_min = -10.0
+y_max = 10.0
 distance = 0.01
 
 magnitude_zeropoint = -10
@@ -77,12 +77,14 @@ def null_deblending(currObs, currLens, debug):
     pos = np.dstack((x, y))
     #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
     #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, xy_variance], [xy_variance, y_second_moment]], allow_singular=True)
-#    covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
+    covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
+    print("covariance matrix: ", covariance_matrix)
     ## test
-    covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
-    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], covariance_matrix)
+    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
+    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], covariance_matrix, allow_singular=True)
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + (rv.pdf(pos) * total_zeroth_moment)
+    print('total_zeroth_moment : ', total_zeroth_moment)
     return image
 
 def plot_all_objects(currObs, currLens, debug):
@@ -99,18 +101,24 @@ def plot_all_objects(currObs, currLens, debug):
     if debug:
         print ('galaxy_x, galaxy_y, PSF_HWHM:'), galaxy_x, galaxy_y, PSF_HWHM
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y)) 
-    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #FIX BUG    
+    pos = np.dstack((x, y))
+    PSF_sigma = desc.slrealizer.fwhm_to_sig(PSF_HWHM)
+    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #FIX BUG
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + rv.pdf(pos)*math.pow(2.5, magnitude_zeropoint - currLens[filterLens])
+    print('multiplication factor : ', math.pow(2.5, magnitude_zeropoint - currLens[filterLens]))
     # iterate for the lens
     for i in xrange(currLens['NIMG']):
         if debug:
             #print ('XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i])
-            mag_ratio = math.pow(2.5, currLens[filterLens]-currLens['MAG'][0][i])
+            pass
+        mag_ratio = math.pow(2.5, magnitude_zeropoint -currLens['MAG'][0][i])
+        print(mag_ratio)
+        print('PSF_sigma: ', PSF_sigma)
             #print ('Magnitude ratio is : ', mag_ratio)
-        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]]) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
-        image = image + rv.pdf(pos)*math.pow(2.5, magnitude_zeropoint-currLens['MAG'][0][i]) #scale
+        rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
+        image = image + rv.pdf(pos)*mag_ratio #scale
+        print('multiplication factor : ', mag_ratio)
     return image
 
 def blend_all_objects(currObs, currLens, debug, input_image):
