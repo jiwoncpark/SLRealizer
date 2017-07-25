@@ -15,7 +15,6 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils import CircularAperture
 from photutils import DAOStarFinder
-#import moment
 import desc.slrealizer
 import scipy.stats
 from scipy.stats import moment
@@ -60,51 +59,41 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
         image = plot_all_objects(currObs, currLens, debug)
         blend_all_objects(currObs, currLens, debug, image)
 
+#https://stackoverflow.com/questions/9005659/compute-eigenvectors-of-image-in-python/9007249#9007249
+def raw_moment(image, iord, jord):
+    nrows, ncols = image.shape
+    y, x = np.mgrid[:nrows, :ncols]
+    image = image * x**iord * y**jord
+    return image.sum()
 
-"""
-def null_deblending(currObs, currLens, debug):
-    filterLens = currObs[1] + '_SDSS_lens'
-    lens_mag = currLens[filterLens]
-    #galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
-    galaxy_x, galaxy_y, PSF_HWHM = 0, 0, currObs[2] # lens centered at 0,0
-    total_zeroth_moment = moment.zeroth_moment(currObs, currLens)[0]
-    x_first_moment, y_first_moment = moment.first_moment(currObs, currLens)
-    x_center_of_mass = x_first_moment[0] / total_zeroth_moment
-    y_center_of_mass = y_first_moment[0] / total_zeroth_moment
-    print('x_center_of_mass:', x_center_of_mass, 'y_center_of_mass: ', y_center_of_mass)
-    x_second_moment, y_second_moment = moment.second_moment(currObs, currLens)
-    #print("x_second_moment: ",  x_second_moment, "y_second_moment: ", y_second_moment)
-#    x_sigma = math.pow(x_second_moment, 0.5)
-#    y_sigma = math.pow(y_second_moment, 0.5)
-#    xy_variance = x_sigma*y_sigma
-    #print("xy_variance : ", xy_variance)
-    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y))
-    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
-    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, xy_variance], [xy_variance, y_second_moment]], allow_singular=True)
-    covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
-    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
-    print("covariance matrix: ", covariance_matrix)
-    ## test
-    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
-    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], covariance_matrix, allow_singular=True)
-    image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + (rv.pdf(pos) * total_zeroth_moment)
-    print('total_zeroth_moment : ', total_zeroth_moment)
-    return image
-"""
+def covariance_matrix(image):
+    data_sum = np.sum(image) #.sum()
+    m10 = raw_moment(image, 1, 0)
+    m01 = raw_moment(image, 0, 1)
+    x_bar = m10 / data_sum
+    y_bar = m01 / data_sum
+    print('x_bar and y_bar: ', x_bar, y_bar)
+    #print('')
+    x_bar, y_bar = scipy.ndimage.center_of_mass(image)
+    print('[computed] x_bar and y_bar: ', x_bar, y_bar)
+    u11 = (raw_moment(image, 1, 1) - x_bar * m01) / data_sum
+    u20 = (raw_moment(image, 2, 0) - x_bar * m10) / data_sum
+    u02 = (raw_moment(image, 0, 2) - y_bar * m01) / data_sum
+    print('data sum: ', data_sum)
+    cov = np.array([[u20, u11], [u11, u02]])
+    return cov
 
 def null_deblending(currObs, currLens, debug):
     image = plot_all_objects(currObs, currLens, debug)
     print('zeroth_moment', np.sum(image))
     print('first_moment', scipy.ndimage.center_of_mass(image))
-    print('second_moment', scipy.stats.moment(image, moment=2, axis=None))
+    print('second_moment', covariance_matrix(image))
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
-    rv = scipy.stats.multivariate_normal(scipy.ndimage.center_of_mass(image), scipy.stats.moment(image, moment=2, axis=None), allow_singular=True) #FIX BUG            
+    rv = scipy.stats.multivariate_normal(scipy.ndimage.center_of_mass(image), covariance_matrix(image), allow_singular=True) #FIX BUG  
     image2 = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image2 = image2 + rv.pdf(pos)*np.sum(image2)
-    return image
+    image2 = image2 + rv.pdf(pos)*np.sum(image)
+    return image2
 
 def plot_all_objects(currObs, currLens, debug):
     """

@@ -1,5 +1,3 @@
-import moment
-
 def test_covariance_matrix(self, lensID=None, debug=False, convolve=False):
     if lensID is None:
         print 'No lens system selected for plotting.'
