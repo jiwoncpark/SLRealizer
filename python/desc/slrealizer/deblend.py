@@ -17,6 +17,9 @@ from photutils import CircularAperture
 from photutils import DAOStarFinder
 import moment
 import desc.slrealizer
+import scipy.stats
+from scipy.stats import moment
+from scipy import ndimage
 
 # ======================================================================
 
@@ -27,10 +30,10 @@ All the sources are assumed to have Gaussian PSFs.
 """
 
 #global variable that controls the size of the plot
-x_min = -10.0
-x_max = 10.0
-y_min = -10.0
-y_max = 10.0
+x_min = -5.0
+x_max = 5.0
+y_min = -5.0
+y_max = 5.0
 distance = 0.01
 
 magnitude_zeropoint = -10
@@ -57,6 +60,8 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
         image = plot_all_objects(currObs, currLens, debug)
         blend_all_objects(currObs, currLens, debug, image)
 
+
+"""
 def null_deblending(currObs, currLens, debug):
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
@@ -78,6 +83,7 @@ def null_deblending(currObs, currLens, debug):
     #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
     #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, xy_variance], [xy_variance, y_second_moment]], allow_singular=True)
     covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
+    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
     print("covariance matrix: ", covariance_matrix)
     ## test
     #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
@@ -85,6 +91,19 @@ def null_deblending(currObs, currLens, debug):
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + (rv.pdf(pos) * total_zeroth_moment)
     print('total_zeroth_moment : ', total_zeroth_moment)
+    return image
+"""
+
+def null_deblending(currObs, currLens, debug):
+    image = plot_all_objects(currObs, currLens, debug)
+    print('zeroth_moment', np.sum(image))
+    print('first_moment', scipy.ndimage.center_of_mass(image))
+    print('second_moment', scipy.stats.moment(image, moment=2, axis=None))
+    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
+    pos = np.dstack((x, y))
+    rv = scipy.stats.multivariate_normal(scipy.ndimage.center_of_mass(image), scipy.stats.moment(image, moment=2, axis=None), allow_singular=True) #FIX BUG            
+    image2 = [[0]*number_of_rows for _ in range(number_of_columns)]
+    image2 = image2 + rv.pdf(pos)*np.sum(image2)
     return image
 
 def plot_all_objects(currObs, currLens, debug):
