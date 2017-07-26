@@ -15,12 +15,15 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils import CircularAperture
 from photutils import DAOStarFinder
-#import moment
+import moment
 import desc.slrealizer
 import scipy.stats
 from scipy.stats import moment
 from scipy import ndimage
-
+import skimage
+import skimage.measure
+from skimage.measure import moments
+from moment import covariance_matrix
 # ======================================================================
 
 """
@@ -35,8 +38,6 @@ x_max = 5.0
 y_min = -5.0
 y_max = 5.0
 distance = 0.01
-
-magnitude_zeropoint = -10
 
 number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
@@ -60,51 +61,15 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
         image = plot_all_objects(currObs, currLens, debug)
         blend_all_objects(currObs, currLens, debug, image)
 
-
-"""
-def null_deblending(currObs, currLens, debug):
-    filterLens = currObs[1] + '_SDSS_lens'
-    lens_mag = currLens[filterLens]
-    #galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]
-    galaxy_x, galaxy_y, PSF_HWHM = 0, 0, currObs[2] # lens centered at 0,0
-    total_zeroth_moment = moment.zeroth_moment(currObs, currLens)[0]
-    x_first_moment, y_first_moment = moment.first_moment(currObs, currLens)
-    x_center_of_mass = x_first_moment[0] / total_zeroth_moment
-    y_center_of_mass = y_first_moment[0] / total_zeroth_moment
-    print('x_center_of_mass:', x_center_of_mass, 'y_center_of_mass: ', y_center_of_mass)
-    x_second_moment, y_second_moment = moment.second_moment(currObs, currLens)
-    #print("x_second_moment: ",  x_second_moment, "y_second_moment: ", y_second_moment)
-#    x_sigma = math.pow(x_second_moment, 0.5)
-#    y_sigma = math.pow(y_second_moment, 0.5)
-#    xy_variance = x_sigma*y_sigma
-    #print("xy_variance : ", xy_variance)
-    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y))
-    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment[0]*x_second_moment[0], 0], [0, y_second_moment[0]*y_second_moment[0]]])
-    #rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], [[x_second_moment, xy_variance], [xy_variance, y_second_moment]], allow_singular=True)
-    covariance_matrix = desc.slrealizer.covariance_matrix(currObs, currLens)
-    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
-    print("covariance matrix: ", covariance_matrix)
-    ## test
-    #covariance_matrix = [[0.8, 0.4],[0.3, 0.5]]
-    rv = scipy.stats.multivariate_normal([x_center_of_mass,y_center_of_mass], covariance_matrix, allow_singular=True)
-    image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + (rv.pdf(pos) * total_zeroth_moment)
-    print('total_zeroth_moment : ', total_zeroth_moment)
-    return image
-"""
-
-def null_deblending(currObs, currLens, debug):
-    image = plot_all_objects(currObs, currLens, debug)
-    print('zeroth_moment', np.sum(image))
-    print('first_moment', scipy.ndimage.center_of_mass(image))
-    print('second_moment', scipy.stats.moment(image, moment=2, axis=None))
-    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y))
-    rv = scipy.stats.multivariate_normal(scipy.ndimage.center_of_mass(image), scipy.stats.moment(image, moment=2, axis=None), allow_singular=True) #FIX BUG            
-    image2 = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image2 = image2 + rv.pdf(pos)*np.sum(image2)
-    return image
+def null_deblending(moment_matrix, debug):
+    print('moment_matrix: ', moment_matrix)
+    zeroth_moment = moment_matrix[0][0]
+    first_moment_x = moment_matrix[1][0] / zeroth_moment
+    first_moment_y = moment_matrix[0][1] / zeroth_moment
+    covariance_matrix = [[moment_matrix[2][0], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[0][2]]]
+    covariance_matrix = covariance_matrix/(zeroth_moment * zeroth_moment)
+    print(zeroth_moment, first_moment_x, first_moment_y, covariance_matrix)
+    return 0
 
 def plot_all_objects(currObs, currLens, debug):
     """
@@ -121,17 +86,19 @@ def plot_all_objects(currObs, currLens, debug):
         print ('galaxy_x, galaxy_y, PSF_HWHM:'), galaxy_x, galaxy_y, PSF_HWHM
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
-    PSF_sigma = desc.slrealizer.fwhm_to_sig(PSF_HWHM)
+    #PSF_sigma = desc.slrealizer.fwhm_to_sig(PSF_HWHM)
+    ####BUG! DECIDE WHICH ONE IS CORRECT
+    PSF_sigma = PSF_HWHM
     rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #FIX BUG
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)*math.pow(2.5, magnitude_zeropoint - currLens[filterLens])
-    print('multiplication factor : ', math.pow(2.5, magnitude_zeropoint - currLens[filterLens]))
+    image = image + rv.pdf(pos)*math.pow(2.5, desc.slrealizer.return_zeropoint() - currLens[filterLens])
+    print('multiplication factor : ', math.pow(2.5, desc.slrealizer.return_zeropoint() - currLens[filterLens]))
     # iterate for the lens
     for i in xrange(currLens['NIMG']):
         if debug:
             #print ('XIMG, YIMG, MAG: ', currLens['XIMG'][0][i], currLens['YIMG'][0][i], currLens['MAG'][0][i])
             pass
-        mag_ratio = math.pow(2.5, magnitude_zeropoint -currLens['MAG'][0][i])
+        mag_ratio = math.pow(2.5, desc.slrealizer.return_zeropoint() -currLens['MAG'][0][i])
         print(mag_ratio)
         print('PSF_sigma: ', PSF_sigma)
             #print ('Magnitude ratio is : ', mag_ratio)
@@ -175,3 +142,51 @@ def show_source_position(sources, input_image):
 # my guess is : https://www.google.de/search?q=2d+gaussian+area&start=10&sa=N&tbm=isch&imgil=2DtvXl3-AibpvM%253A%253Bkgo2jfIP68y8RM%253Bhttps%25253A%25252F%25252Fstackoverflow.com%25252Fquestions%25252F13658799%25252Fplot-a-grid-of-gaussians-with-matlab&source=iu&pf=m&fir=2DtvXl3-AibpvM%253A%252Ckgo2jfIP68y8RM%252C_&usg=__RmeCJMcLu03ro5YjgKk9fGZ53U8%3D&biw=1183&bih=588&ved=0ahUKEwj6wur9yZTVAhXrhlQKHT54DXo4ChDKNwgz&ei=UuluWfrRLOuN0gK-8LXQBw#imgrc=Puj8GXmbAPS6nM: so amplitude is proportional to the flux...?
 
 #https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
+
+
+## copying stackexchange
+import numpy as np
+import matplotlib.pyplot as plt
+
+def please_work(data):
+    xbar, ybar, cov = intertial_axis(data)
+
+    fig, ax = plt.subplots()
+    ax.imshow(data)
+    plot_bars(xbar, ybar, cov, ax)
+    plt.show()
+
+def raw_moment(data, iord, jord):
+    nrows, ncols = data.shape
+    y, x = np.mgrid[:nrows, :ncols]
+    data = data * x**iord * y**jord
+    return data.sum()
+
+def intertial_axis(data):
+    """Calculate the x-mean, y-mean, and cov matrix of an image."""
+    data_sum = data.sum()
+    m10 = raw_moment(data, 1, 0)
+    m01 = raw_moment(data, 0, 1)
+    x_bar = m10 / data_sum
+    y_bar = m01 / data_sum
+    u11 = (raw_moment(data, 1, 1) - x_bar * m01) / data_sum
+    u20 = (raw_moment(data, 2, 0) - x_bar * m10) / data_sum
+    u02 = (raw_moment(data, 0, 2) - y_bar * m01) / data_sum
+    cov = np.array([[u20, u11], [u11, u02]])
+    return x_bar, y_bar, cov
+
+def plot_bars(x_bar, y_bar, cov, ax):
+    """Plot bars with a length of 2 stddev along the principal axes."""
+    def make_lines(eigvals, eigvecs, mean, i):
+        """Make lines a length of 2 stddev."""
+        std = np.sqrt(eigvals[i])
+        vec = 2 * std * eigvecs[:,i] / np.hypot(*eigvecs[:,i])
+        x, y = np.vstack((mean-vec, mean, mean+vec)).T
+        return x, y
+    print("This is the covariance I calculated: ", cov)
+    print("This is the eigenvalue I have", np.linalg.eigh(cov))
+    mean = np.array([x_bar, y_bar])
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    ax.plot(*make_lines(eigvals, eigvecs, mean, 0), marker='o', color='white')
+    ax.plot(*make_lines(eigvals, eigvecs, mean, -1), marker='o', color='red')
+    ax.axis('image')

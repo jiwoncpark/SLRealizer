@@ -1,8 +1,10 @@
 from __future__ import print_function
 import math
 import numpy as np
+import desc.slrealizer
 
-magnitude_zeropoint = -10 # where we define the flux to be 1
+#desc.slrealizer.return_zeropoint = -10 # where we define the flux to be 1
+#desc.slrealizer.return_zeropoint = desc.slrealizer.return_zeropoint()
 
 def calculate_lens_zeroth_moment(currObs, currLens):
     """
@@ -10,7 +12,7 @@ def calculate_lens_zeroth_moment(currObs, currLens):
     """
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
-    lensFlux = pow(2.5, magnitude_zeropoint-lens_mag)
+    lensFlux = pow(2.5, desc.slrealizer.return_zeropoint()()-lens_mag)
     return lensFlux
 
 def calculate_image_zeroth_moment(currObs, currLens):
@@ -23,8 +25,8 @@ def calculate_image_zeroth_moment(currObs, currLens):
     for i in range(int(currLens['NIMG'][0])):
 #        print(currLens['MAG'])
         imageMag = currLens['MAG'][0][i]
-        print(pow(2.5, magnitude_zeropoint-imageMag))
-        imageFlux = imageFlux+ pow(2.5, magnitude_zeropoint-imageMag)
+        print(pow(2.5, desc.slrealizer.return_zeropoint()-imageMag))
+        imageFlux = imageFlux+ pow(2.5, desc.slrealizer.return_zeropoint()-imageMag)
     return imageFlux
 
 def return_image_first_moment(currObs, currLens):
@@ -37,7 +39,7 @@ def return_image_first_moment(currObs, currLens):
         #    imageMag = currLens[filterQuasar]                                                                
         #else:                                                                                               
         imageMag= currLens['MAG'][0][i]
-        imageFlux= imageFlux + pow(2.5, magnitude_zeropoint-imageMag)
+        imageFlux= imageFlux + pow(2.5, desc.slrealizer.return_zeropoint()-imageMag)
         # position * flux = moment                                                                             
         imageCurrXMoment = currLens['XIMG'][0][i] * imageFlux
         imageCurrYMoment = currLens['YIMG'][0][i] * imageFlux
@@ -61,7 +63,7 @@ def calculate_image_second_moment(currObs, currLens):
     imageFlux = 0
     for i in xrange(currLens['NIMG']):
         imageMag= currLens['MAG'][0][i]
-        imageFlux=imageFlux+ pow(2.5, magnitude_zeropoint-imageMag)
+        imageFlux=imageFlux+ pow(2.5, desc.slrealizer.return_zeropoint()-imageMag)
         imageCurrXMoment = currLens['XIMG'][0][i] * currLens['XIMG'][0][i] * imageFlux
         imageCurrYMoment = currLens['YIMG'][0][i] * currLens['YIMG'][0][i] * imageFlux
         imageXMoment += imageCurrXMoment
@@ -137,30 +139,6 @@ def second_moment(currObs, currLens, convolved=False):
     
     return xMoment, yMoment    
 
-#return xSecondMoment, ySecondMoment
-"""
-def covariance_matrix(currObs, currLens, convolved=False):
-    x_minus_mu_array = []
-    y_minus_mu_array = []
-    flux = zeroth_moment(currObs, currLens)
-    x_first_moment, y_first_moment = first_moment(currObs, currLens)
-    x_mu, y_mu = x_first_moment/flux, y_first_moment/flux
-    lens_flux = calculate_lens_zeroth_moment(currObs, currLens)
-    x_minus_mu_array.append(-x_mu*lens_flux)
-    y_minus_mu_array.append(-y_mu*lens_flux)
-    for i in xrange(currLens['NIMG']):
-        imageMag= currLens['MAG'][0][i]
-        imageFlux= pow(2.5, magnitude_zeropoint-imageMag)
-        x_minus_mu_array.append((currLens['XIMG'][0][i]-x_mu) * imageFlux)
-        y_minus_mu_array.append((currLens['YIMG'][0][i]-y_mu) * imageFlux)
-    data_minus_mu = np.squeeze(np.asarray([x_minus_mu_array, y_minus_mu_array]))
-    print(data_minus_mu)
-#    print(data_minus_mu.shape)
-    covariance_matrices = np.matmul(np.transpose(data_minus_mu), data_minus_mu)
-    print(covariance_matrices)
-    return covariance_matrices
-"""
-
 def covariance_matrix(currObs, currLens, convolved=False):
     flux = zeroth_moment(currObs, currLens)
     x_first_moment, y_first_moment = first_moment(currObs, currLens)
@@ -173,7 +151,7 @@ def covariance_matrix(currObs, currLens, convolved=False):
     #y_minus_mu_array.append(-y_mu*lens_flux)
     for i in xrange(currLens['NIMG']):
         imageMag= currLens['MAG'][0][i]
-        imageFlux= pow(2.5, magnitude_zeropoint-imageMag)
+        imageFlux= pow(2.5, desc.slrealizer.return_zeropoint()-imageMag)
         image_array = [(currLens['XIMG'][0][i]-x_mu), (currLens['YIMG'][0][i]-y_mu)]
         data_minus_mu = data_minus_mu + (np.matmul(np.asarray(image_array), np.transpose(np.asarray(image_array))) * imageFlux)
 
@@ -183,3 +161,5 @@ def covariance_matrix(currObs, currLens, convolved=False):
     print(covariance_matrices)
     return covariance_matrices
 
+def return_zeropoint():
+    return 10
