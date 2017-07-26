@@ -1,7 +1,7 @@
 # ======================================================================
 from __future__ import print_function
 from scipy.stats import multivariate_normal
-import plotting
+#import plotting
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter, MaxNLocator
