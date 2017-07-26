@@ -40,12 +40,15 @@ class SLRealizer(object):
         return
 
     # For now set all to true so that we can debug easily
-    def deblend(self, lensID=None, null_deblend=True, debug=True, show_plot=True, report_distance=True):
+    def deblend(self, lensID=None, null_deblend=True, debug=False, show_plot=True, version=None, report_distance=True):
         if lensID is None:
             print('No lens system selected for calculating the statistics')
             return
         if null_deblend is False:
             print('Sorry, working deblender is currently not being supported.')
+            return
+        if version is None:
+            print('Select either 1 or 2')
             return
         import random
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
@@ -53,20 +56,17 @@ class SLRealizer(object):
         while filter == 'y':
             randomIndex = random.randint(0, 200)
             filter = self.observation[randomIndex][1]
-            # Now visualize the lens system at the epoch defined by the randomIndex: 
         image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID), debug)
-        moment_matrix = skimage.measure.moments(image2)
-        print(skimage.measure.moments(image2),'hello')
-        desc.slrealizer.please_work(image2)
-        if show_plot:
-            print('#####################BEFORE DEBLEND PLOT LENSES##################################')
-            desc.slrealizer.show_color_map(image2)
-        if null_deblend:
-            image1 = desc.slrealizer.null_deblending(moment_matrix, image2, debug)
-        if show_plot:
-            print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
-            desc.slrealizer.show_color_map(image1)
+        print('#####################BEFORE DEBLEND PLOT LENSES##################################')
+        desc.slrealizer.show_color_map(image2)
+        if version is 1:
+            desc.slrealizer.please_work(image2)
+            image = desc.slrealizer.null_deblend_v1(image2)
+        if version is 2:
+            image = desc.slrealizer.null_deblend_v2(image2)
+        print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
+        desc.slrealizer.show_color_map(image)
         if report_distance:
             print('###############################################################################')
-            print('Chi squared distance is : ', desc.slrealizer.chi_square_distance(image1, image2))
-            print('KL distance is : ', desc.slrealizer.KL_distance(image1, image2))
+            print('Chi squared distance is : ', desc.slrealizer.chi_square_distance(image, image2))
+            print('KL distance is : ', desc.slrealizer.KL_distance(image, image2))

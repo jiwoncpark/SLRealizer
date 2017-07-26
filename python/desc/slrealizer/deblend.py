@@ -61,36 +61,6 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
         image = plot_all_objects(currObs, currLens, debug)
         blend_all_objects(currObs, currLens, debug, image)
 
-def null_deblending(moment_matrix, image2, debug):
-    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
-    pos = np.dstack((x, y))
-    print('moment_matrix: ', moment_matrix)
-    zeroth_moment = moment_matrix[0][0]
-    first_moment_x = moment_matrix[1][0] / zeroth_moment
-    first_moment_y = moment_matrix[0][1] / zeroth_moment
-    covariance_matrix = [[moment_matrix[2][0], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[0][2]]]
-    covariance_matrix /= zeroth_moment**2
-#    covariance_matrix = covariance_matrix/(zeroth_moment**2)
-    print(zeroth_moment, first_moment_x, first_moment_y, covariance_matrix)
-
-    ## TESTING
-    zeroth_moment = np.sum(image2)
-    first_moment_x = 0
-    first_moment_y = 0
-    print(zeroth_moment, 'sum of the image values')
-    _, _, covariance_matrix = intertial_axis(image2)
-    covariance_matrix = covariance_matrix
-    #covariance_matrix = [[0.5, 0], [0, 0.5]]
-    print(covariance_matrix, 'different covariance matrix')
-    rv = scipy.stats.multivariate_normal([first_moment_x,first_moment_y], covariance_matrix, allow_singular=True) #FIX BUG     
-    image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)*zeroth_moment
-    fig, ax = plt.subplots()
-    ax.imshow(image)
-    #plot_bars(xbar, ybar, cov, ax)
-    plt.show()
-    return image
-
 def plot_all_objects(currObs, currLens, debug):
     """
     Given a current observation epoch details and a lensed system, this method blends all the light sources, assuming the gaussian PSF. 
@@ -163,51 +133,3 @@ def show_source_position(sources, input_image):
 # my guess is : https://www.google.de/search?q=2d+gaussian+area&start=10&sa=N&tbm=isch&imgil=2DtvXl3-AibpvM%253A%253Bkgo2jfIP68y8RM%253Bhttps%25253A%25252F%25252Fstackoverflow.com%25252Fquestions%25252F13658799%25252Fplot-a-grid-of-gaussians-with-matlab&source=iu&pf=m&fir=2DtvXl3-AibpvM%253A%252Ckgo2jfIP68y8RM%252C_&usg=__RmeCJMcLu03ro5YjgKk9fGZ53U8%3D&biw=1183&bih=588&ved=0ahUKEwj6wur9yZTVAhXrhlQKHT54DXo4ChDKNwgz&ei=UuluWfrRLOuN0gK-8LXQBw#imgrc=Puj8GXmbAPS6nM: so amplitude is proportional to the flux...?
 
 #https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
-
-
-## copying stackexchange
-import numpy as np
-import matplotlib.pyplot as plt
-
-def please_work(data):
-    xbar, ybar, cov = intertial_axis(data)
-
-    fig, ax = plt.subplots()
-    ax.imshow(data)
-    plot_bars(xbar, ybar, cov, ax)
-    plt.show()
-
-def raw_moment(data, iord, jord):
-    nrows, ncols = data.shape
-    y, x = np.mgrid[:nrows, :ncols]
-    data = data * x**iord * y**jord
-    return data.sum()
-
-def intertial_axis(data):
-    """Calculate the x-mean, y-mean, and cov matrix of an image."""
-    data_sum = data.sum()
-    m10 = raw_moment(data, 1, 0)
-    m01 = raw_moment(data, 0, 1)
-    x_bar = m10 / data_sum
-    y_bar = m01 / data_sum
-    u11 = (raw_moment(data, 1, 1) - x_bar * m01) / data_sum
-    u20 = (raw_moment(data, 2, 0) - x_bar * m10) / data_sum
-    u02 = (raw_moment(data, 0, 2) - y_bar * m01) / data_sum
-    cov = np.array([[u20, u11], [u11, u02]])
-    return x_bar, y_bar, cov
-
-def plot_bars(x_bar, y_bar, cov, ax):
-    """Plot bars with a length of 2 stddev along the principal axes."""
-    def make_lines(eigvals, eigvecs, mean, i):
-        """Make lines a length of 2 stddev."""
-        std = np.sqrt(eigvals[i])
-        vec = 2 * std * eigvecs[:,i] / np.hypot(*eigvecs[:,i])
-        x, y = np.vstack((mean-vec, mean, mean+vec)).T
-        return x, y
-    print("This is the covariance I calculated: ", cov)
-    print("This is the eigenvalue I have", np.linalg.eigh(cov))
-    mean = np.array([x_bar, y_bar])
-    eigvals, eigvecs = np.linalg.eigh(cov)
-    ax.plot(*make_lines(eigvals, eigvecs, mean, 0), marker='o', color='white')
-    ax.plot(*make_lines(eigvals, eigvecs, mean, -1), marker='o', color='red')
-    ax.axis('image')
