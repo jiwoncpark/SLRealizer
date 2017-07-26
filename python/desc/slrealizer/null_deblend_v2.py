@@ -51,6 +51,6 @@ def null_deblend_v2(image2):
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + rv.pdf(pos)*zeroth_moment
     print('**************zeroth moment: ', zeroth_moment)
-    print('**************first moment: ', first_moment)
+    print('**************first moment: ', first_moment_x, first_moment_y)
     print('**************second moment: ', covariance_matrix)
     return image
