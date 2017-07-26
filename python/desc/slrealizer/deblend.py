@@ -61,15 +61,35 @@ def deblend_test(currObs, currLens, null_deblend = False, debug=False):
         image = plot_all_objects(currObs, currLens, debug)
         blend_all_objects(currObs, currLens, debug, image)
 
-def null_deblending(moment_matrix, debug):
+def null_deblending(moment_matrix, image2, debug):
+    x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
+    pos = np.dstack((x, y))
     print('moment_matrix: ', moment_matrix)
     zeroth_moment = moment_matrix[0][0]
     first_moment_x = moment_matrix[1][0] / zeroth_moment
     first_moment_y = moment_matrix[0][1] / zeroth_moment
     covariance_matrix = [[moment_matrix[2][0], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[0][2]]]
-    covariance_matrix = covariance_matrix/(zeroth_moment * zeroth_moment)
+    covariance_matrix /= zeroth_moment**2
+#    covariance_matrix = covariance_matrix/(zeroth_moment**2)
     print(zeroth_moment, first_moment_x, first_moment_y, covariance_matrix)
-    return 0
+
+    ## TESTING
+    zeroth_moment = np.sum(image2)
+    first_moment_x = 0
+    first_moment_y = 0
+    print(zeroth_moment, 'sum of the image values')
+    _, _, covariance_matrix = intertial_axis(image2)
+    covariance_matrix = covariance_matrix
+    #covariance_matrix = [[0.5, 0], [0, 0.5]]
+    print(covariance_matrix, 'different covariance matrix')
+    rv = scipy.stats.multivariate_normal([first_moment_x,first_moment_y], covariance_matrix, allow_singular=True) #FIX BUG     
+    image = [[0]*number_of_rows for _ in range(number_of_columns)]
+    image = image + rv.pdf(pos)*zeroth_moment
+    fig, ax = plt.subplots()
+    ax.imshow(image)
+    #plot_bars(xbar, ybar, cov, ax)
+    plt.show()
+    return image
 
 def plot_all_objects(currObs, currLens, debug):
     """
@@ -102,6 +122,7 @@ def plot_all_objects(currObs, currLens, debug):
         print(mag_ratio)
         print('PSF_sigma: ', PSF_sigma)
             #print ('Magnitude ratio is : ', mag_ratio)
+        print('currLensX: ', currLens['XIMG'][0][i], 'currLensY: ', currLens['YIMG'][0][i])
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
         image = image + rv.pdf(pos)*mag_ratio #scale
         print('multiplication factor : ', mag_ratio)

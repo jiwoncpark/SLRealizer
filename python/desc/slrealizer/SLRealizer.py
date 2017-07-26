@@ -57,12 +57,12 @@ class SLRealizer(object):
         image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID), debug)
         moment_matrix = skimage.measure.moments(image2)
         print(skimage.measure.moments(image2),'hello')
-#        desc.slrealizer.please_work(image2)
+        desc.slrealizer.please_work(image2)
         if show_plot:
             print('#####################BEFORE DEBLEND PLOT LENSES##################################')
-#            desc.slrealizer.show_color_map(image2)
+            desc.slrealizer.show_color_map(image2)
         if null_deblend:
-            image1 = desc.slrealizer.null_deblending(moment_matrix, debug)
+            image1 = desc.slrealizer.null_deblending(moment_matrix, image2, debug)
         if show_plot:
             print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
             desc.slrealizer.show_color_map(image1)

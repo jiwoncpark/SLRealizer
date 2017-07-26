@@ -162,4 +162,4 @@ def covariance_matrix(currObs, currLens, convolved=False):
     return covariance_matrices
 
 def return_zeropoint():
-    return 10
+    return 3
