@@ -23,7 +23,7 @@ from scipy import ndimage
 import skimage
 import skimage.measure
 from skimage.measure import moments
-from moment import covariance_matrix
+
 # ======================================================================                                  
 
 """                                                                                                    

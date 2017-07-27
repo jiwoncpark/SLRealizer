@@ -23,7 +23,7 @@ from scipy import ndimage
 import skimage
 import skimage.measure
 from skimage.measure import moments
-from moment import covariance_matrix
+
 # ======================================================================
 
 """
@@ -90,12 +90,12 @@ def plot_all_objects(currObs, currLens, debug):
             pass
         mag_ratio = math.pow(2.5, desc.slrealizer.return_zeropoint() -currLens['MAG'][0][i])
         print(mag_ratio)
-        print('PSF_sigma: ', PSF_sigma)
+#        print('PSF_sigma: ', PSF_sigma)
             #print ('Magnitude ratio is : ', mag_ratio)
-        print('currLensX: ', currLens['XIMG'][0][i], 'currLensY: ', currLens['YIMG'][0][i])
+#        print('currLensX: ', currLens['XIMG'][0][i], 'currLensY: ', currLens['YIMG'][0][i])
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #, [[PSF_HWHM*PSF_HWHM, 0], [0, PSF_HWHM*PSF_HWHM]])
         image = image + rv.pdf(pos)*mag_ratio #scale
-        print('multiplication factor : ', mag_ratio)
+#        print('multiplication factor : ', mag_ratio)
     return image
 
 def blend_all_objects(currObs, currLens, debug, input_image):

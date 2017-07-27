@@ -6,3 +6,4 @@ from testing import *
 from moment import *
 from null_deblend_v1 import *
 from null_deblend_v2 import *
+from null_deblend_v3 import *

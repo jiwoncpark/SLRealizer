@@ -64,6 +64,8 @@ class SLRealizer(object):
             image = desc.slrealizer.null_deblend_v1(image2)
         if version is 2:
             image = desc.slrealizer.null_deblend_v2(image2)
+        if version is 3:
+            image = desc.slrealizer.null_deblend_v3(image2)
         print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
         desc.slrealizer.show_color_map(image)
         if report_distance:
