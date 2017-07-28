@@ -45,11 +45,13 @@ def null_deblend_v2(image2):
     zeroth_moment = moment_matrix[0][0]
     first_moment_x = x_min + (moment_matrix[1][0] / zeroth_moment) * distance
     first_moment_y = y_min + (moment_matrix[0][1] / zeroth_moment) * distance
-    covariance_matrix = [[moment_matrix[2][0], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[0][2]]]
+    moment_matrix = skimage.measure.moments_central(image2, moment_matrix[1][0]/zeroth_moment, moment_matrix[0][1]/zeroth_moment)
+    covariance_matrix = [[moment_matrix[0][2], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[2][0]]]
     covariance_matrix /= (zeroth_moment) # dividing by 1 makes no sense
+    covariance_matrix /= 10000
     rv = scipy.stats.multivariate_normal([first_moment_x,first_moment_y], covariance_matrix, allow_singular=True) #FIX BUG     
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)*zeroth_moment
+    image = image + rv.pdf(pos)*zeroth_moment/10000
     print('**************zeroth moment: ', zeroth_moment)
     print('**************first moment: ', first_moment_x, first_moment_y)
     print('**************second moment: ', covariance_matrix)

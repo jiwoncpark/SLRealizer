@@ -52,7 +52,7 @@ distance = 0.01
 def null_deblend_v1(data):
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
-    xbar, ybar, covariance_matrix = intertial_axis(data)
+    xbar, ybar, covariance_matrix = inertial_axis(data)
     zeroth_moment = data.sum()
     first_moment_x = x_min + (xbar) * distance
     first_moment_y = y_min + (ybar) * distance
@@ -68,7 +68,7 @@ def null_deblend_v1(data):
 
 
 def please_work(data):
-    xbar, ybar, cov = intertial_axis(data)
+    xbar, ybar, cov = inertial_axis(data)
     fig, ax = plt.subplots()
     ax.imshow(data)
     plot_bars(xbar, ybar, cov, ax)
