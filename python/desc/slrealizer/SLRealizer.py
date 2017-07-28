@@ -39,6 +39,22 @@ class SLRealizer(object):
                                    convolve, debug)
         return
 
+    def make_catalog(self, lensID=None):
+        if lensID is None:
+            print 'No lens system selected for plotting.'
+            return
+        import random
+        # Keep randomly selecting epochs until we get one that is not in the 'y' filter:                   
+        filter = 'y'
+        while filter == 'y':
+            randomIndex = random.randint(0, 200)
+            filter = self.observation[randomIndex][1]
+            # Now visualize the lens system at the epoch defined by the randomIndex:           
+            desc.slrealizer.make_lens_catalog(self.observation[randomIndex],
+                                   self.catalog.get_lens(lensID))
+
+
+
     # For now set all to true so that we can debug easily
     def deblend(self, lensID=None, null_deblend=True, debug=False, show_plot=True, version=None, report_distance=True):
         if lensID is None:
@@ -63,7 +79,8 @@ class SLRealizer(object):
             desc.slrealizer.please_work(image2)
             image = desc.slrealizer.null_deblend_v1(image2)
         if version is 2:
-            image = desc.slrealizer.null_deblend_v2(image2)
+            flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend_v2(image2)
+            image = desc.slrealizer.null_deblend_plot_v2(flux, first_moment_x, first_moment_y, covariance_matrix)
         if version is 3:
             image = desc.slrealizer.null_deblend_v3(image2)
         print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
