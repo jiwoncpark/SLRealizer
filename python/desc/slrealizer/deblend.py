@@ -68,6 +68,7 @@ def plot_all_objects(currObs, currLens, debug):
     Then, that 2d array is passed to the deblending method to find the discrete sources.
     """
     #obsHist has MJD Filter FWHM 5sigmag
+    print('currObs: ', currObs)
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
     #galaxy_x, galaxy_y, PSF_HWHM = currLens['XSRC'][0], currLens['YSRC'][0], currObs[2]

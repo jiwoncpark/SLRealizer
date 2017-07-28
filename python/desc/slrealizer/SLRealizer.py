@@ -44,19 +44,19 @@ class SLRealizer(object):
         print('From OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         print(self.catalog)
-        df = pd.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky'])
+        df = pd.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
         for i in xrange(num_system):
-            randomIndex = random.randint(0, len(self.catalog.sample[0]))
-            lensID = self.catalog.sample[0]['LENSID']
+            randomIndex = random.randint(0, len(self.catalog.sample))
+            lensID = self.catalog.sample[randomIndex]['LENSID']
             filter = 'y'
             while filter == 'y':
                 randomIndex = random.randint(0, 200)
                 filter = self.observation[randomIndex][1]
-            data = desc.slrealizer.make_lens_catalog(self.catalog.get_lens(lensID), self.observation[randomIndex])
+            data = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
             df.loc[len(df)]= data
         if save:
             print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
-            df.to_csv('../../../data/catalog.csv')
+            df.to_csv('../../../data/catalog.csv', index=False)
 
     # For now set all to true so that we can debug easily
     def deblend(self, lensID=None, null_deblend=True, debug=False, show_plot=True, version=None, report_distance=True):
