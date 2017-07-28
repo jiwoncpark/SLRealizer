@@ -19,4 +19,4 @@ def second_moment(image):
     return scipy.stats.moment(image, moment=2, axis=None)
 
 def return_zeropoint():
-    return 0
+    return 23.5

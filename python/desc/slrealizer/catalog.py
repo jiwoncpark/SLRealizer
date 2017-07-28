@@ -8,6 +8,8 @@ def make_lens_catalog(curr_lens, curr_obs):
     df = pandas.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky'])
     df.loc[len(df)]= data
     print(df)
+    print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
+    df.to_csv('../../../data/catalog.csv')
     #df = pandas.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky'])
     #df.append(data)
 

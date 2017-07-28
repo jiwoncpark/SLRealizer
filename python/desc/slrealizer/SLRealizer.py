@@ -5,6 +5,8 @@ import pylab
 import matplotlib
 import math
 import skimage
+import random
+import om10
 
 class SLRealizer(object):
 
@@ -27,7 +29,6 @@ class SLRealizer(object):
         if lensID is None:
             print 'No lens system selected for plotting.'
             return
-        import random
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
         filter = 'y'
         while filter == 'y':
@@ -39,21 +40,23 @@ class SLRealizer(object):
                                    convolve, debug)
         return
 
-    def make_catalog(self, lensID=None):
-        if lensID is None:
-            print 'No lens system selected for plotting.'
-            return
-        import random
-        # Keep randomly selecting epochs until we get one that is not in the 'y' filter:                   
-        filter = 'y'
-        while filter == 'y':
-            randomIndex = random.randint(0, 200)
-            filter = self.observation[randomIndex][1]
-            # Now visualize the lens system at the epoch defined by the randomIndex:           
-            desc.slrealizer.make_lens_catalog(self.observation[randomIndex],
-                                   self.catalog.get_lens(lensID))
-
-
+    def make_catalog(self, num_system = 3, save = True):
+        print('From OM10 catalog, I am selecting LSST lenses')
+        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
+        print(self.catalog)
+        df = pd.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky'])
+        for i in xrange(num_system):
+            randomIndex = random.randint(0, len(self.catalog.sample[0]))
+            lensID = self.catalog.sample[0]['LENSID']
+            filter = 'y'
+            while filter == 'y':
+                randomIndex = random.randint(0, 200)
+                filter = self.observation[randomIndex][1]
+            data = desc.slrealizer.make_lens_catalog(self.catalog.get_lens(lensID), self.observation[randomIndex])
+            df.loc[len(df)]= data
+        if save:
+            print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
+            df.to_csv('../../../data/catalog.csv')
 
     # For now set all to true so that we can debug easily
     def deblend(self, lensID=None, null_deblend=True, debug=False, show_plot=True, version=None, report_distance=True):
@@ -66,7 +69,6 @@ class SLRealizer(object):
         if version is None:
             print('Select either 1 or 2')
             return
-        import random
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
         filter = 'y'
         while filter == 'y':

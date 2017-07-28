@@ -50,6 +50,7 @@ class TestCase(unittest.TestCase):
         return image
 
     def test_multivariate_v1(self):
+        """
         image = self.generate_gaussian()
         first_moment_x, first_moment_y, covariance_matric = desc.slrealizer.inertial_axis(image)
         print('Zeroth moment: ', image.sum())
@@ -60,6 +61,8 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(distance*first_moment_x, x_com, places=5)
         self.assertAlmostEqual(distance*first_moment_y, y_com, places=5)
         self.assertAlmostEqual(covariance_matric[1][1], covariance_matrix[0][0], places=5)
+        """
+        # not using this anymore
         return
 
     def test_multivariate_v2(self):
