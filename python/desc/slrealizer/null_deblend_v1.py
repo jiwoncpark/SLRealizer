@@ -80,7 +80,7 @@ def raw_moment(data, iord, jord):
     data = data * x**iord * y**jord
     return data.sum()
 
-def intertial_axis(data):
+def inertial_axis(data):
     """Calculate the x-mean, y-mean, and cov matrix of an image."""
     data_sum = data.sum()
     m10 = raw_moment(data, 1, 0)
