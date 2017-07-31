@@ -1,3 +1,5 @@
+#=====================================================
+
 import desc.slrealizer
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,15 +10,14 @@ import skimage
 import random
 import om10
 
-class SLRealizer(object):
+#=====================================================
 
-    # Maybe make a separate method for it
-    # Best OOP practice?
+class SLRealizer(object):
 
     def __init__(self, catalog=None, observation="../../data/twinkles_observation_history.csv"):
         """
-            Reads in a lens sample catalog and observation data.
-            We assume lenses are OM10 lenses and observation file is .csv file
+        Reads in a lens sample catalog and observation data.
+        We assume lenses are OM10 lenses and observation file is .csv file
         """
         self.catalog = catalog
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
@@ -41,14 +42,26 @@ class SLRealizer(object):
         return
 
     def make_catalog(self, num_system = 3, save = True):
+        """
+        Selects the lensed system just as the real LSST will do, and generates a toy catalog
+
+        Parameters
+        ----------
+        num_system: int
+        Number of systems that the user will request
+
+        save: bool
+        If true, the catalog will be saved in the data folder.
+        """
+
         print('From OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
-        print(self.catalog)
         df = pd.DataFrame(columns=['MJD', 'filter', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
         for i in xrange(num_system):
             randomIndex = random.randint(0, len(self.catalog.sample))
             lensID = self.catalog.sample[randomIndex]['LENSID']
             filter = 'y'
+            #  Keep randomly selecting epochs until we get one that is not in the 'y' filter:
             while filter == 'y':
                 randomIndex = random.randint(0, 200)
                 filter = self.observation[randomIndex][1]
@@ -58,36 +71,34 @@ class SLRealizer(object):
             print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
             df.to_csv('../../../data/catalog.csv', index=False)
 
-    # For now set all to true so that we can debug easily
-    def deblend(self, lensID=None, null_deblend=True, debug=False, show_plot=True, version=None, report_distance=True):
+    def deblend(self, lensID=None, null_deblend=True):
+        """
+        Given a lens system, this method deblends the source and plots the process of deblending.
+
+        Parameters
+        ---------
+        lensID : int
+        OM10 lens ID which can be used to identify the lensed system
+        
+        null_deblend : bool
+        If true, assumes null deblender. Working deblender is currently not being supported
+        """
+
         if lensID is None:
             print('No lens system selected for calculating the statistics')
             return
         if null_deblend is False:
-            print('Sorry, working deblender is currently not being supported.')
-            return
-        if version is None:
-            print('Select either 1 or 2')
+            print('Sorry, working deblender is not being supported.')
             return
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
         filter = 'y'
         while filter == 'y':
             randomIndex = random.randint(0, 200)
             filter = self.observation[randomIndex][1]
-        image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID), debug)
-        print('#####################BEFORE DEBLEND PLOT LENSES##################################')
+        image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID))
+        print('##################### PLOTTING ALL SOURCES ##################################')
         desc.slrealizer.show_color_map(image2)
-        if version is 1:
-            desc.slrealizer.please_work(image2)
-            image = desc.slrealizer.null_deblend_v1(image2)
-        if version is 2:
-            flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend_v2(image2)
-            image = desc.slrealizer.null_deblend_plot_v2(flux, first_moment_x, first_moment_y, covariance_matrix)
-        if version is 3:
-            image = desc.slrealizer.null_deblend_v3(image2)
-        print('#####################PRINTING NULL DEBLENDER\'S PLOT###############################')
+        flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend(image2)
+        image = desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
+        print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
-        if report_distance:
-            print('###############################################################################')
-            print('Chi squared distance is : ', desc.slrealizer.chi_square_distance(image, image2))
-            print('KL distance is : ', desc.slrealizer.KL_distance(image, image2))
