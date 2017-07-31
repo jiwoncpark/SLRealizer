@@ -65,6 +65,8 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[0][1], places=3)
         return
 
+    def 
+
 # ======================================================================
 
 if __name__ == '__main__':
