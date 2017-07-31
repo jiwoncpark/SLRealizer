@@ -6,6 +6,11 @@ import desc.slrealizer
 
 #==============================================
 
+"""
+This file contains methods that help generate the toy catalog for the SLRealizer.
+"""
+
+
 def generate_data(curr_lens, curr_obs):    
     """
     Given the current observation detail and current lensed system, generate a mock catalog.

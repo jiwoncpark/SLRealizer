@@ -14,6 +14,12 @@ import om10
 
 class SLRealizer(object):
 
+    """
+    Contains the constructor and the key methods for SLRealizer module.
+    Constructor reads in an OM10 catalog and observation history.
+    Generates the toy catalog, plots the lensed system, and deblends sources using OM10 catalog and observation history.
+    """
+
     def __init__(self, catalog=None, observation="../../data/twinkles_observation_history.csv"):
         """
         Reads in a lens sample catalog and observation data.

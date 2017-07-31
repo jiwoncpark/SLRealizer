@@ -37,6 +37,12 @@ number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
 #=======================================================================
 
+"""
+The methods in this file will be called by `deblend.py`. 
+This file contains methods that will emulate the null-deblender.
+Right now, the working deblender is not being supported -- we only support null deblender.
+"""
+
 def null_deblend(image2):
     """
     Given a 2d input array, this method generates an output as null deblender would do.

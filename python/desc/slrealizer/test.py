@@ -1,6 +1,6 @@
 # ======================================================================
 import os, unittest
-import null_deblend_v2
+#import null_deblend
 import numpy as np
 import scipy
 import skimage
@@ -36,7 +36,7 @@ class TestCase(unittest.TestCase):
         image = self.setUp()
         global x_com, y_com
         global covariance_matrix
-        x_com, y_com = 4, 6
+        x_com, y_com = 4.0, 6.0
         covariance_matrix = [[0.8, 0.4], [0.4, 0.6]]
         center_of_mass = [x_com, y_com]
         rv = scipy.stats.multivariate_normal([4, 6], covariance_matrix)
@@ -57,12 +57,12 @@ class TestCase(unittest.TestCase):
         covariance_matric /= zeroth_moment
         covariance_matric /= 10000
         print('Covariance matrix is: ', covariance_matric)
-        self.assertAlmostEqual(distance*first_moment_x, x_com, places=5)
-        self.assertAlmostEqual(distance*first_moment_y, y_com, places=5)
-        self.assertAlmostEqual(covariance_matric[1][1], covariance_matrix[0][0], places=5)
-        self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[1][0], places=5)
-        self.assertAlmostEqual(covariance_matric[0][0], covariance_matrix[1][1], places=5)
-        self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[0][1], places=5)
+        self.assertAlmostEqual(distance*first_moment_x, x_com, places=3)
+        self.assertAlmostEqual(distance*first_moment_y, y_com, places=3)
+        self.assertAlmostEqual(covariance_matric[1][1], covariance_matrix[0][0], places=3)
+        self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[1][0], places=3)
+        self.assertAlmostEqual(covariance_matric[0][0], covariance_matrix[1][1], places=3)
+        self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[0][1], places=3)
         return
 
 # ======================================================================

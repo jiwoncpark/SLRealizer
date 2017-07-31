@@ -25,12 +25,6 @@ from skimage.measure import moments
 
 # ======================================================================
 
-"""
-Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.
-Assumes null deblender where all the sources are assumed to be observed as single objects.
-All the sources are assumed to have Gaussian PSFs.
-"""
-
 #global variable that controls the size of the plot#
 x_min = -5.0
 x_max = 5.0
@@ -40,10 +34,14 @@ distance = 0.01
 
 number_of_rows = int((x_max - x_min)/distance)
 number_of_columns = int((y_max - y_min)/distance)
-####################################################
+# =========================================================================
 
+"""                                                                                                                                                                             
+Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.                                                                                   
+Assumes null deblender where all the sources are assumed to be observed as single objects.                                                                                        All the sources are assumed to have Gaussian PSFs.                                                                                                                               
+"""
 
-def deblend_test(currObs, currLens, null_deblend = True):
+def deblend_test(currObs, currLens, null_deblend=True):
     """
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
@@ -68,7 +66,7 @@ def plot_all_objects(currObs, currLens):
     galaxy_x, galaxy_y, PSF_sigma = 0, 0, currObs[2]
     x, y = np.mgrid[x_min:x_max:distance, y_min:y_max:distance]
     pos = np.dstack((x, y))
-    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True) #FIX BUG
+    rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True)
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + rv.pdf(pos)*math.pow(2.5, desc.slrealizer.return_zeropoint() - currLens[filterLens])
     # iterate for the lens
@@ -80,7 +78,7 @@ def plot_all_objects(currObs, currLens):
 
 
 """
-From here, we can use the code when we are implementing working deblender, but right now, it is not being used.
+We can use the code when we are implementing working deblender, but right now, it is not being used.
 def blend_all_objects(currObs, currLens, debug, input_image):
     if debug:
         show_color_map(input_image)

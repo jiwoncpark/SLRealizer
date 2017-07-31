@@ -7,6 +7,11 @@ import scipy.stats
 
 #=========================================
 
+"""
+This file can be used to calculate the statistical distances between two images (to be exact, two images arrays)
+"""
+
+
 def chi_square_distance(image1, image2):
     """
     Given two images, calculate the chi square and its p value between the two.
