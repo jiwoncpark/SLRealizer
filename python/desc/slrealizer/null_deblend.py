@@ -65,3 +65,4 @@ def null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix):
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
     image = image + rv.pdf(pos)*flux
     return image
+    
