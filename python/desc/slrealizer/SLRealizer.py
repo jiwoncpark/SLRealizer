@@ -60,9 +60,9 @@ class SLRealizer(object):
         If true, the catalog will be saved in the data folder.
         """
 
-        print('From OM10 catalog, I am selecting LSST lenses')
+        print('From the OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'DEC', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
         for i in xrange(num_system):
             randomIndex = random.randint(0, len(self.catalog.sample))
             lensID = self.catalog.sample[randomIndex]['LENSID']
