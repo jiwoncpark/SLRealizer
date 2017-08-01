@@ -8,7 +8,7 @@ def return_zeropoint():
     """
     returns zeropoint for the SDSS magnitude system
     """
-    return 23.5
+    return 22.5
 
 def return_obs_RA_DEC():
     """
