@@ -108,3 +108,5 @@ class SLRealizer(object):
         image = desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
+        print('##################### DIFFERENCE BETWEEN TWO IMAGES ##################################')
+        desc.slrealizer.show_color_map(image2-image)

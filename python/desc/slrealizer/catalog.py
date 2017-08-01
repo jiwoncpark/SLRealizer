@@ -57,10 +57,14 @@ def return_coordinate(first_moment_x, first_moment_y):
     real_coordinate = desc.slrealizer.return_obs_RA_DEC()
     RA = real_coordinate.ra.deg
     DEC = real_coordinate.dec.deg
-    # copied from OM10
-    # make sure first_moment_x is com
-    RA += first_moment_x/np.cos(DEC)
+    # add the offset by the first moment
+    RA += first_moment_x/(3600*np.cos(DEC))
     DEC += first_moment_y/3600
+    # draw random number to set position in the FOV
+    RA += np.random.uniform(-1.75, 1.75)
+    DEC += np.random.uniform(-1.75, 1.75)
+    pos_err = 0.0 # unit : degree                                                                                                                              
+    pos_err_std = Fraction(1, 3) # Assuming that the three sigma is one degree, one sigma is 0.3333 degree       
     RA_err = noissify_data(pos_err, pos_err_std)
     DEC_err = noissify_data(pos_err, pos_err_std)
     return RA, RA_err, DEC, DEC_err
