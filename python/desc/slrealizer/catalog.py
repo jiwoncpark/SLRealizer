@@ -24,6 +24,8 @@ def generate_data(curr_lens, curr_obs):
     flux_err_std = 0.005
     second_moment_err = 0.05 # unit : percentage
     second_moment_err_std = 0.01
+    pos_err = 0.0 # unit : degree
+    pos_err_std = Fraction(1, 3) # Assuming that the three sigma is one degree, one sigma is 0.3333 degree 
     ###
 
     processed_image = desc.slrealizer.plot_all_objects(curr_obs, curr_lens)
@@ -59,7 +61,6 @@ def return_coordinate(first_moment_x, first_moment_y):
     # make sure first_moment_x is com
     RA += first_moment_x/np.cos(DEC)
     DEC += first_moment_y/3600
-    # three sigma is one degree. One sigma is 0.3333 degree
-    RA_err = noissify_data(0.0, Fraction(1, 3))
-    DEC_err = noissify_data(0.0, Fraction(1, 3))
+    RA_err = noissify_data(pos_err, pos_err_std)
+    DEC_err = noissify_data(pos_err, pos_err_std)
     return RA, RA_err, DEC, DEC_err
