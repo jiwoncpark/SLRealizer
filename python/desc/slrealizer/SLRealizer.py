@@ -108,3 +108,6 @@ class SLRealizer(object):
         image = desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
+
+    def generate_cornerplot(self, catalog='../../../data/catalog.csv'):
+        print 'generating cornerplot'
