@@ -9,6 +9,7 @@ import math
 import skimage
 import random
 import om10
+import pandas
 
 #=====================================================
 
@@ -109,5 +110,36 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, catalog='../../../data/catalog.csv'):
+    def generate_cornerplot(self, catalog='../../../data/catalog.csv', parameters=None):
+        df = pandas.read_csv(catalog)
+        if parameters is None:
+            'default plot prints 2nd moments'
+            name = ('2NDMOM_U', '2NDMOM_G', '2NDMOM_R', '2NDMOM_I', '2NDMOM_Z', '2NDMOM_Y')
+        features, labels = desc.slrealizer.extract_features(df, parameters)
         print 'generating cornerplot'
+        fig = corner.corner(features, labels=labels, color=color, smooth=1.0)
+        if saveImg:
+            pngfile = "catalog_cornerplot.png"
+            pylab.savefig(pngfile)
+            print "SLRealizer: Sample plot saved to file:", pngfile
+        return fig
+
+    def make_catalog_for_corner(self):
+
+        print('From the OM10 catalog, I am selecting LSST lenses')
+        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
+        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        # choose five different epochs
+        for i in xrange(num_system):
+            randomIndex = random.randint(0, len(self.catalog.sample))
+            lensID = self.catalog.sample[randomIndex]['LENSID']
+            filter = 'y'
+            #  Keep randomly selecting epochs until we get one that is not in the 'y' filter:                                                   
+            while filter == 'y':
+                randomIndex = random.randint(0, 200)
+                filter = self.observation[randomIndex][1]
+            data = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
+            df.loc[len(df)]= data
+        if save:
+            print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
+            df.to_csv('../../../data/catalog.csv', index=False)

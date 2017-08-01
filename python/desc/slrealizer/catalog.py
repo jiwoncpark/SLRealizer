@@ -61,6 +61,10 @@ def return_coordinate(first_moment_x, first_moment_y):
     # make sure first_moment_x is com
     RA += first_moment_x/np.cos(DEC)
     DEC += first_moment_y/3600
+    #===========================
+    pos_err = 0.0 # unit : degree                                                                                                             
+    pos_err_std = Fraction(1, 3)
+    #===========================
     RA_err = noissify_data(pos_err, pos_err_std)
     DEC_err = noissify_data(pos_err, pos_err_std)
     return RA, RA_err, DEC, DEC_err

@@ -52,15 +52,12 @@ def plot_sample(sample, saveImg=False, fig=None, color='black',
 
 # ======================================================================
 
-def extract_features(x, names):
+def extract_features(df, names):
     """
-    Given an OM10 table of lenses, extract the required parameters and
-    provide labels for them.
 
     Parameters
     ----------
-    x : Table
-        OM10 lens sample.
+    df : csv toy catalog
     names : str, tuple
         Names of features required.
 
@@ -76,10 +73,10 @@ def extract_features(x, names):
     labels = []
 
     p = len(names)
-    n = len(x)
+    n = len(df)
 
     for name in names:
-        features = np.append(features, x[name])
+        features = np.append(features, df[name])
         labels.append(axis_labels[name])
 
     return features.reshape(p,n).transpose(), labels
