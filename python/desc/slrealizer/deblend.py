@@ -41,7 +41,7 @@ Given a specific date and the OM10 catalog, this deblends the sources that are o
 Assumes null deblender where all the sources are assumed to be observed as single objects.                                                                                        All the sources are assumed to have Gaussian PSFs.                                                                                                                               
 """
 
-def deblend_test(currObs, currLens, null_deblend=True):
+def deblend(currObs, currLens, null_deblend=True):
     """
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.

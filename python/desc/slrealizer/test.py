@@ -1,9 +1,9 @@
 # ======================================================================
 import os, unittest
-#import null_deblend
 import numpy as np
 import scipy
 import skimage
+import desc.slrealizer
 
 # ======================================================================
 
@@ -72,6 +72,11 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(covariance_matric[1][0], covariance_matrix[0][1], places=3)
         return
 
+    def test_null_deblend(self):
+        image = self.generate_gaussian()
+        flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend(image)
+        returned_image=desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
+        self.assertEqual(image.all(), returned_image.all())
 # ======================================================================
 
 if __name__ == '__main__':
