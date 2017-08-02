@@ -1,5 +1,5 @@
 #=====================================================
-
+import numpy as np
 import desc.slrealizer
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,7 +10,8 @@ import skimage
 import random
 import om10
 import pandas
-
+import corner
+#from corner import corner
 #=====================================================
 
 class SLRealizer(object):
@@ -28,6 +29,8 @@ class SLRealizer(object):
         """
         self.catalog = catalog
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
+        print(type(self.observation))
+        print(self.observation)
 
     def plot_lens_random_date(self, lensID=None, debug=False, convolve=False):
         """
@@ -110,36 +113,58 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, catalog='../../../data/catalog.csv', parameters=None):
-        df = pandas.read_csv(catalog)
-        if parameters is None:
-            'default plot prints 2nd moments'
-            name = ('2NDMOM_U', '2NDMOM_G', '2NDMOM_R', '2NDMOM_I', '2NDMOM_Z', '2NDMOM_Y')
-        features, labels = desc.slrealizer.extract_features(df, parameters)
-        print 'generating cornerplot'
-        fig = corner.corner(features, labels=labels, color=color, smooth=1.0)
-        if saveImg:
-            pngfile = "catalog_cornerplot.png"
-            pylab.savefig(pngfile)
-            print "SLRealizer: Sample plot saved to file:", pngfile
+    def generate_cornerplot(self):
+        df_g = pandas.read_csv('../../../data/catalog_g.csv')
+        qxx_g = df_g['qxx'].as_matrix()
+        df_z = pandas.read_csv('../../../data/catalog_z.csv')
+        qxx_z = df_z['qxx'].as_matrix()
+        df_r = pandas.read_csv('../../../data/catalog_r.csv')
+        qxx_r = df_r['qxx'].as_matrix()
+        df_u = pandas.read_csv('../../../data/catalog_u.csv')
+        qxx_u = df_u['qxx'].as_matrix()
+        df_i = pandas.read_csv('../../../data/catalog_i.csv')
+        qxx_i = df_i['qxx'].as_matrix()
+        names = ('qxx_g', 'qxx_z', 'qxx_r', 'qxx_u', 'qxx_i')
+        features = np.array([qxx_g, qxx_z, qxx_r, qxx_u, qxx_i])
+        label = []
+        for name in names:
+            label.append(axis_labels[name])
+        n = len(df_g)
+        p = len(names)
+        #reload(corner)
+        #features=features.reshape(p, n).transpose()
+        #corner.corner()
+        fig = corner.corner(features.reshape(p, n).transpose(), labels=label, color='black', smooth=1.0)
         return fig
 
-    def make_catalog_for_corner(self):
 
+    def make_catalog(self, observation):
+        """
+        Generates a full catalog(for each filter) of 200 lensed system and save it 
+        """
         print('From the OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df_g = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df_z = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df_r = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df_u = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        df_i = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
+        total_df = [df_g, df_z, df_r, df_u, df_i]
+#        print total_df
         # choose five different epochs
-        for i in xrange(num_system):
-            randomIndex = random.randint(0, len(self.catalog.sample))
-            lensID = self.catalog.sample[randomIndex]['LENSID']
-            filter = 'y'
-            #  Keep randomly selecting epochs until we get one that is not in the 'y' filter:                                                   
-            while filter == 'y':
-                randomIndex = random.randint(0, 200)
-                filter = self.observation[randomIndex][1]
-            data = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
-            df.loc[len(df)]= data
-        if save:
-            print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
-            df.to_csv('../../../data/catalog.csv', index=False)
+        # print(len(self.catalog.sample))
+        for i in xrange(200): # we will use first 200
+            for (currObs, df) in zip(observation, total_df):
+                data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), currObs)
+                df.loc[len(df)]= data
+        for (df, filter) in zip(total_df, ['g', 'z', 'r', 'u', 'i']):
+            df.to_csv('../../../data/catalog_'+filter+'.csv', index=False)        
+
+# ======================================================================
+
+axis_labels = {}
+axis_labels['qxx_g'] = '$qxx_g$'
+axis_labels['qxx_z'] = '$qxx_z$'
+axis_labels['qxx_r'] = '$qxx_r$'
+axis_labels['qxx_u'] = '$qxx_u$'
+axis_labels['qxx_i'] = '$qxx_i$'
