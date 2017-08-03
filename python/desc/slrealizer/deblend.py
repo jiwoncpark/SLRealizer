@@ -60,7 +60,6 @@ def plot_all_objects(currObs, currLens):
     The blending is done by generating a 2d-gaussian and adding the values to the 2d array.
     Then, that 2d array is passed to the deblending method to find the discrete sources.
     """
-
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
     galaxy_x, galaxy_y, PSF_sigma = 0, 0, currObs[2]

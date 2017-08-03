@@ -53,6 +53,7 @@ def null_deblend(image2):
     zeroth_moment = moment_matrix[0][0]
     first_moment_x = x_min + (moment_matrix[0][1] / zeroth_moment) * distance
     first_moment_y = y_min + (moment_matrix[1][0] / zeroth_moment) * distance
+    # another comment
     moment_matrix = skimage.measure.moments_central(image2, moment_matrix[1][0]/zeroth_moment, moment_matrix[0][1]/zeroth_moment)
     covariance_matrix = [[moment_matrix[0][2], moment_matrix[1][1]], [moment_matrix[1][1], moment_matrix[2][0]]]
     covariance_matrix /= (zeroth_moment)
