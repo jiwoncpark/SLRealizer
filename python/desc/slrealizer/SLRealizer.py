@@ -8,7 +8,6 @@ import matplotlib
 import math
 import skimage
 import random
-import om10
 import pandas
 import corner
 #from corner import corner
@@ -65,11 +64,11 @@ class SLRealizer(object):
         """
 
         print('From the OM10 catalog, I am selecting LSST lenses')
-        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
+        self.catalog.select_random(maglim=21.3,area=20000.0,IQ=0.75)
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
-        for i in xrange(num_system):
-            randomIndex = random.randint(0, len(self.catalog.sample))
-            lensID = self.catalog.sample[randomIndex]['LENSID']
+        for i in xrange(len(self.catalog)): # for all lenses
+            lensID = self.catalog.sample[i]['LENSID']
+            print('length is:', len(self.catalog))
             filter = 'y'
             #  Keep randomly selecting epochs until we get one that is not in the 'y' filter:
             while filter == 'y':

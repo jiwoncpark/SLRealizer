@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 import skimage
 import desc.slrealizer
+import pandas
 
 # ======================================================================
 
@@ -77,6 +78,11 @@ class TestCase(unittest.TestCase):
         flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend(image)
         returned_image=desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
         self.assertEqual(image.all(), returned_image.all())
+
+    def test_catalog(self):
+        df = pandas.read_csv('../../../data/catalog_u.csv')
+        flux_err_array = df['flux_err']
+        self.assertEqual(all(x==flux_err_array[0] for x in flux_err_array), True)
 # ======================================================================
 
 if __name__ == '__main__':

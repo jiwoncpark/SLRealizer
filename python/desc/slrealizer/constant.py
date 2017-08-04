@@ -15,3 +15,21 @@ def return_obs_RA_DEC():
     Return OM10's lensed system's position
     """
     return SkyCoord('03h 32m 30s', '10d 00m 24s')
+
+def get_flux_err():
+    return 0.01 # unit : percentage
+
+def get_flux_err_std():
+    return 0.005 # unit : percentage
+
+def get_first_moment_err():
+    return 0.01 # unit : percentage
+
+def get_first_moment_err_std():
+    return 0.005
+
+def get_second_moment_err():
+    return 0.05
+
+def get_second_moment_err_std():
+    return 0.01
