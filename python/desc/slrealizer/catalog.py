@@ -78,41 +78,4 @@ def return_coordinate(first_moment_x, first_moment_y):
 def return_mean_properties(lens_array):
     return lens_array['flux'].mean(), lens_array['x'].mean(), lens_array['y'].mean(), lens_array['qxx'].mean(), lens_array['qxy'].mean(), lens_array['qyy'].mean(), lens_array['flux_err'].mean(), lens_array['x_com_err'].mean(), lens_array['y_com_err'].mean(), lens_array['qxx_err'].mean(), lens_array['qxy_err'].mean(), lens_array['qyy_err'].mean()
 
-def extract_features(df, names):
-    """
-    Parameters
-    ----------
-    df : csv toy catalog
-    names : str, tuple
-        Names of features required.
-    Returns
-    -------
-    features : float, ndarray
-        Values of requested features, for each lens in the Table
-    labels : str, list
-        Corresponding axis labels
-    """
 
-    features = np.array([])
-    labels = []
-
-    p = len(names)
-    n = len(df)
-
-    for name in names:
-        features = np.append(features, df[name])
-        labels.append(axis_labels[name])
-
-    return features.reshape(p,n).transpose(), labels
-
-axis_labels = {}
-axis_labels['g_flux'] = '$g$'
-axis_labels['z_flux'] = '$z$'
-axis_labels['r_flux'] = '$r$'
-axis_labels['u_flux'] = '$u$'
-axis_labels['i_flux'] = '$i$'
-axis_labels['g_x'] = '$g_x$'
-axis_labels['z_x'] = '$z_x$'
-axis_labels['r_x'] = '$r_x$'
-axis_labels['u_x'] = '$u_x$'
-axis_labels['i_x'] = '$i_x$'

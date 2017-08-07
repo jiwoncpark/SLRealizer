@@ -10,6 +10,7 @@ import skimage
 import random
 import pandas
 import corner
+import plot_corner
 #from corner import corner
 #=====================================================
 
@@ -111,13 +112,40 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', source_table_dir = '../../../data/object_catalog.csv', params = ('g_flux', 'z_flux', 'r_flux', 'u_flux', 'i_flux')):
+    def generate_cornerplot(self, color='black', source_table_dir = '../../../data/source_table.csv', option = None, params = None):
+        """
+        Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
+
+        Parameters
+        ----------
+        option : string
+        Choose from size, position, color, ellipticity, and magnitude. The cornerplot will show the attribute that the user selected.
+        If None, the user should specify the parameters(column names) in the source table.
+
+        params : tuples of strings
+        Names of columns in source_table that the user wants to see in the cornerplot.
+        Only works when option is not specified.
+
+        Returns cornerplot (matplotlib.pyplot)
+        """
+
+        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude']
         source_table = pd.read_csv(source_table_dir)
-        data, label = desc.slrealizer.extract_features(source_table, params)
-        print data
+        if ((option is None) and (params is None)):
+            print('either specify params or option. You can choose among :')
+            print(options)
+            print('or specify columns in the source table that you want to see in the cornerplot.')
+            return
+        elif option not in options:
+            print(option, ' is not supported')
+            return
+        elif option is not None:
+            method_name = 'calculate_'+option
+            data, label = getattr(plot_corner, method_name)(source_table)
+        else:
+            data, label = desc.slrealizer.extract_features(source_table, params)
         fig = corner.corner(data, labels=label, color=color, smooth=1.0)
         return fig
-
 
     def make_source_catalog(self, dir='../../../data/catalog.csv'):
         """
@@ -135,7 +163,7 @@ class SLRealizer(object):
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
 
-    def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/source_table.csv'):
+    def make_object_catalog(self, source_table_dir='../../../data/catalog.csv', save_dir='../../../data/object_table.csv'):
         print('Reading in the catalog')
         df = pandas.read_csv(source_table_dir)
         # select all rows with the index label "arizona" df.loc[:'Arizona']
@@ -152,5 +180,4 @@ _err', 'z_qxy_err', 'z_qyy_err','i_flux', 'i_x', 'i_y', 'i_qxx', 'i_qxy', 'i_qyy
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
 
-# ======================================================================
 
