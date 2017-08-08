@@ -2,20 +2,13 @@ import numpy as np
 import desc.slrealizer
 import math
 
+"""
+This file contains helper methods to draw cornerplot.
+Each method extracts the information user requested (ex. size, position, ellipticity, etd)
+"""
+
+
 def extract_features(df, names):
-    """                                                                                                                                                                              
-    Parameters                                                                                                                                                                      
-    ----------                                                                                                                                                                     
-    df : csv toy catalog                                                                                                                                                             
-    names : str, tuple                                                                                                                                                              
-        Names of features required.                                                                                                                                                  
-    Returns                                                                                                                                                                          
-    -------                                                                                                                                                                          
-    features : float, ndarray                                                                                                                                                        
-        Values of requested features, for each lens in the Table                                                                                                                     
-    labels : str, list                                                                                                                                                               
-        Corresponding axis labels                                                                                                                                                    
-    """
 
     features = np.array([])
     labels = []
@@ -31,14 +24,28 @@ def extract_features(df, names):
 
 def calculate_size(df):
 
+    """
+    Parameters
+    ----------
+    df : csv toy catalog
+
+    Returns
+    ----------
+    features: float, ndarray
+    Sizes for each filter
+
+    labels: string, list
+    Corresponding axis labels
+    """
+
     features = np.array([])
     labels = []
     
-    for filter in ['g', 'z', 'r', 'u', 'i']:
+    for filter in ['u', 'g', 'r', 'i', 'z']:
         qxx = df[filter+'_qxx']
         qxy = df[filter+'_qxy']
         qyy = df[filter+'_qyy']
-        size = (qxx*qyy)-(qxy*qxy)
+        size = (qxx*qyy)-(qxy*qxy) # size is calculated by the determinant of a covariance matrix
         features = np.append(features, size)
         labels.append(axis_labels[filter+'size'])
 
@@ -49,7 +56,7 @@ def calculate_ellipticity(df):
     features = np.array([])
     labels = []
 
-    for filter in ['g', 'z', 'r', 'u', 'i']:
+    for filter in ['u', 'g', 'r', 'i', 'z']:
         qxx = df[filter+'_qxx']
         qxy = df[filter+'_qxy']
         qyy = df[filter+'_qyy']
@@ -66,7 +73,7 @@ def calculate_magnitude(df):
     features = np.array([])
     labels = []
 
-    for filter in ['g', 'z', 'r', 'u', 'i']:
+    for filter in ['u', 'g', 'r', 'i', 'z']:
         filter_flux = df[filter+'_flux']
         filter_mag = desc.slrealizer.return_zeropoint()-2.5*np.log10(filter_flux)
         features = np.append(features, filter_mag)
@@ -75,6 +82,7 @@ def calculate_magnitude(df):
     return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_color(df):
+
 
     labels = []
     magnitude = np.array([])
@@ -95,7 +103,7 @@ def calculate_x_position(df):
     features = np.array([])
     labels = []
 
-    for filter in ['g', 'z', 'r', 'u']:
+    for filter in ['u', 'g', 'r', 'z']:
         name = filter+'_x'
         filter_pos = df[name] - df['i_x']
         features = np.append(features, filter_pos)
@@ -109,13 +117,15 @@ def calculate_y_position(df):
     features = np.array([])
     labels = []
 
-    for filter in ['g', 'z', 'r', 'u']:
+    for filter in ['u', 'g', 'r', 'z']:
         name = filter+'_y'
         filter_pos = df[name] -df['i_y']
         features = np.append(features, filter_pos)
         labels.append(axis_labels[filter+'mag'])
 
     return features.reshape(4, len(df)).transpose(), labels
+
+#============================================================================================
 
 axis_labels = {}
 axis_labels['g_flux'] = '$g$'

@@ -76,6 +76,10 @@ def return_coordinate(first_moment_x, first_moment_y):
     return RA, RA_err, DEC, DEC_err
 
 def return_mean_properties(lens_array):
+    """
+    returns the mean value of flux, 1st moment of x, 1st moment of y, qzz, qxy, qyy, flux_err, 1st moment x error, 1st moment y error, qxx error, qxy error, and qyy error
+    """
+
     return lens_array['flux'].mean(), lens_array['x'].mean(), lens_array['y'].mean(), lens_array['qxx'].mean(), lens_array['qxy'].mean(), lens_array['qyy'].mean(), lens_array['flux_err'].mean(), lens_array['x_com_err'].mean(), lens_array['y_com_err'].mean(), lens_array['qxx_err'].mean(), lens_array['qxy_err'].mean(), lens_array['qyy_err'].mean()
 
 

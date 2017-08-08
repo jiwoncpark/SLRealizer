@@ -11,6 +11,7 @@ import random
 import pandas
 import corner
 import plot_corner
+import dropbox
 #from corner import corner
 #=====================================================
 
@@ -48,36 +49,6 @@ class SLRealizer(object):
                                    self.catalog.get_lens(lensID),
                                    convolve, debug)
         return
-
-    def make_catalog(self, num_system = 3, save = True):
-        """
-        Selects the lensed system just as the real LSST will do, and generates a toy catalog
-
-        Parameters
-        ----------
-        num_system: int
-        Number of systems that the user will request
-
-        save: bool
-        If true, the catalog will be saved in the data folder.
-        """
-
-        print('From the OM10 catalog, I am selecting LSST lenses')
-        self.catalog.select_random(maglim=21.3,area=20000.0,IQ=0.75)
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
-        for i in xrange(len(self.catalog)): # for all lenses
-            lensID = self.catalog.sample[i]['LENSID']
-            print('length is:', len(self.catalog))
-            filter = 'y'
-            #  Keep randomly selecting epochs until we get one that is not in the 'y' filter:
-            while filter == 'y':
-                randomIndex = random.randint(0, 200)
-                filter = self.observation[randomIndex][1]
-            data = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
-            df.loc[len(df)]= data
-        if save:
-            print('saving the table with the name catalog.csv. Check your data folder (../../../data/)')
-            df.to_csv('../../../data/catalog.csv', index=False)
 
     def deblend(self, lensID=None, null_deblend=True):
         """
@@ -147,37 +118,39 @@ class SLRealizer(object):
         fig = corner.corner(data, labels=label, color=color, smooth=1.0)
         return fig
 
-    def make_source_catalog(self, dir='../../../data/catalog.csv'):
+    def make_source_catalog(self, dir='../../../data/source_catalog.csv'):
         """
-        Generates a full catalog(for each filter) of 200 lensed system and save it 
+        Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
         print('From the OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
-        # print(len(self.catalog.sample))
-        for j in xrange(200): # we will select 200 observation
+        for j in xrange(400): # we will select 200 observation
             if self.observation[j][1] != 'y':
-                for i in xrange(200): # we will use first 200 lenses
+                for i in xrange(400): # we will use first 200 lenses
                     data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                     df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
+        #desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
 
-    def make_object_catalog(self, source_table_dir='../../../data/catalog.csv', save_dir='../../../data/object_table.csv'):
+    def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
+        """
+        From the source_table, make an object table by averaging the quantities for each filter and saves into the save_dir.
+        """
         print('Reading in the catalog')
         df = pandas.read_csv(source_table_dir)
         # select all rows with the index label "arizona" df.loc[:'Arizona']
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['g_flux', 'g_x', 'g_y', 'g_qxx', 'g_qxy', 'g_qyy', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_qxx_err', 'g_qxy_err', 'g_qyy_err','z_flux', 'z_x', 'z_y', 'z_qxx', 'z_qxy', 'z_qyy', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_qxx\
+        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_qxx', 'g_qxy', 'g_qyy', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_qxx_err', 'g_qxy_err', 'g_qyy_err','z_flux', 'z_x', 'z_y', 'z_qxx', 'z_qxy', 'z_qyy', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_qxx\
 _err', 'z_qxy_err', 'z_qyy_err','i_flux', 'i_x', 'i_y', 'i_qxx', 'i_qxy', 'i_qyy', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_qxx_err', 'i_qxy_err', 'i_qyy_err','r_flux', 'r_x', 'r_y', 'r_qxx', 'r_qxy', 'r_qyy', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_qxx_err', 'r_qxy_err', 'r_qyy_err','u_flux', 'u_x', 'u_y', 'u_qxx', 'u_qxy', 'u_qyy', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_qxx_err', 'u_qxy_err', 'u_qyy_err']
         source_table = pd.DataFrame(columns=column_name)
         for lens in lensID:
-            lens_row = []
+            lens_row = [lensID[0]]
             lens_array = df.loc[df['lensid'] == lens]
             for filter in ['g', 'z', 'i', 'r', 'u']:
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
-
-
+        #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog.csv')
