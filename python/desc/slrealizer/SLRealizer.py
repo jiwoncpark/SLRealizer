@@ -50,6 +50,7 @@ class SLRealizer(object):
                                    convolve, debug)
         return
 
+    # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
         """
         Given a lens system, this method deblends the source and plots the process of deblending.
