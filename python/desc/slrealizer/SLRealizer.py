@@ -90,7 +90,7 @@ class SLRealizer(object):
 
         Parameters
         ----------
-        option : string
+        option : list of string/strings
         Choose from size, position, color, ellipticity, and magnitude. The cornerplot will show the attribute that the user selected.
         If None, the user should specify the parameters(column names) in the source table.
 
@@ -109,12 +109,17 @@ class SLRealizer(object):
             print(options)
             print('or specify columns in the source table that you want to see in the cornerplot.')
             return
-        elif option not in options:
-            print(option, ' is not supported')
-            return
         elif option is not None:
-            method_name = 'calculate_'+option
-            data, label = getattr(extract_corner, method_name)(object_table)
+            data, label = np.array([]), []
+            for elem in option:
+                if elem not in options:
+                    print(elem, 'is not in the option')
+                    return
+                method_name = 'calculate_'+elem
+                cur_data, cur_label = getattr(extract_corner, method_name)(object_table)
+                data = np.append(data, cur_data)
+                label.extend(cur_label)
+            data = data.reshape(len(label), len(object_table)).transpose()
         else:
             data, label = desc.slrealizer.extract_features(object_table, params)
         fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)

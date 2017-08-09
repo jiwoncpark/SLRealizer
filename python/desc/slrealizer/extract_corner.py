@@ -8,7 +8,19 @@ Each method extracts the information user requested (ex. size, position, ellipti
 """
 
 def extract_features(df, names):
+    """
+    Parameters
+    ----------
+    df: csv toy catalog
+    names : csv toy catalog column names
 
+    Returns
+    ---------
+    features: float, ndarray
+    Features requested for the cornerplot
+    labels: strings, list
+    Corresponding labels
+    """
     features = np.array([])
     labels = []
 
@@ -48,7 +60,8 @@ def calculate_size(df):
         features = np.append(features, size)
         labels.append(axis_labels[filter+'size'])
 
-    return features.reshape(5, len(df)).transpose(), labels
+    return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_ellipticity(df):
 
@@ -78,7 +91,8 @@ def calculate_ellipticity(df):
         features = np.append(features,e)
         labels.append(axis_labels[filter+'e'])
 
-    return features.reshape(5, len(df)).transpose(), labels
+    return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_magnitude(df):
 
@@ -105,22 +119,24 @@ def calculate_magnitude(df):
         features = np.append(features, filter_mag)
         labels.append(axis_labels[filter+'mag'])
 
-    return features.reshape(5, len(df)).transpose(), labels
+    return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_color(df):
 
     labels = []
-    magnitude = np.array([])
+    features = np.array([])
 
     for filters in [['g', 'r'], ['r', 'i'], ['i', 'z']]:
         filter_flux_1 = df[filters[0]+'_flux']
         filter_mag_1 = desc.slrealizer.return_zeropoint()-2.5*np.log10(filter_flux_1)
         filter_flux_2 = df[filters[1]+'_flux']
         filter_mag_2 = desc.slrealizer.return_zeropoint()-2.5*np.log10(filter_flux_2)
-        magnitude = np.append(magnitude, (filter_mag_1 - filter_mag_2))
+        features = np.append(features, (filter_mag_1 - filter_mag_2))
         labels.append(axis_labels[filters[0]+filters[1]])
 
-    return magnitude.reshape(3, len(df)).transpose(), labels
+    return features, labels
+    #return magnitude.reshape(3, len(df)).transpose(), labels
 
 def calculate_x_position(df):
     # reference filter : i
@@ -147,7 +163,8 @@ def calculate_x_position(df):
         features = np.append(features, filter_pos)
         labels.append(axis_labels[filter+'xpos'])
     
-    return features.reshape(4, len(df)).transpose(), labels
+    return features, labels
+    #return features.reshape(4, len(df)).transpose(), labels
 
 def calculate_y_position(df):
     # reference filter : i
@@ -174,7 +191,8 @@ def calculate_y_position(df):
         features = np.append(features, filter_pos)
         labels.append(axis_labels[filter+'ypos'])
 
-    return features.reshape(4, len(df)).transpose(), labels
+    return features, labels
+    #return features.reshape(4, len(df)).transpose(), labels
 
 #============================================================================================
 
