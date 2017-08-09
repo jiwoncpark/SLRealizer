@@ -5,5 +5,5 @@ from constant import *
 from null_deblend import *
 from catalog import *
 from test import *
-from plot_corner import *
+from extract_corner import *
 from dropbox_manage import *

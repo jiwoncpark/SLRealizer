@@ -29,8 +29,8 @@ def generate_data(curr_lens, curr_obs):
 
 
     """
-        REAL BUG: RA, DEC, 2nd moment error values are not yet valid
-        """
+    REAL BUG: RA, DEC, 2nd moment error values are not yet valid
+    """
     
     
     RA, RA_err, DEC, DEC_err = return_coordinate(first_moment_x, first_moment_y)

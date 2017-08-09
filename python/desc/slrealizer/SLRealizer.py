@@ -10,8 +10,8 @@ import skimage
 import random
 import pandas
 import corner
-import plot_corner
 import dropbox
+import extract_corner
 #from corner import corner
 #=====================================================
 
@@ -114,7 +114,7 @@ class SLRealizer(object):
             return
         elif option is not None:
             method_name = 'calculate_'+option
-            data, label = getattr(plot_corner, method_name)(object_table)
+            data, label = getattr(extract_corner, method_name)(object_table)
         else:
             data, label = desc.slrealizer.extract_features(object_table, params)
         fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
@@ -142,7 +142,6 @@ class SLRealizer(object):
         """
         print('Reading in the catalog')
         df = pandas.read_csv(source_table_dir)
-        # select all rows with the index label "arizona" df.loc[:'Arizona']
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
         column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_qxx', 'g_qxy', 'g_qyy', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_qxx_err', 'g_qxy_err', 'g_qyy_err','z_flux', 'z_x', 'z_y', 'z_qxx', 'z_qxy', 'z_qyy', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_qxx\
