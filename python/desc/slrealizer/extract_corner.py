@@ -127,7 +127,7 @@ def calculate_color(df):
     labels = []
     features = np.array([])
 
-    for filters in [['g', 'r'], ['r', 'i'], ['i', 'z']]:
+    for filters in [['u', 'g'], ['g', 'r'], ['r', 'i'], ['i', 'z']]:
         filter_flux_1 = df[filters[0]+'_flux']
         filter_mag_1 = desc.slrealizer.return_zeropoint()-2.5*np.log10(filter_flux_1)
         filter_flux_2 = df[filters[1]+'_flux']
