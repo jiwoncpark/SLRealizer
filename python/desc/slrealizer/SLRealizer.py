@@ -83,7 +83,7 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', source_table_dir = '../../../data/source_table.csv', option = None, params = None):
+    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None):
         """
         Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
 
@@ -97,11 +97,12 @@ class SLRealizer(object):
         Names of columns in source_table that the user wants to see in the cornerplot.
         Only works when option is not specified.
 
+        range : list of tuples for each plot
         Returns cornerplot (matplotlib.pyplot)
         """
 
         options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude']
-        source_table = pd.read_csv(source_table_dir)
+        object_table = pd.read_csv(object_table_dir)
         if ((option is None) and (params is None)):
             print('either specify params or option. You can choose among :')
             print(options)
@@ -112,10 +113,10 @@ class SLRealizer(object):
             return
         elif option is not None:
             method_name = 'calculate_'+option
-            data, label = getattr(plot_corner, method_name)(source_table)
+            data, label = getattr(plot_corner, method_name)(object_table)
         else:
-            data, label = desc.slrealizer.extract_features(source_table, params)
-        fig = corner.corner(data, labels=label, color=color, smooth=1.0)
+            data, label = desc.slrealizer.extract_features(object_table, params)
+        fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
         return fig
 
     def make_source_catalog(self, dir='../../../data/source_catalog.csv'):

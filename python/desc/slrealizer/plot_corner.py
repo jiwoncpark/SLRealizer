@@ -107,7 +107,7 @@ def calculate_x_position(df):
         name = filter+'_x'
         filter_pos = df[name] - df['i_x']
         features = np.append(features, filter_pos)
-        labels.append(axis_labels[filter+'mag'])
+        labels.append(axis_labels[filter+'xpos'])
     
     return features.reshape(4, len(df)).transpose(), labels
 
@@ -121,7 +121,7 @@ def calculate_y_position(df):
         name = filter+'_y'
         filter_pos = df[name] -df['i_y']
         features = np.append(features, filter_pos)
-        labels.append(axis_labels[filter+'mag'])
+        labels.append(axis_labels[filter+'ypos'])
 
     return features.reshape(4, len(df)).transpose(), labels
 
@@ -143,21 +143,31 @@ axis_labels['z_y'] = '$z_y$'
 axis_labels['r_y'] = '$r_y$'
 axis_labels['u_y'] = '$u_y$'
 axis_labels['i_y'] = '$i_y$'
-axis_labels['gsize'] = '$gsize$'
-axis_labels['zsize'] = '$zsize$'
-axis_labels['rsize'] = '$rsize$'
-axis_labels['usize'] = '$usize$'
-axis_labels['isize'] = '$isize$'
+axis_labels['gsize'] = '$size_g$'
+axis_labels['zsize'] = '$size_z$'
+axis_labels['rsize'] = '$size_r$'
+axis_labels['usize'] = '$size_u$'
+axis_labels['isize'] = '$size_i$'
 axis_labels['ge'] = '$e_g$'
 axis_labels['ze'] = '$e_z$'
 axis_labels['re'] = '$e_r$'
 axis_labels['ue'] = '$e_u$'
 axis_labels['ie'] = '$e_i$'
-axis_labels['gmag'] = '$gmag$'
-axis_labels['zmag'] = '$zmag$'
-axis_labels['rmag'] = '$rmag$'
-axis_labels['umag'] = '$umag$'
-axis_labels['imag'] = '$imag$'
-axis_labels['gr'] = '$gr$'
-axis_labels['ri'] = '$zu$'
-axis_labels['iz'] = '$ri$'
+axis_labels['gmag'] = '$mag_g$'
+axis_labels['zmag'] = '$mag_z$'
+axis_labels['rmag'] = '$mag_r$'
+axis_labels['umag'] = '$mag_u$'
+axis_labels['imag'] = '$mag_i$'
+axis_labels['gr'] = '$g-r$'
+axis_labels['ri'] = '$r-i$'
+axis_labels['iz'] = '$i-z$'
+axis_labels['gxpos'] = '$x_g$'
+axis_labels['zxpos'] = '$x_z$'
+axis_labels['rxpos'] = '$x_r$'
+axis_labels['uxpos'] = '$x_u$'
+axis_labels['ixpos'] = '$x_i$'
+axis_labels['gypos'] = '$y_g$'
+axis_labels['zypos'] = '$y_z$'
+axis_labels['rypos'] = '$y_r$'
+axis_labels['uypos'] = '$y_u$'
+axis_labels['iypos'] = '$y_i$'
