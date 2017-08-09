@@ -23,19 +23,6 @@ import skimage
 import skimage.measure
 from skimage.measure import moments
 
-# ======================================================================
-
-#global variable that controls the size of the plot#
-x_min = -5.0
-x_max = 5.0
-y_min = -5.0
-y_max = 5.0
-distance = 0.01
-
-number_of_rows = int((x_max - x_min)/distance)
-number_of_columns = int((y_max - y_min)/distance)
-# =========================================================================
-
 """                                                                                                                                                                             
 Given a specific date and the OM10 catalog, this deblends the sources that are on the catalog.                                                                                   
 Assumes null deblender where all the sources are assumed to be observed as single objects.                                                                                        All the sources are assumed to have Gaussian PSFs.                                                                                                                               
@@ -46,6 +33,11 @@ def deblend(currObs, currLens, null_deblend=True):
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
     """
+    global x_min, x_max, y_min, y_max, distance
+    x_min, x_max, y_min, y_max, distance = desc.slrealizer.get_x_min(), desc.slrealizer.get_x_max(), desc.slrealizer.get_y_min(), desc.slrealizer.get_y_max(), desc.slrealizer.get_distance()
+    global number_of_rows, number_of_columns
+    number_of_rows, number_of_columns = int((x_max - x_min)/distance), int((y_max - y_min)/distance)
+
     if null_deblend:
         image = null_deblending(currObs, currLens, debug)
         show_color_map(image)
@@ -67,14 +59,14 @@ def plot_all_objects(currObs, currLens):
     pos = np.dstack((x, y))
     rv = scipy.stats.multivariate_normal([galaxy_x,galaxy_y], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True)
     image = [[0]*number_of_rows for _ in range(number_of_columns)]
-    image = image + rv.pdf(pos)*math.pow(2.5, desc.slrealizer.return_zeropoint() - currLens[filterLens])
+    image = image + rv.pdf(pos)*np.power(2.5, desc.slrealizer.return_zeropoint() - currLens[filterLens])
     # iterate for the lens                                                                                                                 
     for i in xrange(currLens['NIMG']):
         # calculate the real magnitude of the images from source                                                                           
         # this was originally a bug                                                                                                        
         filter_quasar = currObs[1]+'_SDSS_quasar'
-        curr_lens_mag = -2.5*math.log(abs(currLens['MAG'][0][i]), 10) + currLens[filter_quasar] # sometimes magnitude gets negative value (inverted image)                                                                                                                            
-        mag_ratio = math.pow(2.5, desc.slrealizer.return_zeropoint()-curr_lens_mag)
+        curr_lens_mag = -2.5*np.log10(abs(currLens['MAG'][0][i])) + currLens[filter_quasar] # sometimes magnitude gets negative value (inverted image)                                                                                                                            
+        mag_ratio = np.power(2.5, desc.slrealizer.return_zeropoint()-curr_lens_mag)
         rv = scipy.stats.multivariate_normal([currLens['XIMG'][0][i],currLens['YIMG'][0][i]], [[PSF_sigma*PSF_sigma, 0], [0, PSF_sigma*PSF_sigma]], allow_singular=True)
         image = image + rv.pdf(pos)*mag_ratio #scale                                                                                       
     return image

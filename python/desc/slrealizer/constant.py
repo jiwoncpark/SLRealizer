@@ -33,3 +33,18 @@ def get_second_moment_err():
 
 def get_second_moment_err_std():
     return 0.01
+
+def get_x_min():
+    return -5.0
+
+def get_y_min():
+    return -5.0
+
+def get_x_max():
+    return 5.0
+
+def get_y_max():
+    return 5.0
+
+def get_distance():
+    return 0.2
