@@ -139,7 +139,7 @@ class SLRealizer(object):
                     df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
-        #desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
+        desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
@@ -153,10 +153,10 @@ class SLRealizer(object):
 _err', 'z_qxy_err', 'z_qyy_err','i_flux', 'i_x', 'i_y', 'i_qxx', 'i_qxy', 'i_qyy', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_qxx_err', 'i_qxy_err', 'i_qyy_err','r_flux', 'r_x', 'r_y', 'r_qxx', 'r_qxy', 'r_qyy', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_qxx_err', 'r_qxy_err', 'r_qyy_err','u_flux', 'u_x', 'u_y', 'u_qxx', 'u_qxy', 'u_qyy', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_qxx_err', 'u_qxy_err', 'u_qyy_err']
         source_table = pd.DataFrame(columns=column_name)
         for lens in lensID:
-            lens_row = [lensID[0]]
+            lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
             for filter in ['g', 'z', 'i', 'r', 'u']:
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
-        #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog.csv')
+        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog.csv')
