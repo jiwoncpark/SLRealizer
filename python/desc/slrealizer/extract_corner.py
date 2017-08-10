@@ -57,7 +57,7 @@ def calculate_size(df):
         qxy = df[filter+'_qxy']
         qyy = df[filter+'_qyy']
         size = (qxx*qyy)-(qxy*qxy) # size is calculated by the determinant of a covariance matrix
-        features = np.append(features, size)
+        features = np.append(features, size*math.pow(desc.slrealizer.get_pixel_arcsec_conversion(),2))
         labels.append(axis_labels[filter+'size'])
 
     return features, labels
@@ -160,7 +160,7 @@ def calculate_x_position(df):
     for filter in ['u', 'g', 'r', 'z']:
         name = filter+'_x'
         filter_pos = df[name] - df['i_x']
-        features = np.append(features, filter_pos)
+        features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'xpos'])
     
     return features, labels
@@ -188,7 +188,7 @@ def calculate_y_position(df):
     for filter in ['u', 'g', 'r', 'z']:
         name = filter+'_y'
         filter_pos = df[name] -df['i_y']
-        features = np.append(features, filter_pos)
+        features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'ypos'])
 
     return features, labels
@@ -202,21 +202,21 @@ axis_labels['z_flux'] = '$z$'
 axis_labels['r_flux'] = '$r$'
 axis_labels['u_flux'] = '$u$'
 axis_labels['i_flux'] = '$i$'
-axis_labels['g_x'] = '$g_x$'
-axis_labels['z_x'] = '$z_x$'
-axis_labels['r_x'] = '$r_x$'
-axis_labels['u_x'] = '$u_x$'
-axis_labels['i_x'] = '$i_x$'
-axis_labels['g_y'] = '$g_y$'
-axis_labels['z_y'] = '$z_y$'
-axis_labels['r_y'] = '$r_y$'
-axis_labels['u_y'] = '$u_y$'
-axis_labels['i_y'] = '$i_y$'
-axis_labels['gsize'] = '$size_g$'
-axis_labels['zsize'] = '$size_z$'
-axis_labels['rsize'] = '$size_r$'
-axis_labels['usize'] = '$size_u$'
-axis_labels['isize'] = '$size_i$'
+axis_labels['g_x'] = '$g_x / arcsec$'
+axis_labels['z_x'] = '$z_x / arcsec$'
+axis_labels['r_x'] = '$r_x / arcsec$'
+axis_labels['u_x'] = '$u_x / arcsec$'
+axis_labels['i_x'] = '$i_x / arcsec$'
+axis_labels['g_y'] = '$g_y / arcsec$'
+axis_labels['z_y'] = '$z_y / arcsec$'
+axis_labels['r_y'] = '$r_y / arcsec$'
+axis_labels['u_y'] = '$u_y / arcsec$'
+axis_labels['i_y'] = '$i_y / arcsec$'
+axis_labels['gsize'] = '$size_g / arcsec^2$'
+axis_labels['zsize'] = '$size_z / arcsec^2$'
+axis_labels['rsize'] = '$size_r / arcsec^2$'
+axis_labels['usize'] = '$size_u / arcsec^2$'
+axis_labels['isize'] = '$size_i / arcsec^2$'
 axis_labels['ge'] = '$e_g$'
 axis_labels['ze'] = '$e_z$'
 axis_labels['re'] = '$e_r$'
@@ -231,13 +231,13 @@ axis_labels['gr'] = '$g-r$'
 axis_labels['ri'] = '$r-i$'
 axis_labels['iz'] = '$i-z$'
 axis_labels['ug'] = '$u-g$'
-axis_labels['gxpos'] = '$x_g$'
-axis_labels['zxpos'] = '$x_z$'
-axis_labels['rxpos'] = '$x_r$'
-axis_labels['uxpos'] = '$x_u$'
-axis_labels['ixpos'] = '$x_i$'
-axis_labels['gypos'] = '$y_g$'
-axis_labels['zypos'] = '$y_z$'
-axis_labels['rypos'] = '$y_r$'
-axis_labels['uypos'] = '$y_u$'
-axis_labels['iypos'] = '$y_i$'
+axis_labels['gxpos'] = '$x_g / arcsec$'
+axis_labels['zxpos'] = '$x_z / arcsec$'
+axis_labels['rxpos'] = '$x_r / arcsec$'
+axis_labels['uxpos'] = '$x_u / arcsec$'
+axis_labels['ixpos'] = '$x_i / arcsec$'
+axis_labels['gypos'] = '$y_g / arcsec$'
+axis_labels['zypos'] = '$y_z / arcsec$'
+axis_labels['rypos'] = '$y_r / arcsec$'
+axis_labels['uypos'] = '$y_u / arcsec$'
+axis_labels['iypos'] = '$y_i / arcsec$'

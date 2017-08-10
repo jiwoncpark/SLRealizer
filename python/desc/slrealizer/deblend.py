@@ -33,9 +33,7 @@ def deblend(currObs, currLens, null_deblend=True):
     If the user wants to see the plot drawn by plotting.py in the debug mode, this code draws it.
     Otherwise, it acts like a wrapper method -- this just calls blend_all_objects.
     """
-    global x_min, x_max, y_min, y_max, distance
     x_min, x_max, y_min, y_max, distance = desc.slrealizer.get_x_min(), desc.slrealizer.get_x_max(), desc.slrealizer.get_y_min(), desc.slrealizer.get_y_max(), desc.slrealizer.get_distance()
-    global number_of_rows, number_of_columns
     number_of_rows, number_of_columns = int((x_max - x_min)/distance), int((y_max - y_min)/distance)
 
     if null_deblend:
@@ -52,6 +50,8 @@ def plot_all_objects(currObs, currLens):
     The blending is done by generating a 2d-gaussian and adding the values to the 2d array.
     Then, that 2d array is passed to the deblending method to find the discrete sources.
     """
+    x_min, x_max, y_min, y_max, distance = desc.slrealizer.get_x_min(), desc.slrealizer.get_x_max(), desc.slrealizer.get_y_min(), desc.slrealizer.get_y_max(), desc.slrealizer.get_distance()
+    number_of_rows, number_of_columns = int((x_max - x_min)/distance), int((y_max - y_min)/distance)
     filterLens = currObs[1] + '_SDSS_lens'
     lens_mag = currLens[filterLens]
     galaxy_x, galaxy_y, PSF_sigma = 0, 0, currObs[2]
@@ -100,6 +100,8 @@ def show_color_map(input_image):
     """
     Given a 2d array, this draws a color plot that shows the intensity of each pixel.
     """
+    x_min, x_max, y_min, y_max, distance = desc.slrealizer.get_x_min(), desc.slrealizer.get_x_max(), desc.slrealizer.get_y_min(), desc.slrealizer.get_y_max(), desc.slrealizer.get_distance()
+    number_of_rows, number_of_columns = int((x_max - x_min)/distance), int((y_max - y_min)/distance)
     cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list('my_colormap', ['black', 'green', 'yellow'], 256)                                                               
     img2 = plt.imshow(input_image, interpolation='nearest', cmap = cmap2, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect = "auto")                                 
     plt.colorbar(img2,cmap=cmap2)                                                                                                                                               
