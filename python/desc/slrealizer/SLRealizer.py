@@ -12,6 +12,7 @@ import pandas
 import corner
 import dropbox
 import extract_corner
+import om10
 #from corner import corner
 #=====================================================
 
@@ -125,12 +126,14 @@ class SLRealizer(object):
         fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
         return fig
 
-    def make_source_catalog(self, dir='../../../data/source_catalog.csv'):
+    def make_source_catalog(self, dir='../../../data/source_catalog.csv', galsim=False):
         """
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
-        print('From the OM10 catalog, I am selecting LSST lenses')
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
+        if galsim:
+            pass
+        print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'psf_sigma', 'sky', 'lensid'])
         for j in xrange(400): # we will select 200 observation
             if self.observation[j][1] != 'y':
@@ -160,3 +163,7 @@ _err', 'z_qxy_err', 'z_qyy_err','i_flux', 'i_x', 'i_y', 'i_qxx', 'i_qxy', 'i_qyy
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
         desc.slrealizer.dropbox_upload(save_dir, 'object_catalog.csv')
+
+    def test(self):
+        desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[0]['LENSID']), self.observation[0])
+        print('*************!******************!*******************')

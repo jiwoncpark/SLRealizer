@@ -5,7 +5,8 @@ import scipy
 import skimage
 import desc.slrealizer
 import pandas
-
+import galsim
+import matplotlib.pyplot as plt
 # ======================================================================
 
 class TestCase(unittest.TestCase):
@@ -79,6 +80,19 @@ class TestCase(unittest.TestCase):
         returned_image=desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
         self.assertEqual(image.all(), returned_image.all())
 
+    def test_galsim(self):
+        galaxy = galsim.Gaussian(flux=10.0,sigma=3.0)
+        galaxy = galaxy.shift(1, 2)
+        img = galaxy.drawImage(scale=.2)
+        shape_info = img.FindAdaptiveMom()
+        first_moment_x, first_moment_y = (shape_info.moments_centroid.x-(len(img.array)/2.0))*0.2, (shape_info.moments_centroid.y-(len(img.array)/2.0))*0.2
+        # total image intensity for best-fit elliptical Gaussian from adaptive moments. Normally, this field is simply equal to the image flux (for objects that follow a Gaussian light distribution, otherwise it is something approximating the flux). However, if the image was drawn using `drawImage(method='sb')` then moments_amp relates to the flux via flux=(moments_amp)*(pixel scale)^2.
+        flux = shape_info.moments_amp
+        # moment calculation needs to be changed, because 2d array is not returned                                                                                             
+        I_xx = shape_info.moments_sigma * 0.2 * 0.2 # unit of pixels is returned, so change units for arcsec squared 
+        self.assertAlmostEqual(flux, 10)
+        self.assertAlmostEqual(first_moment_x, 1, places=0)
+        self.assertAlmostEqual(first_moment_y, 2, places=0)
     """
     def test_catalog(self):
         df = pandas.read_csv('../../../data/catalog_u.csv')

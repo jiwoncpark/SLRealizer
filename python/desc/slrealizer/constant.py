@@ -51,4 +51,4 @@ def get_distance():
 
 def get_pixel_arcsec_conversion():
     # based on the distance, x_max, x_min, y_max, and y_min, we can know how many arcsec corresponds to one pixel
-    return 0.1 # fix later : it should be the same as get_distance()
+    return 0.2 # fix later : it should be the same as get_distance()
