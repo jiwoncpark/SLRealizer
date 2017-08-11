@@ -45,5 +45,5 @@ def galsim_generate_data(currLens, currObs):
     # moment calculation needs to be changed, because 2d array is not returned
     I_xx = shape_info.moments_sigma * 0.2 * 0.2 # unit of pixels is returned, so change units for arcsec squared 
     I_yy, I_xy, lensID = 1, 0, currLens['LENSID'][0]
-    sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, I_xx, I_xx_err_calc, I_yy, I_yy_err_calc, I_xy, I_xy_err_calc, lensID]
+    sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, I_xx, I_xx_err_calc, I_yy, I_yy_err_calc, I_xy, I_xy_err_calc, PSF_HWHM, sky_mag, lensID]
     return np.array(sample_array)

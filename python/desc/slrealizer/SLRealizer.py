@@ -138,11 +138,17 @@ class SLRealizer(object):
         for j in xrange(400): # we will select 200 observation
             if self.observation[j][1] != 'y':
                 for i in xrange(400): # we will use first 200 lenses
-                    data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                    if galsim:
+                        data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                    else:
+                        data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                     df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
-        desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
+        if galsim:
+            desc.slrealizer.dropbox_upload(dir, 'source_catalog_galsim.csv')
+        else:
+            desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
