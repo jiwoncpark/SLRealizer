@@ -33,7 +33,7 @@ def extract_features(df, names):
 
     return features.reshape(p,n).transpose(), labels
 
-def calculate_size(df, galsim):
+def calculate_size(df):
 
     """
     Parameters
@@ -57,13 +57,13 @@ def calculate_size(df, galsim):
         qxy = df[filter+'_qxy']
         qyy = df[filter+'_qyy']
         size = (qxx*qyy)-(qxy*qxy) # size is calculated by the determinant of a covariance matrix
-        features = np.append(features, size*math.pow(desc.slrealizer.get_pixel_arcsec_conversion(),2))
+        features = np.append(features, size)
         labels.append(axis_labels[filter+'size'])
 
     return features, labels
     #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_ellipticity(df, galsim):
+def calculate_ellipticity(df):
 
     """
     Parameters
@@ -82,22 +82,13 @@ def calculate_ellipticity(df, galsim):
     labels = []
 
     for filter in ['u', 'g', 'r', 'i', 'z']:
-        if galsim:
-            e = df[filter+'_e']
-        else:
-            qxx = df[filter+'_qxx']
-            qxy = df[filter+'_qxy']
-            qyy = df[filter+'_qyy']
-            e1 = (qxx-qyy)/(qxx+qyy)
-            e2 = 2*qxy/(qxx+qyy)
-            e = np.power(np.power(e1,2)+np.power(e2,2),0.5)
+        e = df[filter+'_e']
         features = np.append(features,e)
         labels.append(axis_labels[filter+'e'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_magnitude(df, galsim):
+def calculate_magnitude(df):
 
     """
     Parameters
@@ -125,7 +116,7 @@ def calculate_magnitude(df, galsim):
     return features, labels
     #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_color(df, galsim):
+def calculate_color(df):
 
     labels = []
     features = np.array([])
@@ -141,7 +132,7 @@ def calculate_color(df, galsim):
     return features, labels
     #return magnitude.reshape(3, len(df)).transpose(), labels
 
-def calculate_x_position(df, galsim):
+def calculate_x_position(df):
     # reference filter : i
 
     """
@@ -169,7 +160,7 @@ def calculate_x_position(df, galsim):
     return features, labels
     #return features.reshape(4, len(df)).transpose(), labels
 
-def calculate_y_position(df, galsim):
+def calculate_y_position(df):
     # reference filter : i
     """
         Parameters
