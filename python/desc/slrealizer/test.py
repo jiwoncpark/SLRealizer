@@ -7,6 +7,7 @@ import desc.slrealizer
 import pandas
 import galsim
 import matplotlib.pyplot as plt
+import math
 # ======================================================================
 
 class TestCase(unittest.TestCase):
@@ -82,12 +83,13 @@ class TestCase(unittest.TestCase):
 
     def test_galsim(self):
         galaxy = galsim.Gaussian(flux=10.0, sigma=10)
+        """
         galaxy = galaxy.shift(1, 2)
         galaxy = galaxy.shear(e1=0.2)
         #psf = galsim.Gaussian(flux=1, sigma=3.0)
         #galaxy = galsim.Convolve([galaxy,psf]) 
         img = galaxy.drawImage(scale=.2)
-        shape_info = img.FindAdaptiveMom()
+        #shape_info = img.FindAdaptiveMom()
         first_moment_x, first_moment_y = (shape_info.moments_centroid.x-(len(img.array)/2.0))*0.2, (shape_info.moments_centroid.y-(len(img.array)/2.0))*0.2
         # total image intensity for best-fit elliptical Gaussian from adaptive moments. Normally, this field is simply equal to the image flux (for objects that follow a Gaussian light distribution, otherwise it is something approximating the flux). However, if the image was drawn using `drawImage(method='sb')` then moments_amp relates to the flux via flux=(moments_amp)*(pixel scale)^2.
         flux = shape_info.moments_amp
@@ -103,6 +105,14 @@ class TestCase(unittest.TestCase):
         #self.assertAlmostEqual(first_moment_x, 1, places=0)
         #self.assertAlmostEqual(first_moment_y, 2, places=0)
         self.assertAlmostEqual(I_xx*0.2, 3.0, places=2)
+        """
+        img = galaxy.drawImage(scale=.2)   
+        random_number_generator = galsim.BaseDeviate(3) #random seed can be any number you want   
+        sky_level = math.pow(10, (22.5 - 23.5)/2.5)/5 # because Fb = 5 \sigma_b        
+        noise = galsim.PoissonNoise(random_number_generator, sky_level=sky_level) # I guess sky_level is just sky_sigma? 
+        print 'sky_level', sky_level, 'noise', noise
+        img.addNoise(noise)
+        shape_info = img.FindAdaptiveMom()
 
 # ======================================================================
 

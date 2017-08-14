@@ -132,20 +132,19 @@ class SLRealizer(object):
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
-        if galsim:
-            pass
         print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'e', 'psf_sigma', 'sky', 'lensid'])
-        for j in xrange(200): # we will select 200 observation
+        ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
+        for j in xrange(400): # we will select 400 observation
             if self.observation[j][1] != 'y':
-                for i in xrange(200): # we will use first 200 lenses
-                    if galsim:
-                        print(i, j, 'index')
-                        data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                        df.loc[len(df)]= data
-                    else:
-                        data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                        df.loc[len(df)]= data
+                for i in xrange(400): # we will use first 400 lenses
+                    if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
+                        if galsim:
+                            data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                            df.loc[len(df)]= data
+                        else:
+                            data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                            df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
         if galsim:

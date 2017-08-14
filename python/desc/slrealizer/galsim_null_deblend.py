@@ -12,30 +12,41 @@ def galsim_make_galsim_catalog(currLens, currObs):
 def galsim_plot_all_objects(currLens, currObs):
     MJD, filter, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
     # init galaxy array
+    print 'sky mag: ', sky_mag
     curr_galaxy_mag = currLens[currObs[1]+'_SDSS_lens'][0]
+    print 'galaxy magnitude: ', curr_galaxy_mag
     galaxy_flux = np.power(2.5, desc.slrealizer.return_zeropoint()-curr_galaxy_mag)
     #Only one of sigma, fwhm, and half_light_radius may be specified for Gaussian, so we just add the values!
     galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=galaxy_flux)
-    psf = galsim.Gaussian(flux=1, sigma=PSF_HWHM)
+    print 'galaxy flux:', galaxy_flux
     for i in xrange(currLens['NIMG']):
         filter_quasar = currLens[currObs[1]+'_SDSS_quasar']
+        print 'curr_quasar_mag: ', filter_quasar
         curr_lens_mag = -2.5*np.log10(abs(currLens['MAG'][0][i])) + filter_quasar[0]
         mag_ratio = np.power(2.5, desc.slrealizer.return_zeropoint()-curr_lens_mag)
-        lens = galsim.Gaussian(flux=mag_ratio, sigma=0.1) # we are going to convolve later, so let's say bc of atmosphere sigma for lens is 0.01"
+        lens = galsim.Gaussian(flux=mag_ratio, sigma=0.0) # we are going to convolve later, so let's say bc of atmosphere sigma for lens is 0.01"
         lens = lens.shift([currLens['XIMG'][0][i],currLens['YIMG'][0][i]])
         galaxy += lens
+        print('quasar')
+        print('X: ', currLens['XIMG'][0][i], 'Y: ', currLens['YIMG'][0][i], 'mag_ratio', mag_ratio, 'sigma', PSF_HWHM)
+    psf = galsim.Gaussian(flux=1, sigma=PSF_HWHM)
     galaxy = galsim.Convolve(galaxy, psf)
     galaxy = galaxy.shear(e1=currLens['ELLIP'][0])
     phi_angle = currLens['PHIE'][0] * galsim.degrees
     galaxy = galaxy.rotate(theta=phi_angle)
+    print('galaxy')
+    print('psf', psf, 'phi_angle', phi_angle, 'e1', currLens['ELLIP'][0], 'half_light_radius', currLens['REFF_T'][0])
     img = galaxy.drawImage(scale=0.2)
     ### ADD NOISE!!
     #realization + psf convolution code here
-    #random_number_generator = galsim.BaseDeviate(3) #random seed can be any number you want
+    #random_number_generator = galsim.BaseDeviate(0) #random seed can be any number you want
     #sky_level = math.pow(10, (22.5 - sky_mag)/2.5)/5 # because Fb = 5 \sigma_b  
     #noise = galsim.PoissonNoise(random_number_generator, sky_level=sky_level) # I guess sky_level is just sky_sigma?
+    #print 'sky_level', sky_level, 'noise', noise
+    #galsim.applyToView(img, noise)
     #img.addNoise(noise)
-    #plt.imshow(img.array)
+    #print 'hello'
+#plt.imshow(img.array)
     return img
 
 def galsim_generate_data(currLens, currObs):

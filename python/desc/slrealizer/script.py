@@ -8,6 +8,7 @@ import desc.slrealizer
 
 
 db = om10.DB(vb=False, catalog='../../../data/qso_mock.fits')
+db.select_random(maglim=23.3,area=18000.0,IQ=0.75)
 db.paint(synthetic=True)
 realizer = desc.slrealizer.SLRealizer(catalog=db, observation="../../../data/twinkles_observation_history.csv")
 realizer.make_source_catalog(galsim=True, dir='../../../data/source_catalog_galsim.csv')
