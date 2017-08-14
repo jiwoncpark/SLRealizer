@@ -127,6 +127,9 @@ class SLRealizer(object):
         fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
         return fig
 
+    def overlap():
+        pass
+
     def make_source_catalog(self, dir='../../../data/source_catalog.csv', galsim=False):
         """
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
