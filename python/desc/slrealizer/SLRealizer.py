@@ -141,9 +141,12 @@ class SLRealizer(object):
         print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'e', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
+        debug_count = 0
         for j in xrange(200): # we will select 400 observation
             if self.observation[j][1] != 'y':
                 for i in xrange(200): # we will use first 400 lenses
+                    print('debug_count: ***************************** : ', debug_count)
+                    debug_count += 1
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                         if galsim:
                             data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
@@ -151,6 +154,7 @@ class SLRealizer(object):
                         else:
                             data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                             df.loc[len(df)]= data
+                            debug_count += 1
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
         if galsim:

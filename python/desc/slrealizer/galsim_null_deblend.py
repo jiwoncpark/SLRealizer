@@ -31,9 +31,8 @@ def galsim_plot_all_objects(currLens, currObs):
         print('X: ', currLens['XIMG'][0][i], 'Y: ', currLens['YIMG'][0][i], 'mag_ratio', mag_ratio, 'sigma', PSF_HWHM)
     psf = galsim.Gaussian(flux=1, sigma=PSF_HWHM)
     galaxy = galsim.Convolve(galaxy, psf)
-    galaxy = galaxy.shear(e1=currLens['ELLIP'][0])
     phi_angle = currLens['PHIE'][0] * galsim.degrees
-    galaxy = galaxy.rotate(theta=phi_angle)
+    galaxy = galaxy.shear(e=currLens['ELLIP'][0], beta=phi_angle)
     print('galaxy')
     print('psf', psf, 'phi_angle', phi_angle, 'e1', currLens['ELLIP'][0], 'half_light_radius', currLens['REFF_T'][0])
     img = galaxy.drawImage(scale=0.2)
@@ -45,11 +44,13 @@ def galsim_generate_data(currLens, currObs):
     RA, RA_err, DEC, DEC_err, first_moment_x_err_calc, first_moment_y_err_calc, I_xx_err_calc, I_yy_err_calc, I_xy_err_calc = 0, 0, 0, 0, 0, 0, 0, 0, 0
     flux_err_calc = math.pow(10, (22.5 - sky_mag)/2.5)/5 # because Fb = 5 \sigma_b
     shape_info = img.FindAdaptiveMom()
+    #shape_info = img.EstimateShear()
+    #print(shape_info.corrected_shape_err)
     first_moment_x, first_moment_y = (shape_info.moments_centroid.x-(len(img.array)/2.0))*0.2, (shape_info.moments_centroid.y-(len(img.array)/2.0))*0.2
     # total image intensity for best-fit elliptical Gaussian from adaptive moments. Normally, this field is simply equal to the image flux (for objects that follow a Gaussian light distribution, otherwise it is something approximating the flux). However, if the image was drawn using `drawImage(method='sb')` then moments_amp relates to the flux via flux=(moments_amp)*(pixel scale)^2.
     flux = shape_info.moments_amp # I unit tested, and this is right though
     # moment calculation needs to be changed, because 2d array is not returned
-    I_xx = shape_info.moments_sigma * 0.2 # unit of pixels is returned, so change units for arcsec squared 
+    I_xx = shape_info.moments_sigma * 0.2 # unit of pixels is returned, so change units for arcsec
     I_yy, I_xy, lensID = 0, 0, currLens['LENSID'][0]
     e1 = shape_info.observed_shape.e1
     e2 = shape_info.observed_shape.e2
