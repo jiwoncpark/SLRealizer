@@ -56,7 +56,7 @@ def calculate_size(df):
         qxx = df[filter+'_qxx']
         qxy = df[filter+'_qxy']
         qyy = df[filter+'_qyy']
-        size = (qxx*qyy)-(qxy*qxy) # size is calculated by the determinant of a covariance matrix
+        size = qxx+qyy
         features = np.append(features, size)
         labels.append(axis_labels[filter+'size'])
 
@@ -85,7 +85,6 @@ def calculate_ellipticity(df):
         e = df[filter+'_e']
         features = np.append(features,e)
         labels.append(axis_labels[filter+'e'])
-
     return features, labels
 
 def calculate_magnitude(df):
@@ -132,8 +131,20 @@ def calculate_color(df):
     return features, labels
     #return magnitude.reshape(3, len(df)).transpose(), labels
 
+def calculate_position(df):
+    # using pythagorean theorem calculate the distance between centroids
+    x_distance, _ = desc.slrealizer.calculate_x_position(df)
+    y_distance, _ = desc.slrealizer.calculate_y_position(df)
+    x_distance_squared = np.multiply(x_distance, x_distance)
+    y_distance_squared = np.multiply(y_distance, y_distance)
+    distance = np.sqrt(x_distance_squared+y_distance_squared)
+    labels = []
+    for filter in ['u', 'g', 'i', 'z']:
+        labels.append(axis_labels[filter+'pos'])
+    return distance, labels
+
 def calculate_x_position(df):
-    # reference filter : i
+    # reference filter : r
 
     """
     Parameters
@@ -151,9 +162,9 @@ def calculate_x_position(df):
     features = np.array([])
     labels = []
 
-    for filter in ['u', 'g', 'r', 'z']:
+    for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_x'
-        filter_pos = df[name] - df['i_x']
+        filter_pos = df[name] - df['r_x']
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'xpos'])
     
@@ -179,9 +190,9 @@ def calculate_y_position(df):
     features = np.array([])
     labels = []
 
-    for filter in ['u', 'g', 'r', 'z']:
+    for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_y'
-        filter_pos = df[name] -df['i_y']
+        filter_pos = df[name] -df['r_y']
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'ypos'])
 
@@ -235,3 +246,7 @@ axis_labels['zypos'] = '$y_z / arcsec$'
 axis_labels['rypos'] = '$y_r / arcsec$'
 axis_labels['uypos'] = '$y_u / arcsec$'
 axis_labels['iypos'] = '$y_i / arcsec$'
+axis_labels['zpos'] = '$pos_z / arcsec$'
+axis_labels['gpos'] = '$pos_g / arcsec$'
+axis_labels['upos'] = '$pos_u / arcsec$'
+axis_labels['ipos'] = '$pos_i / arcsec$'
