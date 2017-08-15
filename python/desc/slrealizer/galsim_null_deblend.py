@@ -37,16 +37,6 @@ def galsim_plot_all_objects(currLens, currObs):
     print('galaxy')
     print('psf', psf, 'phi_angle', phi_angle, 'e1', currLens['ELLIP'][0], 'half_light_radius', currLens['REFF_T'][0])
     img = galaxy.drawImage(scale=0.2)
-    ### ADD NOISE!!
-    #realization + psf convolution code here
-    #random_number_generator = galsim.BaseDeviate(0) #random seed can be any number you want
-    #sky_level = math.pow(10, (22.5 - sky_mag)/2.5)/5 # because Fb = 5 \sigma_b  
-    #noise = galsim.PoissonNoise(random_number_generator, sky_level=sky_level) # I guess sky_level is just sky_sigma?
-    #print 'sky_level', sky_level, 'noise', noise
-    #galsim.applyToView(img, noise)
-    #img.addNoise(noise)
-    #print 'hello'
-#plt.imshow(img.array)
     return img
 
 def galsim_generate_data(currLens, currObs):
@@ -60,13 +50,7 @@ def galsim_generate_data(currLens, currObs):
     flux = shape_info.moments_amp # I unit tested, and this is right though
     # moment calculation needs to be changed, because 2d array is not returned
     I_xx = shape_info.moments_sigma * 0.2 # unit of pixels is returned, so change units for arcsec squared 
-    I_yy, I_xy, lensID = 1, 0, currLens['LENSID'][0]
-    sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, I_xx, I_xx_err_calc, I_yy, I_yy_err_calc, I_xy, I_xy_err_calc, PSF_HWHM, sky_mag, lensID]
-    # here we noisify data because SLRealizer are noise-free
-    flux += flux*desc.slrealizer.noissify_data(desc.slrealizer.get_flux_err(), desc.slrealizer.get_flux_err_std())
-    first_moment_x += desc.slrealizer.noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_x
-    first_moment_y += desc.slrealizer.noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_y
-    I_xx += I_xx * desc.slrealizer.noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
+    I_yy, I_xy, lensID = 0, 0, currLens['LENSID'][0]
     e1 = shape_info.observed_shape.e1
     e2 = shape_info.observed_shape.e2
     e_squared = (e1*e1+e2*e2)

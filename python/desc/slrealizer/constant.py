@@ -56,4 +56,7 @@ def get_galsim_pixel_arcsec_conversion():
     return 0.2
 
 def get_ellipticity_cut():
-    return 0.5
+    return 0.4
+
+def get_SDSS_pixel_arcsec_conversion():
+    return 0.396

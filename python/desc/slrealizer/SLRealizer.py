@@ -25,7 +25,7 @@ class SLRealizer(object):
     Generates the toy catalog, plots the lensed system, and deblends sources using OM10 catalog and observation history.
     """
 
-    def __init__(self, catalog=None, observation="../../data/twinkles_observation_history.csv"):
+    def __init__(self, catalog=None, observation="../../../data/twinkles_observation_history.csv"):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is .csv file
@@ -86,7 +86,7 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, galsim=False):
+    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, galsim=False, overlap=None):
         """
         Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
 
@@ -104,7 +104,7 @@ class SLRealizer(object):
         Returns cornerplot (matplotlib.pyplot)
         """
 
-        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude']
+        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position']
         object_table = pd.read_csv(object_table_dir)
         if ((option is None) and (params is None)):
             print('either specify params or option. You can choose among :')
@@ -124,11 +124,14 @@ class SLRealizer(object):
             data = data.reshape(len(label), len(object_table)).transpose()
         else:
             data, label = desc.slrealizer.extract_features(object_table, params)
-        fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
+        if overlap is None:
+            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
+        else:
+            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap)
         return fig
 
-    def overlap():
-        pass
+    def overlap(self, dir='../../../data/sdss.fits'):
+        desc.slrealizer.convert_to_om10(catalog=dir)
 
     def make_source_catalog(self, dir='../../../data/source_catalog.csv', galsim=False):
         """
@@ -138,9 +141,9 @@ class SLRealizer(object):
         print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'e', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
-        for j in xrange(400): # we will select 400 observation
+        for j in xrange(200): # we will select 400 observation
             if self.observation[j][1] != 'y':
-                for i in xrange(400): # we will use first 400 lenses
+                for i in xrange(200): # we will use first 400 lenses
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                         if galsim:
                             data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
