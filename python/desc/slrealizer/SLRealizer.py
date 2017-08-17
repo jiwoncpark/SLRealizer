@@ -32,6 +32,12 @@ class SLRealizer(object):
         """
         self.catalog = catalog
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
+        filter = self.observation[:,1]
+        self.observation_count = {'u': np.count_nonzero(filter=='u'),
+                                      'g': np.count_nonzero(filter=='g'),
+                                      'r': np.count_nonzero(filter=='r'),
+                                      'i': np.count_nonzero(filter=='i'),
+                                      'z': np.count_nonzero(filter=='z')}
 
     def plot_lens_random_date(self, lensID=None, debug=False, convolve=False):
         """
@@ -86,7 +92,7 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, galsim=False, overlap=None):
+    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, galsim=False, overlap=None, normed=False, data=None, label=None):
         """
         Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
 
@@ -104,13 +110,15 @@ class SLRealizer(object):
         Returns cornerplot (matplotlib.pyplot)
         """
 
-        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position']
+        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position', 'custom']
         object_table = pd.read_csv(object_table_dir)
         if ((option is None) and (params is None)):
             print('either specify params or option. You can choose among :')
             print(options)
             print('or specify columns in the source table that you want to see in the cornerplot.')
             return
+        elif 'custom' in option:
+            print('custom input')
         elif option is not None:
             data, label = np.array([]), []
             for elem in option:
@@ -118,20 +126,20 @@ class SLRealizer(object):
                     print(elem, 'is not in the option')
                     return
                 method_name = 'calculate_'+elem
-                cur_data, cur_label = getattr(extract_corner, method_name)(object_table, galsim)
+                cur_data, cur_label = getattr(galsim_extract_corner, method_name)(object_table)
                 data = np.append(data, cur_data)
                 label.extend(cur_label)
             data = data.reshape(len(label), len(object_table)).transpose()
         else:
             data, label = desc.slrealizer.extract_features(object_table, params)
         if overlap is None:
-            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range)
+            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, hist_kwargs=dict(normed=normed))
         else:
-            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap)
+            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap, hist_kwargs=dict(normed=normed))
         return fig
 
     def overlap(self, dir='../../../data/sdss.fits'):
-        desc.slrealizer.convert_to_om10(catalog=dir)
+        desc.slrealizer.save_as_catalog(catalog=dir)
 
     def make_source_catalog(self, dir='../../../data/source_catalog.csv', galsim=False):
         """
@@ -139,7 +147,7 @@ class SLRealizer(object):
         """
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         print('From the OM10 catalog, I am selecting LSST lenses')
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'qxx', 'qxx_err', 'qyy', 'qyy_err', 'qxy', 'qxy_err', 'e', 'psf_sigma', 'sky', 'lensid'])
+        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
         for j in xrange(200): # we will select 400 observation
@@ -150,7 +158,9 @@ class SLRealizer(object):
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                         if galsim:
                             data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                            df.loc[len(df)]= data
+                            if data is not None:
+                                df.loc[len(df)]= data
+                                print('data:', data)
                         else:
                             data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                             df.loc[len(df)]= data
@@ -170,12 +180,18 @@ class SLRealizer(object):
         df = pandas.read_csv(source_table_dir)
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_qxx', 'g_qxy', 'g_qyy', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_qxx_err', 'g_qxy_err', 'g_qyy_err', 'g_e', 'z_flux', 'z_x', 'z_y', 'z_qxx', 'z_qxy', 'z_qyy', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_qxx_err', 'z_qxy_err', 'z_qyy_err', 'z_e', 'i_flux', 'i_x', 'i_y', 'i_qxx', 'i_qxy', 'i_qyy', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_qxx_err', 'i_qxy_err', 'i_qyy_err', 'i_e', 'r_flux', 'r_x', 'r_y', 'r_qxx', 'r_qxy', 'r_qyy', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_qxx_err', 'r_qxy_err', 'r_qyy_err','r_e', 'u_flux', 'u_x', 'u_y', 'u_qxx', 'u_qxy', 'u_qyy', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_qxx_err', 'u_qxy_err', 'u_qyy_err', 'u_e']
+        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err','r_e', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e']
         source_table = pd.DataFrame(columns=column_name)
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
+            print('**********LENSARRAY**********')
+            print(lens_array)
             for filter in ['g', 'z', 'i', 'r', 'u']:
+                print('*******INPUT****************')
+                print(lens_array.loc[lens_array['filter'] == filter])
+                print('*******RETURNED**************')
+                print(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
