@@ -150,9 +150,11 @@ class SLRealizer(object):
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
+        num_system = len(self.catalog.sample)
+        print('number of system:', num_system)
         for j in xrange(200): # we will select 400 observation
             if self.observation[j][1] != 'y':
-                for i in xrange(200): # we will use first 400 lenses
+                for i in xrange(num_system): # we will use first 400 lenses
                     print('debug_count: ***************************** : ', debug_count)
                     debug_count += 1
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
