@@ -33,7 +33,7 @@ def extract_features(df, names):
 
     return features.reshape(p,n).transpose(), labels
 
-def calculate_size(df, galsim):
+def calculate_size(df):
 
     """
     Parameters
@@ -54,11 +54,12 @@ def calculate_size(df, galsim):
     
     for filter in ['u', 'g', 'r', 'i', 'z']:
         features = np.append(features, df[filter+'_size'])
-        labels.append(axis_labels[filter+'_size'])
+        labels.append(axis_labels[filter+'size'])
 
     return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_ellipticity(df, galsim):
+def calculate_ellipticity(df):
 
     """
     Parameters
@@ -77,22 +78,12 @@ def calculate_ellipticity(df, galsim):
     labels = []
 
     for filter in ['u', 'g', 'r', 'i', 'z']:
-        if galsim:
-            e = df[filter+'_e']
-        else:
-            qxx = df[filter+'_qxx']
-            qxy = df[filter+'_qxy']
-            qyy = df[filter+'_qyy']
-            e1 = (qxx-qyy)/(qxx+qyy)
-            e2 = 2*qxy/(qxx+qyy)
-            e = np.power(np.power(e1,2)+np.power(e2,2),0.5)
+        e = df[filter+'_e']
         features = np.append(features,e)
         labels.append(axis_labels[filter+'e'])
-
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_magnitude(df, galsim):
+def calculate_magnitude(df):
 
     """
     Parameters
@@ -120,7 +111,7 @@ def calculate_magnitude(df, galsim):
     return features, labels
     #return features.reshape(5, len(df)).transpose(), labels
 
-def calculate_color(df, galsim):
+def calculate_color(df):
 
     labels = []
     features = np.array([])
@@ -136,8 +127,20 @@ def calculate_color(df, galsim):
     return features, labels
     #return magnitude.reshape(3, len(df)).transpose(), labels
 
-def calculate_x_position(df, galsim):
-    # reference filter : i
+def calculate_position(df):
+    # using pythagorean theorem calculate the distance between centroids
+    x_distance, _ = desc.slrealizer.calculate_x_position(df)
+    y_distance, _ = desc.slrealizer.calculate_y_position(df)
+    x_distance_squared = np.multiply(x_distance, x_distance)
+    y_distance_squared = np.multiply(y_distance, y_distance)
+    distance = np.sqrt(x_distance_squared+y_distance_squared)
+    labels = []
+    for filter in ['u', 'g', 'i', 'z']:
+        labels.append(axis_labels[filter+'pos'])
+    return distance, labels
+
+def calculate_x_position(df):
+    # reference filter : r
 
     """
     Parameters
@@ -155,16 +158,16 @@ def calculate_x_position(df, galsim):
     features = np.array([])
     labels = []
 
-    for filter in ['u', 'g', 'r', 'z']:
+    for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_x'
-        filter_pos = df[name] - df['i_x']
+        filter_pos = df[name] - df['r_x']
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'xpos'])
     
     return features, labels
     #return features.reshape(4, len(df)).transpose(), labels
 
-def calculate_y_position(df, galsim):
+def calculate_y_position(df):
     # reference filter : i
     """
         Parameters
@@ -183,9 +186,9 @@ def calculate_y_position(df, galsim):
     features = np.array([])
     labels = []
 
-    for filter in ['u', 'g', 'r', 'z']:
+    for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_y'
-        filter_pos = df[name] -df['i_y']
+        filter_pos = df[name] -df['r_y']
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'ypos'])
 
@@ -210,11 +213,11 @@ axis_labels['z_y'] = '$z_y / arcsec$'
 axis_labels['r_y'] = '$r_y / arcsec$'
 axis_labels['u_y'] = '$u_y / arcsec$'
 axis_labels['i_y'] = '$i_y / arcsec$'
-axis_labels['g_size'] = '$size_g / arcsec$'
-axis_labels['z_size'] = '$size_z / arcsec$'
-axis_labels['r_size'] = '$size_r / arcsec$'
-axis_labels['u_size'] = '$size_u / arcsec$'
-axis_labels['i_size'] = '$size_i / arcsec$'
+axis_labels['gsize'] = '$size_g / arcsec$'
+axis_labels['zsize'] = '$size_z / arcsec$'
+axis_labels['rsize'] = '$size_r / arcsec$'
+axis_labels['usize'] = '$size_u / arcsec$'
+axis_labels['isize'] = '$size_i / arcsec$'
 axis_labels['ge'] = '$e_g$'
 axis_labels['ze'] = '$e_z$'
 axis_labels['re'] = '$e_r$'
@@ -239,3 +242,7 @@ axis_labels['zypos'] = '$y_z / arcsec$'
 axis_labels['rypos'] = '$y_r / arcsec$'
 axis_labels['uypos'] = '$y_u / arcsec$'
 axis_labels['iypos'] = '$y_i / arcsec$'
+axis_labels['zpos'] = '$pos_z / arcsec$'
+axis_labels['gpos'] = '$pos_g / arcsec$'
+axis_labels['upos'] = '$pos_u / arcsec$'
+axis_labels['ipos'] = '$pos_i / arcsec$'

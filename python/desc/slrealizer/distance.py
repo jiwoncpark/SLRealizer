@@ -1,7 +1,6 @@
 #=========================================
 
 import desc.slrealizer
-import deblend
 import scipy
 import scipy.stats
 

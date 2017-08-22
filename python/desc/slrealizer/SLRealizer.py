@@ -12,7 +12,6 @@ import pandas
 import corner
 import dropbox
 import extract_corner
-import galsim_extract_corner
 import om10
 #from corner import corner
 #=====================================================
@@ -32,12 +31,6 @@ class SLRealizer(object):
         """
         self.catalog = catalog
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
-        filter = self.observation[:,1]
-        self.observation_count = {'u': np.count_nonzero(filter=='u'),
-                                      'g': np.count_nonzero(filter=='g'),
-                                      'r': np.count_nonzero(filter=='r'),
-                                      'i': np.count_nonzero(filter=='i'),
-                                      'z': np.count_nonzero(filter=='z')}
 
     def plot_lens_random_date(self, lensID=None, convolve=False):
         """                                                                                                                      
@@ -91,7 +84,7 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, galsim=False, overlap=None, normed=False, data=None, label=None):
+    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, overlap=None, normed=False, data=None, label=None):
         """
         Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
 
@@ -125,7 +118,7 @@ class SLRealizer(object):
                     print(elem, 'is not in the option')
                     return
                 method_name = 'calculate_'+elem
-                cur_data, cur_label = getattr(galsim_extract_corner, method_name)(object_table)
+                cur_data, cur_label = getattr(extract_corner, method_name)(object_table)
                 data = np.append(data, cur_data)
                 label.extend(cur_label)
             data = data.reshape(len(label), len(object_table)).transpose()
@@ -137,10 +130,7 @@ class SLRealizer(object):
             fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap, hist_kwargs=dict(normed=normed))
         return fig
 
-    def overlap(self, dir='../../../data/sdss.fits'):
-        desc.slrealizer.save_as_catalog(catalog=dir)
-
-    def make_source_catalog(self, dir='../../../data/source_catalog.csv', galsim=False):
+    def make_source_catalog(self, dir='../../../data/source_catalog.csv'):
         """
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
@@ -157,21 +147,13 @@ class SLRealizer(object):
                     print('debug_count: ***************************** : ', debug_count)
                     debug_count += 1
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                        if galsim:
-                            data = desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                            if data is not None:
-                                df.loc[len(df)]= data
-                                print('data:', data)
-                        else:
-                            data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                        data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                        if data is not None:
                             df.loc[len(df)]= data
-                            debug_count += 1
+                            print('data:', data)
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
-        if galsim:
-            desc.slrealizer.dropbox_upload(dir, 'source_catalog_galsim.csv')
-        else:
-            desc.slrealizer.dropbox_upload(dir, 'source_catalog.csv')
+        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
@@ -196,8 +178,8 @@ class SLRealizer(object):
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
             source_table.loc[len(source_table)]= np.array(lens_row)
         source_table.to_csv(save_dir, index=False)
-        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog.csv')
+        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv')
 
     def test(self):
-        desc.slrealizer.galsim_generate_data(self.catalog.get_lens(self.catalog.sample[0]['LENSID']), self.observation[0])
+        desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[0]['LENSID']), self.observation[0])
         print('*************!******************!*******************')
