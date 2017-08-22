@@ -53,15 +53,10 @@ def calculate_size(df, galsim):
     labels = []
     
     for filter in ['u', 'g', 'r', 'i', 'z']:
-        qxx = df[filter+'_qxx']
-        qxy = df[filter+'_qxy']
-        qyy = df[filter+'_qyy']
-        size = (qxx*qyy)-(qxy*qxy) # size is calculated by the determinant of a covariance matrix
-        features = np.append(features, size*math.pow(desc.slrealizer.get_pixel_arcsec_conversion(),2))
-        labels.append(axis_labels[filter+'size'])
+        features = np.append(features, df[filter+'_size'])
+        labels.append(axis_labels[filter+'_size'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_ellipticity(df, galsim):
 
@@ -215,11 +210,11 @@ axis_labels['z_y'] = '$z_y / arcsec$'
 axis_labels['r_y'] = '$r_y / arcsec$'
 axis_labels['u_y'] = '$u_y / arcsec$'
 axis_labels['i_y'] = '$i_y / arcsec$'
-axis_labels['gsize'] = '$size_g / arcsec$'
-axis_labels['zsize'] = '$size_z / arcsec$'
-axis_labels['rsize'] = '$size_r / arcsec$'
-axis_labels['usize'] = '$size_u / arcsec$'
-axis_labels['isize'] = '$size_i / arcsec$'
+axis_labels['g_size'] = '$size_g / arcsec$'
+axis_labels['z_size'] = '$size_z / arcsec$'
+axis_labels['r_size'] = '$size_r / arcsec$'
+axis_labels['u_size'] = '$size_u / arcsec$'
+axis_labels['i_size'] = '$size_i / arcsec$'
 axis_labels['ge'] = '$e_g$'
 axis_labels['ze'] = '$e_z$'
 axis_labels['re'] = '$e_r$'

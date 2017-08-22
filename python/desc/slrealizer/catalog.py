@@ -38,11 +38,13 @@ def generate_data(curr_lens, curr_obs):
     I_xx += I_xx * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
     I_xy += I_xy * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
     I_yy += I_yy * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
+    size = I_xx + I_yy
+    size_err = 0 # for now
     I_xx_err_calc, I_xy_err_calc, I_yy_err_calc = 0, 0, 0
     lensID = curr_lens[0]['LENSID']
 
     e = 0 # we do not have to calculate here, just for galsim
-    return np.array([MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, I_xx, I_xx_err_calc, I_yy, I_yy_err_calc, I_xy, I_xy_err_calc, e, PSF_HWHM, sky_mag, lensID])
+    return np.array([MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e, PSF_HWHM, sky_mag, lensID])
 
 def noissify_data(mean, stdev):
     """
@@ -82,6 +84,4 @@ def return_mean_properties(lens_array):
     returns the mean value of flux, 1st moment of x, 1st moment of y, qzz, qxy, qyy, flux_err, 1st moment x error, 1st moment y error, qxx error, qxy error, and qyy error
     """
 
-    return lens_array['flux'].mean(), lens_array['x'].mean(), lens_array['y'].mean(), lens_array['qxx'].mean(), lens_array['qxy'].mean(), lens_array['qyy'].mean(), lens_array['flux_err'].mean(), lens_array['x_com_err'].mean(), lens_array['y_com_err'].mean(), lens_array['qxx_err'].mean(), lens_array['qxy_err'].mean(), lens_array['qyy_err'].mean(), lens_array['e'].mean()
-
-
+    return lens_array['flux'].mean(), lens_array['x'].mean(), lens_array['y'].mean(), lens_array['size'].mean(), lens_array['flux_err'].mean(), lens_array['x_com_err'].mean(), lens_array['y_com_err'].mean(), lens_array['size_err'].mean(), lens_array['e'].mean()
