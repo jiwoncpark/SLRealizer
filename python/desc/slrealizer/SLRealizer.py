@@ -24,7 +24,7 @@ class SLRealizer(object):
     Generates the toy catalog, plots the lensed system, and deblends sources using OM10 catalog and observation history.
     """
 
-    def __init__(self, catalog=None, observation="../../../data/twinkles_observation_history.csv"):
+    def __init__(self, catalog=None, observation="../data/twinkles_observation_history.csv"):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is .csv file
@@ -84,7 +84,7 @@ class SLRealizer(object):
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
 
-    def generate_cornerplot(self, color='black', object_table_dir = '../../../data/source_table.csv', option = None, params = None, range=None, overlap=None, normed=False, data=None, label=None):
+    def generate_cornerplot(self, color='black', object_table_dir = '../data/object_catalog_galsim_noise.csv', option = None, params = None, range=None, overlap=None, normed=False, data=None, label=None):
         """
         Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
 

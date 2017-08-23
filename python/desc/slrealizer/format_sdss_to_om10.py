@@ -31,21 +31,19 @@ def save_as_catalog(catalog=None, dir='../../../data/sdss_object.csv'):
         curr_galaxy_y = curr_galaxy_DEC #arcsec unit
         catalog[filter+'_x'] = curr_galaxy_x
         catalog[filter+'_y'] = curr_galaxy_y
-        catalog[filter+'_size'] = data['mRrCc_'+filter] * desc.slrealizer.get_SDSS_pixel_arcsec_conversion()
         #magnitude error                        
         curr_galaxy_err = data['err_'+filter]
         catalog[filter+'_flux_err'] = curr_galaxy_err
         catalog[filter+'_x_com_err'] = [0] * len(data)
         catalog[filter+'_y_com_err'] = [0] * len(data)
         catalog[filter+'_size_err'] = [0] * len(data)
+#        catalog[filter+'_size'] = np.sqrt(data['mRrCc_'+filter]*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()*0.396/np.pi)*2
+        #catalog[filter+'_size'] = np.sqrt(data['mRrCc_'+filter]*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()*np.pi)*2
+        catalog[filter+'_size'] = np.sqrt(data['mRrCc_'+filter]*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()*desc.slrealizer.get_SDSS_pixel_arcsec_conversion()/np.pi)*2
         e1 = np.array(data['mE1_'+filter])
-        print('e1', e1)
         e2 = np.array(data['mE2_'+filter])
-        print('e2', e2)
         e_squared = np.multiply(e1, e1) + np.multiply(e2, e2)
-        print('e_squared', e_squared)
         e = np.sqrt(e_squared)
-        print('e', e)
         catalog[filter+'_e'] = e
     df = catalog.to_pandas()
     df.to_csv(dir, index=False)
