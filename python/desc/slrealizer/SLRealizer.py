@@ -45,9 +45,8 @@ class SLRealizer(object):
             randomIndex = random.randint(0, 200)
             filter = self.observation[randomIndex][1]
         # Now visualize the lens system at the epoch defined by the randomIndex:
-        desc.slrealizer.draw_model(self.observation[randomIndex],
-                                   self.catalog.get_lens(lensID),
-                                   convolve)
+        img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex])
+        plt.imshow(img.array)
         return
 
     # after merging, change this one to deblend_test
@@ -136,21 +135,21 @@ class SLRealizer(object):
         """
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         print('From the OM10 catalog, I am selecting LSST lenses')
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e', 'psf_sigma', 'sky', 'lensid'])
+        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
         num_system = len(self.catalog.sample)
         print('number of system:', num_system)
-        for j in xrange(200): # we will select 400 observation
+        for j in xrange(263): # we will select 263 observation - first three years amount
             if self.observation[j][1] != 'y':
-                for i in xrange(num_system): # we will use first 400 lenses
+                print(self.observation[j][0])
+                for i in xrange(len(self.catalog.sample)): # we will use first 400 lenses
                     print('debug_count: ***************************** : ', debug_count)
                     debug_count += 1
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                         data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                         if data is not None:
                             df.loc[len(df)]= data
-                            print('data:', data)
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
         desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
@@ -163,7 +162,7 @@ class SLRealizer(object):
         df = pandas.read_csv(source_table_dir)
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err','r_e', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e']
+        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e', 'g_phi', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e', 'z_phi', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e', 'i_phi', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err','r_e', 'r_phi', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e', 'u_phi']
         source_table = pd.DataFrame(columns=column_name)
         for lens in lensID:
             lens_row = [lens]

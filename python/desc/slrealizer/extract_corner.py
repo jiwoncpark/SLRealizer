@@ -160,7 +160,7 @@ def calculate_x_position(df):
 
     for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_x'
-        filter_pos = df[name] - df['r_x']
+        filter_pos = (df[name] - df['r_x'])
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'xpos'])
     
@@ -188,7 +188,7 @@ def calculate_y_position(df):
 
     for filter in ['u', 'g', 'i', 'z']:
         name = filter+'_y'
-        filter_pos = df[name] -df['r_y']
+        filter_pos = (df[name] - df['r_y'])
         features = np.append(features, filter_pos*desc.slrealizer.get_pixel_arcsec_conversion())
         labels.append(axis_labels[filter+'ypos'])
 

@@ -44,7 +44,9 @@ def save_as_catalog(catalog=None, dir='../../../data/sdss_object.csv'):
         e2 = np.array(data['mE2_'+filter])
         e_squared = np.multiply(e1, e1) + np.multiply(e2, e2)
         e = np.sqrt(e_squared)
+        phi = np.arctan(e2/e1)/2.0
         catalog[filter+'_e'] = e
+        catalog[filter+'_phi'] = phi
     df = catalog.to_pandas()
     df.to_csv(dir, index=False)
     desc.slrealizer.dropbox_upload(dir, 'sdss_formatted.csv')

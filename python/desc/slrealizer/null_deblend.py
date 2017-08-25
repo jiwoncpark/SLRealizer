@@ -19,6 +19,7 @@ def plot_all_objects(currLens, currObs):
     galaxy_flux = np.power(2.5, desc.slrealizer.return_zeropoint()-curr_galaxy_mag+filter_AB_offset)
     #Only one of sigma, fwhm, and half_light_radius may be specified for Gaussian, so we just add the values!
     galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=galaxy_flux)
+    #galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=0)
     #print 'galaxy flux:', galaxy_flux
     for i in xrange(currLens['NIMG']):
         filter_quasar = currLens[currObs[1]+'_SDSS_quasar']
@@ -35,23 +36,6 @@ def plot_all_objects(currLens, currObs):
     phi_angle = currLens['PHIE'][0] * galsim.degrees
     galaxy = galaxy.shear(e=currLens['ELLIP'][0], beta=phi_angle)
     img = galaxy.drawImage(scale=0.2)
-    #return img
-#img_copy = img.copy()
-    #print(img.FindAdaptiveMom())
-    #plt.figure()
-    #plt.imshow(img.array)
-    #rng = galsim.BaseDeviate(1)
-    #noise = galsim.PoissonNoise(rng, sky_level=poisson_noise)
-    #noise = galsim.GaussianNoise(sky_level=poisson_noise)
-    #img_copy.addNoise(noise)
-    #print('********************')
-    #print(img.FindAdaptiveMom())
-    #plt.figure()
-    #plt.imshow(img_copy.array)
-    #print('********************')
-    #print(img.FindAdaptiveMom())               
-#plt.figure()
-    #plt.imshow(img.array)
     return img
 
 def generate_data(currLens, currObs, manual_error=True):
@@ -77,13 +61,14 @@ def generate_data(currLens, currObs, manual_error=True):
     e2 = shape_info.observed_shape.e2
     e_squared = (e1*e1+e2*e2)
     e = np.sqrt(e_squared)
+    phi = np.arctan(e2/e1)/2
     size_err = 0
     if manual_error:
         size += size * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
         first_moment_x += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_x
         first_moment_y += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_y
         flux += flux*noissify_data(desc.slrealizer.get_flux_err(), desc.slrealizer.get_flux_err_std())
-        sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e, PSF_HWHM, sky_mag, lensID]
+        sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e, phi, PSF_HWHM, sky_mag, lensID]
     print('returned')
     return np.array(sample_array)
 
