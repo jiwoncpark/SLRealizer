@@ -20,7 +20,7 @@ cache:
     - pip: true
 
 script: 
-    - "python ../python/setup.py develop && nosetests -w tests/"
+    - "python python/setup.py develop && nosetests -w tests/"
 
 after_success:
     - codecov
