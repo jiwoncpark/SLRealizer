@@ -4,3 +4,4 @@ scikit-learn
 astropy
 matplotlib
 corner
+om10
