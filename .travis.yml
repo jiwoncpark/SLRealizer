@@ -20,8 +20,7 @@ cache:
     - pip: true
 
 script: 
-    - cd tests
-    - nosetests
+    - "python setup.py develop && nosetests -w tests/"
 
 after_success:
     - codecov
