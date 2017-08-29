@@ -1,6 +1,6 @@
 # SLRealizer
 
-![](http://imgur.com/a/uk4Pg)
+![](http://imgur.com/HAHxXNY)
 
 <a href='https://travis-ci.org/jennykim1016/SLRealizer'>
 <img src='https://secure.travis-ci.org/jennykim1016/SLRealizer.png?branch=master'></a>
