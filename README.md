@@ -1,5 +1,3 @@
-# SLRealizer
-
 ![Logo](https://i.imgur.com/HAHxXNY.png)
 
 <a href='https://travis-ci.org/jennykim1016/SLRealizer'>
