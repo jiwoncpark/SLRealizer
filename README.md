@@ -46,15 +46,16 @@ SLRealizer/
 ├── python/
 │   ├── desc/
 |   |    └── slrealizer/
-|   |    ├── __init__.py
-|   |    ├── SLRealizer.py // contains wrapper methods that ensembles the methods in different modules
-|   |    ├── null_deblend.py // contains methods that null-deblends the input sources
-|   |    ├── catalog.py // contains methods that format each entree of the source and the object catalog
-|   |    ├── constant.py // defines constants that could be accessed globally in the package
-|   |    ├── dropbox_manage.py // contains methods that sync dropbox repository with a local repository to save big data
-|   |    ├── test.py // contains unit tests for the SLRealizer package
-|   |    ├── plotting.py // _not called by SLRealizer.py_ given an OM10 system, make a simple plot of gaussian realization
-|   |    ├── Makefile // _to be more updated_ currently, contains `make clean` that cleans up the junk files
+|   |    |   ├── __init__.py
+|   |    |   ├── SLRealizer.py // contains wrapper methods that ensembles the methods in different modules
+|   |    |   ├── null_deblend.py // contains methods that null-deblends the input sources
+|   |    |   ├── catalog.py // contains methods that format each entree of the source and the object catalog
+|   |    |   ├── constant.py // defines constants that could be accessed globally in the package
+|   |    |   ├── dropbox_manage.py // contains methods that sync dropbox repository with a local repository to save big data
+|   |    |   ├── test.py // contains unit tests for the SLRealizer package
+|   |    |   ├── plotting.py // _not called by SLRealizer.py_ given an OM10 system, make a simple plot of gaussian realization
+|   |    |   ├── distance.py // _not yet used by SLRealizer.py_ calculate the image distance and evaluate the cost model
+|   |    |   └── Makefile // _to be more updated_ currently, contains `make clean` that cleans up the junk files
 │   └── setup.py
 └── data/
     ├── qso_mock.fits // OM10 catalog
