@@ -10,8 +10,6 @@ def make_catalog(currLens, currObs):
     image = plot_all_objects(currLens, currObs)
 
 def plot_all_objects(currLens, currObs):
-    print('currLens: ', currLens)
-    print('currObs: ', currObs)
     MJD, filter, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
     filter_AB_offset = 0.00
     curr_galaxy_mag = currLens[currObs[1]+'_SDSS_lens'][0]
@@ -19,7 +17,10 @@ def plot_all_objects(currLens, currObs):
     galaxy_flux = np.power(2.5, desc.slrealizer.return_zeropoint()-curr_galaxy_mag+filter_AB_offset)
     #Only one of sigma, fwhm, and half_light_radius may be specified for Gaussian, so we just add the values!
     galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=galaxy_flux)
-    #galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=0)
+    big_fft_params = galsim.GSParams(maximum_fft_size=10240)
+    phi_angle = currLens['PHIE'][0] * galsim.degrees
+    galaxy = galaxy.shear(e=currLens['ELLIP'][0], beta=phi_angle)
+#galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=0)
     #print 'galaxy flux:', galaxy_flux
     for i in xrange(currLens['NIMG']):
         filter_quasar = currLens[currObs[1]+'_SDSS_quasar']
@@ -32,9 +33,7 @@ def plot_all_objects(currLens, currObs):
         #print('quasar')
         #print('X: ', currLens['XIMG'][0][i], 'Y: ', currLens['YIMG'][0][i], 'mag_ratio', mag_ratio, 'sigma', PSF_HWHM)
     psf = galsim.Gaussian(flux=1, sigma=PSF_HWHM)
-    galaxy = galsim.Convolve(galaxy, psf)
-    phi_angle = currLens['PHIE'][0] * galsim.degrees
-    galaxy = galaxy.shear(e=currLens['ELLIP'][0], beta=phi_angle)
+    galaxy = galsim.Convolve(galaxy, psf, gsparams=big_fft_params)
     img = galaxy.drawImage(scale=0.2)
     return img
 
@@ -68,7 +67,7 @@ def generate_data(currLens, currObs, manual_error=True):
         first_moment_x += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_x
         first_moment_y += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_y
         flux += flux*noissify_data(desc.slrealizer.get_flux_err(), desc.slrealizer.get_flux_err_std())
-        sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e, phi, PSF_HWHM, sky_mag, lensID]
+        sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e1, e2, e, phi, PSF_HWHM, sky_mag, lensID]
     print('returned')
     return np.array(sample_array)
 

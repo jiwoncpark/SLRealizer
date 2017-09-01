@@ -54,10 +54,38 @@ def calculate_size(df):
     
     for filter in ['u', 'g', 'r', 'i', 'z']:
         features = np.append(features, df[filter+'_size'])
+        print(features)
         labels.append(axis_labels[filter+'size'])
 
     return features, labels
     #return features.reshape(5, len(df)).transpose(), labels
+
+
+def calculate_phi(df):
+
+    """                                                                         
+    Parameters                                                                  
+    ----------                                                                  
+    df : csv toy catalog                                                        
+                                                                                
+    Returns                                                                     
+    ----------                                                                  
+    features: float, ndarray                                                    
+    rotation angle for each filter                                                       
+                                                                                
+    labels: string, list                                                        
+    Corresponding axis labels                                                   
+    """
+
+    features = np.array([])
+    labels = []
+
+    for filter in ['u', 'g', 'r', 'i', 'z']:
+        features = np.append(features, df[filter+'_phi'])
+        labels.append(axis_labels[filter+'phi'])
+
+    return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels  
 
 def calculate_ellipticity(df):
 
@@ -246,3 +274,8 @@ axis_labels['zpos'] = '$pos_z / arcsec$'
 axis_labels['gpos'] = '$pos_g / arcsec$'
 axis_labels['upos'] = '$pos_u / arcsec$'
 axis_labels['ipos'] = '$pos_i / arcsec$'
+axis_labels['gphi'] = '$phi_g$'
+axis_labels['zphi'] = '$phi_z$'
+axis_labels['rphi'] = '$phi_r$'
+axis_labels['uphi'] = '$phi_u$'
+axis_labels['iphi'] = '$phi_i$'
