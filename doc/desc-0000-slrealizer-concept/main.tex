@@ -95,22 +95,20 @@ In order to save some computation time, we queried the first three years of the 
 Using the data from \ref{subsec:dataprep}, we were able to make an each entre of catalog describing how each lensed system would look like in a particular night. While doing this, we assumed that all the sources in the lensed system have gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
 
 In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the gaussians with the gaussian point spread functions. After then, we added all the convolved gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels), realizing the total sum as one gaussian. After realization, we could get ellipticity, zeroth moment, first moment, and the second moment per one big, convolved gaussian.
-
 \begin{figure}
-\centering
-\label{fig:null-deblend}
-\begin{subfigure}[h]{0.3\linewidth}
-\includegraphics[width=\linewidth]{beforenulldeblend.png}
-\centering
-\caption{Before null-deblending, the whole system looks like this image. The brightest source is the lensing galaxy, and there are two dimmer quasar images near the galaxy. There is only one quasar images that are obvious that makes the image more elliptical.}
-\end{subfigure}
-\hfill
-\begin{subfigure}[h]{0.3\linewidth}
-\includegraphics[width=\linewidth]{afternulldeblend.png}
-\centering
-\caption{After null-deblending, the whole system looks like this image. All the sources look like one big source observed at once.}
-\end{subfigure}%
-\caption{Example null-deblending.}
+    \centering
+    \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
+        \centering
+        \includegraphics[width=\linewidth, height=8cm]{beforenulldeblend.png}
+        \caption{Before null-deblending, the whole system looks like this image. The brightest source is the lensing galaxy, and there are two dimmer quasar images near the galaxy. There is only one quasar images that are obvious that makes the image more elliptical.}
+    \end{subfigure}
+    \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
+        \centering
+        \includegraphics[width=\linewidth, height=8cm]{afternulldeblend.png}
+        \caption{After null-deblending, the whole system looks like this image. All the sources look like one big source observed at once.                                                                                                                                                                                 }
+    \end{subfigure}
+    \caption{Example null-deblending.}
+    \label{fig:null-deblend}
 \end{figure}
 
 The toy catalog is in \ref{sssec:toysource}.
@@ -171,7 +169,7 @@ flux          & flux\_err       & size          & size\_err & e1               &
 5.9831 & 0.03549 & 1.2253 & 0         & -0.05931 & 0.02588     & 0.06471 & -0.2057 & 1.093153   & 24.377204 \\
 6.2727 & 0.03549 & 1.2102  & 0         & -0.03114 & -0.05654  & 0.06455 & 0.5336  & 1.093153   & 24.377204 \\ \hline
 \end{tabular}
-\caption{Few entrees of the toy source catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/muqui8eu3kxox2l/toy_source_catalog.csv?dl=0}{here}}
+\caption{Few sample entrees of the toy source catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/muqui8eu3kxox2l/toy_source_catalog.csv?dl=0}{here}}
 \end{table}
 
 The above is the toy source catalog that we generated. For now, we haven't added error terms and calculated the positions (RA and DEC).
@@ -219,7 +217,7 @@ z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\
 18.0387 & 0.1216 & 0.7587 & 1.0622  & 0.0315       & 0.0            & 0.0            & 0.0          & -0.0751 & -0.0064 & 0.0754 & 0.0426 \\ \hline
 \end{tabular}
 
-\caption{trees of the toy object catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
+\caption{Few sample enrees of the toy object catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
 
 \end{table}
 
@@ -228,7 +226,7 @@ z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\
 \subsection{Feature Selection}
 \label{subsec:feature_data}
 
-Full cornerplots can be viewed in the \hyperref{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb} [SLRealizer's github repository's notebook folder].
+Full cornerplots can be viewed in the \href{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb}{SLRealizer's github repository's notebook folder}.
 
 As mentioned in \ref{subsec:feature}, we thought comparing features between $u$ and $z$ filter will be discriminatory. We chose six main features that we thought would change dramatically between the filters for OM10 lenses -- sizes, ellipticities (e), rotation angles of galaxies ($\phi$), magnitudes, positions($\Delta$ x), and the angle between ellipticity vector and the rotation vector ($\omega = \frac{e \cdot \phi}{ \left | e \right | \left | \phi \right |}$).
 
@@ -242,27 +240,33 @@ Here, the centroid of the yellow points(SDSS galaxies) and the purple points(OM1
 
 \begin{figure}[!h]
 \includegraphics[width=0.6\columnwidth]{FeatureImportance.png}
-\caption{Feature importance calculated with Random Forest algorithm.}
+\caption{Feature importance calculated with the Random Forest algorithm.}
  \label{fig:featureimportance}
 \end{figure}
 
 \subsection{Classification}
 \label{subsec:classification_data}
 
-As mentioned in \ref{subsec:classification}, we used three different algorithms: linear SVC, KNeighbors (Nearest Neighbors), and Random Forest. This is the results that we got for each algorithm.
-
-\begin{figure}[!h]
-\includegraphics[width=0.6\columnwidth]{ML_notmagnified.png}
-\caption{ROC curve for each algorithm}
- \label{fig:ML_nonmag}
-\end{figure}
+As mentioned in \ref{subsec:classification}, we used three different algorithms: linear SVC, KNeighbors (Nearest Neighbors), and Random Forest. \ref{fig:ML_nonmag} is the results that we got for each algorithm.
 
 Random forest showed the best performance among the three different algorithms. If we look into the top left corner where all the curves are overlapped, we can see this more obviously. The best classifiers were Random Forest, and the more the number of estimators were, the better the algorithm performed. For the best algorithm, we were able to achieve ~98$\%$ of the true positive rate(TPR) and ~0.04$\%$ of the false positive rate(FPR).
 
-\begin{figure}[!h]
-\includegraphics[width=0.6\columnwidth]{ML_magnified.png}
-\caption{ROC curve from FPR (0, 0.08) and TPR (0.6, 1.0)}
- \label{fig:ML Magnified}
+\begin{figure}
+    \centering
+    \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
+        \centering
+		\includegraphics[width=\linewidth]{ML_notmagnified.png}
+	\caption{ROC curve for each algorithm}
+	 \label{fig:ML_nonmag}
+    \end{subfigure}
+    \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
+        \centering
+        \includegraphics[width=\linewidth]{ML_magnified.png}
+		\caption{ROC curve from FPR (0, 0.08) and TPR (0.6, 1.0)}
+		 \label{fig:ML Magnified}
+    \end{subfigure}
+    \caption{Example null-deblending.}
+    \label{fig:null-deblend}
 \end{figure}
 
 % ----------------------------------------------------------------------
