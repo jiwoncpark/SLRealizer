@@ -86,13 +86,13 @@ In order to save some computation time, we queried the first three years of the 
 
 % ----------------------------------------------------------------------
 
-\section{Catalog Generation}
+\section{Data Preparation}
 \label{sssec:catalog}
 \subsection{Toy Source Catalog}
 
 \label{sssec:toysource}
 
-Using the data from \ref{dataprep}, we were able to make an each entre of catalog describing how each lensed system would look like in a particular night. While doing this, we assumed that all the sources in the lensed system have gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
+Using the data from \ref{subsec:dataprep}, we were able to make an each entre of catalog describing how each lensed system would look like in a particular night. While doing this, we assumed that all the sources in the lensed system have gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
 
 In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the gaussians with the gaussian point spread functions. After then, we added all the convolved gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels), realizing the total sum as one gaussian. After realization, we could get ellipticity, zeroth moment, first moment, and the second moment per one big, convolved gaussian.
 
@@ -140,9 +140,9 @@ Using these values, we computed various additional features. We plotted SDSS gal
 
 We have 2323 OM10 lensed systems, and 16000 SDSS galaxies. In order to make the balanced test data set, we randomly selected 2323 SDSS galaxies. We mixed the order of those two samples so that there will be roughly same number of each OM10 and SDSS samples in both the test and the training data. Then, using the scikit train$\_$test$\_$split method, we selected 75$\%$ of the data to be the training set, and performed the test on the remaining 25$\%$.
 
-According to the scikit's \hyperref{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html} {choosing the right estimator}, we were able to choose three different algorithms for the classification purposes. We did have more than 50 samples, we were predicting a catagory, we did have a labeled data, and we had less than 100K samples in a text data. This yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such as Random Forest.
+According to the scikit's \href{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html} {choosing the right estimator}, we were able to choose three different algorithms for the classification purposes. We did have more than 50 samples, we were predicting a catagory, we did have a labeled data, and we had less than 100K samples in a text data. This yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such as Random Forest.
 
-Detailed results are in \ref{subsec:trainSL}.
+Detailed results are in \ref{subsec:classification_data}.
 
 % ----------------------------------------------------------------------
 
@@ -154,18 +154,76 @@ Detailed results are in \ref{subsec:trainSL}.
 
 \begin{table}[!h]
 \label{table:source_table}
-%\csvautotabular[respect all]{source.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
-\caption{Few entrees of the object catalog. The full object catalog can be viewed here: insert link}
-% link : https://www.dropbox.com/s/muqui8eu3kxox2l/toy_source_catalog.csv?dl=0
+\centering
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+lensid   & MJD          & filter & RA & RA\_err & DEC & DEC\_err & x              & x\_com\_err & y               & y\_com\_err \\ \hline 
+710960   & 59823.286523 & g      & 0  & 0       & 0   & 0        & 2.1350  & 0           & 1.2151 & 0			\\
+17432684 & 59823.286523 & g      & 0  & 0       & 0   & 0        & 0.1226 & 0           & 0.7593  & 0           \\
+50310149 & 59823.286523 & g      & 0  & 0       & 0   & 0        & 0.2527 & 0           & 0.4665  & 0           \\
+52812164 & 59823.286523 & g      & 0  & 0       & 0   & 0        & 0.3874 & 0           & -0.3413 & 0          \\ \hline
+\end{tabular}
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|}
+\hline
+flux          & flux\_err       & size          & size\_err & e1               & e2                & e               & phi             & psf\_sigma & sky       \\ \hline
+21.9127 & 0.03549 & 1.4501 & 0         & 0.2386    & 0.3360    & 0.4121  & 0.4766  & 1.093153   & 24.377204 \\
+18.2072 & 0.03549& 1.1802  & 0         & -0.0550 & -0.004712  & 0.05525 & 0.04270 & 1.093153   & 24.377204 \\
+5.9831 & 0.03549 & 1.2253 & 0         & -0.05931 & 0.02588     & 0.06471 & -0.2057 & 1.093153   & 24.377204 \\
+6.2727 & 0.03549 & 1.2102  & 0         & -0.03114 & -0.05654  & 0.06455 & 0.5336  & 1.093153   & 24.377204 \\ \hline
+\end{tabular}
+\caption{Few entrees of the toy source catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/muqui8eu3kxox2l/toy_source_catalog.csv?dl=0}{here}}
 \end{table}
 
-\ref{table:source_table} is the toy source catalog that we generated. For now, we haven't added error terms and calculated the positions (RA and DEC).
+The above is the toy source catalog that we generated. For now, we haven't added error terms and calculated the positions (RA and DEC).
 
 \subsection{Toy Object Catalog}
 \label{subsec:toyobject}
 
+\begin{table}[!h]
+\label{table:object_table}
+\centering
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+lensid     & u\_flux & u\_x   & u\_y   & u\_size & u\_flux\_err & u\_x\_com\_err & u\_y\_com\_err & u\_size\_err & u\_e1   & u\_e2   & u\_e   & u\_phi \\ \hline
+710960.0   & 37.0846 & 2.2817 & 1.2996 & 1.4151  & 0.2511       & 0.0            & 0.0            & 0.0          & 0.1399  & 0.205   & 0.2496 & 0.4574 \\ \hline
+17432684.0 & 26.7018 & 0.1211 & 0.7633 & 0.971   & 0.2516       & 0.0            & 0.0            & 0.0          & -0.0968 & -0.0092 & 0.0972 & 0.0497 \\ \hline
+\end{tabular}
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|ll|}
+\hline
+g\_flux & g\_x   & g\_y   & g\_size & g\_flux\_err & g\_x\_com\_err & g\_y\_com\_err & g\_size\_err & g\_e1   & g\_e2   & g\_e   & g\_phi	\\ \hline
+19.9485 & 2.1555 & 1.2328 & 1.4608  & 0.1244       & 0.0            & 0.0            & 0.0          & 0.1967  & 0.2768  & 0.3395 & 0.4765 \\ \hline
+17.5991 & 0.1221 & 0.7518 & 1.2413  & 0.1244       & 0.0            & 0.0            & 0.0          & -0.0532 & -0.0045 & 0.0534	& 0.0425	\\ \hline
+\end{tabular}
+
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+r\_flux & r\_x   & r\_y   & r\_size & r\_flux\_err & r\_x\_com\_err & r\_y\_com\_err & r\_size\_err & r\_e1   & r\_e2   & r\_e   & r\_phi \\ \hline
+31.0886 & 2.27   & 1.2928 & 1.2608  & 0.0923       & 0.0            & 0.0            & 0.0          & 0.1693  & 0.2395  & 0.2933 & 0.4779 \\
+25.2258 & 0.1215 & 0.7617 & 0.9958  & 0.0923       & 0.0            & 0.0            & 0.0          & -0.0867 & -0.0078 & 0.087  & 0.0457 \\ \hline
+\end{tabular}
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+i\_flux & i\_x   & i\_y   & i\_size & i\_flux\_err & i\_x\_com\_err & i\_y\_com\_err & i\_size\_err & i\_e1   & i\_e2   & i\_e   & i\_phi \\ \hline
+26.2547 & 2.3012 & 1.3075 & 1.2154  & 0.0433       & 0.0            & 0.0            & 0.0          & 0.1521  & 0.2146  & 0.263  & 0.4773 \\
+22.747  & 0.1217 & 0.7612 & 1.0063  & 0.0433       & 0.0            & 0.0            & 0.0          & -0.0813 & -0.0071 & 0.0816 & 0.0436 \\ \hline
+\end{tabular}
+
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\_err & z\_size\_err & z\_e1   & z\_e2   & z\_e   & z\_phi \\ \hline
+19.7955 & 2.264  & 1.2879 & 1.2545  & 0.0322       & 0.0            & 0.0            & 0.0          & 0.1595  & 0.2247  & 0.2755 & 0.4767 \\
+18.0387 & 0.1216 & 0.7587 & 1.0622  & 0.0315       & 0.0            & 0.0            & 0.0          & -0.0751 & -0.0064 & 0.0754 & 0.0426 \\ \hline
+\end{tabular}
+
+\caption{trees of the toy object catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
+
+\end{table}
+
 \ref{table:object_table} is the toy object catalog that we generated.
-%https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0
 
 \subsection{Feature Selection}
 \label{subsec:feature_data}
