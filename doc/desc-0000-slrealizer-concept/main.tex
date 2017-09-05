@@ -26,7 +26,7 @@
       \usepackage{csvsimple}
       \usepackage{hyperref}
       \usepackage{adjustbox}
-      \usepackage{float}
+      %\usepackage{float}
       \usepackage{numprint}
 
 %
@@ -40,12 +40,7 @@
 
 \begin{abstract}
 
-The scale of the LSST dataset will be such that we should anticipate
-extracting as much information out of the its catalogs as possible,
-before ever turning to the pixel-level data. In this work we explore the
-use of simple, low-multiplicity Gaussian mixture models for realizing
-gravitational lens systems in LSST catalog space, to enable both
-large-scale sample simulation and direct model inference.
+The scale of the LSST dataset will be enormous that we need a different method to classify lensed images of quasars than manually picking the images out. We should anticipate to extract as much information out of its catalogs as possible before everturning to the pixel-level data. In this work we explore the use of simple, low-multiplicity Gaussian mixture models for realizing gravitational lens systems in LSST catalog space, to enable both large-scale sample simulation and direct model inference.
 
 \end{abstract}
 % Keywords are ignored in the LSST DESC Note style:
@@ -60,12 +55,15 @@ large-scale sample simulation and direct model inference.
 
 The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will be start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth astroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
 
-LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lense mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. 
+LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lense mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Cosmology from Gravitational Lens Time Delays and Planck Data} \cite{Dissecting the Gravitational Lens B1608+656} \cite{Treu2010} which describes the state of the universe.
 
-In order to do so, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabyes of data each night. %https://www.lsst.org/sites/default/files/docs/sciencebook/SB_Whole.pdf
-Considering the amount of the data that LSST will produce, pixel-level data searching will be really inefficient and expensive. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques. The software that does this job is named 'SL Realizer'. The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.  
+In order to perform such reesarch, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabyes of data each night \cite{LSSTScienceBookv2}.
+Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer). 
 
-The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) is effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system. Most of the previous attemps involved single-band image classification \cite{LensExtractor} \cite{convolution_neural_network}.
+The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) could be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system.
+
+The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.  
+
 
 
 
@@ -75,11 +73,13 @@ The attempt to use Machine Learning to detect lensed system is not a completely 
 \subsection{Preparation of Data}
 \label{subsec:dataprep}
 
-Twinkles, a simulated LSST sky with observed with six filters for ten years, provided the ten years of mock observation history. We also had OM10 mock lensed systems. 
+Twinkles, a simulated LSST sky with observed with six filters for ten years, provided the ten years of mock observation history. We also had OM10 mock lensed systems \cite{TimeDelayOverall}. 
+
+We assumed that OM10 mock lensed systems are composed of point-like sources. This means that the size of the galaxies as well as the quasar images had the effective radius of zero.
 
 \begin{table}[!h]
 \csvautotabular{../../data/paper_history.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
-\caption{Few entrees of the twinkles mock observation history data. Full data can be accessed from SLRealizer repository's data folder}
+\caption{Few entrees of the twinkles mock observation history data. Full data can be accessed \href{https://github.com/jennykim1016/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
 \end{table}
 
 In order to save some computation time, we queried the first three years of the observation which yields 263 observation epochs. We also selected LSST-like OM10 mock lensed systems by querying with magnitude cut of 22.5. 
@@ -151,7 +151,6 @@ Detailed results are in \ref{subsec:classification_data}.
 \label{subsec:toysource}
 
 \begin{table}[!h]
-\label{table:source_table}
 \centering
 \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
 \hline
@@ -170,6 +169,7 @@ flux          & flux\_err       & size          & size\_err & e1               &
 6.2727 & 0.03549 & 1.2102  & 0         & -0.03114 & -0.05654  & 0.06455 & 0.5336  & 1.093153   & 24.377204 \\ \hline
 \end{tabular}
 \caption{Few sample entrees of the toy source catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/muqui8eu3kxox2l/toy_source_catalog.csv?dl=0}{here}}
+\label{table:source_table}
 \end{table}
 
 The above is the toy source catalog that we generated. For now, we haven't added error terms and calculated the positions (RA and DEC).
@@ -178,7 +178,6 @@ The above is the toy source catalog that we generated. For now, we haven't added
 \label{subsec:toyobject}
 
 \begin{table}[!h]
-\label{table:object_table}
 \centering
 
 \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|l|}
@@ -218,7 +217,7 @@ z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\
 \end{tabular}
 
 \caption{Few sample enrees of the toy object catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
-
+\label{table:object_table}
 \end{table}
 
 \ref{table:object_table} is the toy object catalog that we generated.
@@ -239,7 +238,7 @@ As mentioned in \ref{subsec:feature}, we thought comparing features between $u$ 
 Here, the centroid of the yellow points(SDSS galaxies) and the purple points(OM10 systems) differed the most for size. Still, we could quantify the importance of the features by putting all the data into the Random Forest Algorithms. The results were as follows.
 
 \begin{figure}[!h]
-\includegraphics[width=0.6\columnwidth]{FeatureImportance.png}
+\includegraphics[width=0.4\columnwidth]{FeatureImportance.png}
 \caption{Feature importance calculated with the Random Forest algorithm.}
  \label{fig:featureimportance}
 \end{figure}
@@ -274,7 +273,7 @@ Random forest showed the best performance among the three different algorithms. 
 \section{Conclusions}
 \label{sec:conclusions}
 
-The results suggest that random forest algorithms would be able to differentiate lensed systems from galaxies. Still, even though we have high accuracy, because we expect to have much more non-lensed systems than the lensed systems, we will have more contaminants in the truly-classified lensed systems than the actual lensed systems. more number goes here Thus, it would also be helpful to have more rigorous model that actually fits physical models to the systems after rejecting all the non lensed-systems using SLRealizer.
+The results suggest that random forest algorithms would be able to differentiate lensed systems from galaxies. Still, even though we have high accuracy, because we expect to have much more non-lensed systems than the lensed systems, we will have more contaminants in the truly-classified lensed systems than the actual lensed systems. For instance, we expect to find 10,000 times more non-lensed systems than the lensed ones. Thus, with 98\% of the TPR and ~0.042\% of the FPR, we will have ~430 contaminants per truly classified lensed systems. Thus, it would also be helpful to have more rigorous model that actually fits physical models to the systems after rejecting all the non lensed-systems using SLRealizer.
 
 In addition, we only compared the features between OM10 lensed systems and SDSS galaxies. It will also be useful to overlap star-star pairs, star-galaxy pairs, quasar-quasar pairs, or quasar-galaxy pairs to see how different the other samples could be from the lensed system.
 
