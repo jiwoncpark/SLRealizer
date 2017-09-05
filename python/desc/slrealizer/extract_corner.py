@@ -54,7 +54,6 @@ def calculate_size(df):
     
     for filter in ['u', 'g', 'r', 'i', 'z']:
         features = np.append(features, df[filter+'_size'])
-        print(features)
         labels.append(axis_labels[filter+'size'])
 
     return features, labels

@@ -142,17 +142,16 @@ class SLRealizer(object):
         """
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
-        #self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
         ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
         num_system = len(self.catalog.sample)
         print('number of system:', num_system)
-        for j in xrange(263): # we will select 263 observation - first three years amount
-            if self.observation[j][1] != 'y' and self.observation[j][2] < 0.75:
-                for i in xrange(num_system): # we will use first 400 lenses
-                    #print('debug_count: ***************************** : ', debug_count)
+        num_obs, _ = self.observation.shape
+        for j in xrange(num_obs): # we will select 263 observation - first three years amount
+            if self.observation[j][1] != 'y' and self.observation[j][0] < 60919:
+                for i in xrange(num_system):
                     debug_count += 1
                     if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                         data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
@@ -175,18 +174,10 @@ class SLRealizer(object):
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
-            print('**********LENSARRAY**********')
-            print(lens_array)
-            for filter in ['g', 'z', 'i', 'r', 'u']:
-                print('*******INPUT****************')
-                print(lens_array.loc[lens_array['filter'] == filter])
-                print('*******RETURNED**************')
-                print(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
+            for filter in ['u', 'g', 'r', 'i', 'z']:
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
-            if not np.isnan(np.array(lens_row)).any():
-                if None not in lens_row:
-                    if np.infinite(np.array(lens_row)).all():
-                        source_table.loc[len(source_table)]= np.array(lens_row)
+            if np.isfinite(lens_row).all():
+                source_table.loc[len(source_table)]= np.array(lens_row)
         source_table = source_table.dropna(how='any')
         source_table.to_csv(save_dir, index=False)
         desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv')
