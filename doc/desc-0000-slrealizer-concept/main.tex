@@ -1,5 +1,6 @@
 %
 % ======================================================================
+
 \RequirePackage{docswitch}
 % \flag is set by the user, through the makefile:
 %    make note
@@ -44,10 +45,11 @@ The scale of the LSST dataset will be enormous that we need a different method t
 
 
 \end{abstract}
+
 % Keywords are ignored in the LSST DESC Note style:
 \dockeys{methods: statistical, cosmology: gravitational lenses}
 
-%\maketitlepost
+\maketitlepost
 
 % ----------------------------------------------------------------------
 
@@ -55,6 +57,7 @@ The scale of the LSST dataset will be enormous that we need a different method t
 \label{sec:intro}
 
 The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
+
 
 LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Cosmology from Gravitational Lens Time Delays and Planck Data} \cite{Dissecting the Gravitational Lens B1608+656} \cite{Treu2010} which describes the state of the universe.
 
@@ -94,7 +97,7 @@ In order to save some computation time, we queried the first three years of the 
 
 Using the data from \ref{subsec:dataprep}, we were able to make an each entry of catalog describing how each lensed system would look like on a particular night. While doing this, we assumed that all the sources in the lensed system have Gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
 
-In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of a galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the Gaussians with the Gaussian point spread functions. After then, we added all the convolved Gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels), realizing the total sum as one Gaussian. After the realization, we could get ellipticity, zeroth moment, the first moment, and the second moment per one big convolved Gaussian.
+In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of a galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the Gaussians with the Gaussian point spread functions. After then, we added all the convolved Gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels) as LSST, realizing the total sum as one Gaussian. After the realization, we could get ellipticity, zeroth moment, the first moment, and the second moment per one big convolved Gaussian.
 \begin{figure}
     \centering
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
@@ -113,12 +116,12 @@ In order to do so, we used Galsim package in Python. For each lensed system, we 
 
 The toy catalog is in \ref{sssec:toysource}.
 
-\subsection{Object Source Catalog}
-\label{sssec:objectsource}
+\subsection{Toy Object Catalog}
+\label{sssec:toyobject}
 
 After generating the source catalog, we computed the object table whose entree describes average properties of each lensed system per filter. In order to do so, we queried each lensed system in the source catalog. Then, for each lensed system, we computed the average properties for each filter.
 
-The toy catalog is in \ref{sssec:objectsource}.
+The toy catalog is in \ref{subsec:toyobject}.
 
 \subsection{Feature Selection}
 \label{subsec:feature}
@@ -129,7 +132,7 @@ We expect that the quasar images will be brighter in the shorter wavelength filt
 
 The features that we could get from the object table is changes in the first moment along the x-axis (reference to the $r$ filter), changes in the first moment along the y-axis (reference to the $r$ filter), changes in the position (reference to the $r$ filter), ellipticities, rotation angles, fluxes, and sizes.
 
-The catalog of SDSS galaxies also provides the same features. Magnitude systems are the same in both SDSS and OM10, and the units are scaled to be the same. However, the only difference was in the sizes. SDSS's definition of size was $I_{xx}$ + $I_{yy}$. Galsim calculates the size of OM10 systems by calculating the determinant of the second moment(M $=$ $I_{xx}$ * $I_{yy}$ - $I_{xy}$ * $I_{xy}$) and applying the fourth root on it ($\sqrt[4]{M}$). 
+The catalog of SDSS galaxies also provides the same features. Magnitude systems are the same in both SDSS and OM10, and the units are scaled to be the same. However, the only difference was in the sizes. SDSS's definition of size was $I_{xx}$ + $I_{yy}$. Galsim calculates the size of OM10 systems by calculating the determinant of the second moment(M $=$ $I_{xx}$ * $I_{yy}$ - $I_{xy}$ * $I_{xy}$) and applying the fourth root on it ($\sqrt[4]{M}$). In order to solve the problem by scaling the SDSS sizes, we multiplied the power of pixel-to-arcsec ratio to change the unit to arcseconds, multiplied two to convert the half size to the full size, and applied the square root to the value to get a right dimension.
 
 Using these values, we computed various additional features. We plotted SDSS galaxies and OM10 lensed systems onto the corner plot \ref{subsec:feature}, and chose the features that differentiated OM10 lensed systems from SDSS galaxies the most.
 
