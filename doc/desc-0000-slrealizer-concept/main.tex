@@ -40,7 +40,8 @@
 
 \begin{abstract}
 
-The scale of the LSST dataset will be enormous that we need a different method to classify lensed images of quasars than manually picking the images out. We should anticipate to extract as much information out of its catalogs as possible before everturning to the pixel-level data. In this work we explore the use of simple, low-multiplicity Gaussian mixture models for realizing gravitational lens systems in LSST catalog space, to enable both large-scale sample simulation and direct model inference.
+The scale of the LSST dataset will be enormous that we need a different method to classify lensed images of quasars than manually picking the images out. We should anticipate extracting as much information out of its catalogs as possible before ever turning to the pixel-level data. In this work we explore the use of simple, low-multiplicity Gaussian mixture models for realizing gravitational lens systems in LSST catalog space, to enable both large-scale sample simulation and direct model inference.
+
 
 \end{abstract}
 % Keywords are ignored in the LSST DESC Note style:
@@ -53,17 +54,16 @@ The scale of the LSST dataset will be enormous that we need a different method t
 \section{Introduction}
 \label{sec:intro}
 
-The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will be start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth astroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
+The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
 
-LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lense mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Cosmology from Gravitational Lens Time Delays and Planck Data} \cite{Dissecting the Gravitational Lens B1608+656} \cite{Treu2010} which describes the state of the universe.
+LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Cosmology from Gravitational Lens Time Delays and Planck Data} \cite{Dissecting the Gravitational Lens B1608+656} \cite{Treu2010} which describes the state of the universe.
 
-In order to perform such reesarch, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabyes of data each night \cite{LSSTScienceBookv2}.
+In order to perform such research, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabytes of data each night \cite{LSSTScienceBookv2}.
 Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer). 
 
 The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) could be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system.
 
 The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.  
-
 
 
 
@@ -79,7 +79,7 @@ We assumed that OM10 mock lensed systems are composed of point-like sources. Thi
 
 \begin{table}[!h]
 \csvautotabular{../../data/paper_history.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
-\caption{Few entrees of the twinkles mock observation history data. Full data can be accessed \href{https://github.com/jennykim1016/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
+\caption{Few entries of the twinkles mock observation history data. Full data can be accessed \href{https://github.com/jennykim1016/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
 \end{table}
 
 In order to save some computation time, we queried the first three years of the observation which yields 263 observation epochs. We also selected LSST-like OM10 mock lensed systems by querying with magnitude cut of 22.5. 
@@ -92,9 +92,9 @@ In order to save some computation time, we queried the first three years of the 
 
 \label{sssec:toysource}
 
-Using the data from \ref{subsec:dataprep}, we were able to make an each entre of catalog describing how each lensed system would look like in a particular night. While doing this, we assumed that all the sources in the lensed system have gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
+Using the data from \ref{subsec:dataprep}, we were able to make an each entry of catalog describing how each lensed system would look like on a particular night. While doing this, we assumed that all the sources in the lensed system have Gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
 
-In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the gaussians with the gaussian point spread functions. After then, we added all the convolved gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels), realizing the total sum as one gaussian. After realization, we could get ellipticity, zeroth moment, first moment, and the second moment per one big, convolved gaussian.
+In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of a galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the Gaussians with the Gaussian point spread functions. After then, we added all the convolved Gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels), realizing the total sum as one Gaussian. After the realization, we could get ellipticity, zeroth moment, the first moment, and the second moment per one big convolved Gaussian.
 \begin{figure}
     \centering
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
@@ -125,20 +125,20 @@ The toy catalog is in \ref{sssec:objectsource}.
 
 For now, we focused on classifying the lensed systems from the SDSS galaxies. We expect the lensed images to appear near the bright, massive galaxies. Thus, if we can differentiate the galaxies with lensed images with the galaxies without them, it would be really helpful.
 
-We expect that the quasar images will be brighter in the shorter wavelength filters. The galaxies will be brighter in the longer wavelength filters. Thus, when we observe a lensed system through $u$ filter (the shortest wavelength filter that OM10 has), we will see more stretched object because of the contribution from the quasar images. However, in the $z$ band, we will see more round object because of the contribution from the lens. By comparing the features in the $u$ filter and the $z$ filter, we will thus be able to see bigger changes in the properties for the lensed systems than SDSS galaxies.
+We expect that the quasar images will be brighter in the shorter wavelength filters. The galaxies will be brighter in the longer wavelength filters. Thus, when we observe a lensed system through a $u$ filter (the shortest wavelength filter that OM10 has), we will see the more stretched object because of the contribution from the quasar images. However, in the $z$ band, we will see a round object because of the contribution from the lens. By comparing the features in the $u$ filter and the $z$ filter, we will thus be able to see bigger changes in the properties for the lensed systems than SDSS galaxies.
 
 The features that we could get from the object table is changes in the first moment along the x-axis (reference to the $r$ filter), changes in the first moment along the y-axis (reference to the $r$ filter), changes in the position (reference to the $r$ filter), ellipticities, rotation angles, fluxes, and sizes.
 
 The catalog of SDSS galaxies also provides the same features. Magnitude systems are the same in both SDSS and OM10, and the units are scaled to be the same. However, the only difference was in the sizes. SDSS's definition of size was $I_{xx}$ + $I_{yy}$. Galsim calculates the size of OM10 systems by calculating the determinant of the second moment(M $=$ $I_{xx}$ * $I_{yy}$ - $I_{xy}$ * $I_{xy}$) and applying the fourth root on it ($\sqrt[4]{M}$). 
 
-Using these values, we computed various additional features. We plotted SDSS galaxies and OM10 lensed systems onto the cornerplot \ref{subsec:feature}, and chose the features that differentiated OM10 lensed systems from SDSS galaxies the most.
+Using these values, we computed various additional features. We plotted SDSS galaxies and OM10 lensed systems onto the corner plot \ref{subsec:feature}, and chose the features that differentiated OM10 lensed systems from SDSS galaxies the most.
 
 \subsection{Classification}
 \label{subsec:classification}
 
-We have 2323 OM10 lensed systems, and 16000 SDSS galaxies. In order to make the balanced test data set, we randomly selected 2323 SDSS galaxies. We mixed the order of those two samples so that there will be roughly same number of each OM10 and SDSS samples in both the test and the training data. Then, using the scikit train$\_$test$\_$split method, we selected 75$\%$ of the data to be the training set, and performed the test on the remaining 25$\%$.
+We have 2323 OM10 lensed systems and 16000 SDSS galaxies. In order to make the balanced test data set, we randomly selected 2323 SDSS galaxies. We mixed the order of those two samples so that there will be a roughly same number of each OM10 and SDSS samples in both the test and the training data. Then, using the scikit train$\_$test$\_$split method, we selected 75$\%$ of the data to be the training set and performed the test on the remaining 25$\%$.
 
-According to the scikit's \href{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html} {choosing the right estimator}, we were able to choose three different algorithms for the classification purposes. We did have more than 50 samples, we were predicting a catagory, we did have a labeled data, and we had less than 100K samples in a text data. This yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such as Random Forest.
+According to the scikit's \href{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html} {choosing the right estimator}, we were able to choose three different algorithms for the classification purposes. We did have more than 50 samples, we were predicting a category, we did have a labeled data, and we had less than 100K samples in a text data. This yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such as Random Forest.
 
 Detailed results are in \ref{subsec:classification_data}.
 
@@ -225,7 +225,7 @@ z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\
 \subsection{Feature Selection}
 \label{subsec:feature_data}
 
-Full cornerplots can be viewed in the \href{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb}{SLRealizer's github repository's notebook folder}.
+Full corner plots can be viewed in the \href{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb}{SLRealizer's GitHub repository's notebook folder}.
 
 As mentioned in \ref{subsec:feature}, we thought comparing features between $u$ and $z$ filter will be discriminatory. We chose six main features that we thought would change dramatically between the filters for OM10 lenses -- sizes, ellipticities (e), rotation angles of galaxies ($\phi$), magnitudes, positions($\Delta$ x), and the angle between ellipticity vector and the rotation vector ($\omega = \frac{e \cdot \phi}{ \left | e \right | \left | \phi \right |}$).
 
@@ -254,15 +254,15 @@ Random forest showed the best performance among the three different algorithms. 
     \centering
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
         \centering
-		\includegraphics[width=\linewidth]{ML_notmagnified.png}
-	\caption{ROC curve for each algorithm}
-	 \label{fig:ML_nonmag}
+        \includegraphics[width=\linewidth]{ML_notmagnified.png}
+    \caption{ROC curve for each algorithm}
+     \label{fig:ML_nonmag}
     \end{subfigure}
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
         \centering
         \includegraphics[width=\linewidth]{ML_magnified.png}
-		\caption{ROC curve from FPR (0, 0.08) and TPR (0.6, 1.0)}
-		 \label{fig:ML Magnified}
+        \caption{ROC curve from FPR (0, 0.08) and TPR (0.6, 1.0)}
+         \label{fig:ML Magnified}
     \end{subfigure}
     \caption{Example null-deblending.}
     \label{fig:null-deblend}
@@ -273,7 +273,7 @@ Random forest showed the best performance among the three different algorithms. 
 \section{Conclusions}
 \label{sec:conclusions}
 
-The results suggest that random forest algorithms would be able to differentiate lensed systems from galaxies. Still, even though we have high accuracy, because we expect to have much more non-lensed systems than the lensed systems, we will have more contaminants in the truly-classified lensed systems than the actual lensed systems. For instance, we expect to find 10,000 times more non-lensed systems than the lensed ones. Thus, with 98\% of the TPR and ~0.042\% of the FPR, we will have ~430 contaminants per truly classified lensed systems. Thus, it would also be helpful to have more rigorous model that actually fits physical models to the systems after rejecting all the non lensed-systems using SLRealizer.
+The results suggest that random forest algorithms would be able to differentiate lensed systems from galaxies. Still, even though we have high accuracy, because we expect to have much more non-lensed systems than the lensed systems, we will have more contaminants in the truly-classified lensed systems than the actual lensed systems. For instance, we expect to find 10,000 times more non-lensed systems than the lensed ones. Thus, with 98\% of the TPR and ~0.042\% of the FPR, we will have ~430 contaminants per truly classified lensed systems. Thus, it would also be helpful to have a more rigorous model that actually fits physical models to the systems after rejecting all the non lensed-systems using SLRealizer.
 
 In addition, we only compared the features between OM10 lensed systems and SDSS galaxies. It will also be useful to overlap star-star pairs, star-galaxy pairs, quasar-quasar pairs, or quasar-galaxy pairs to see how different the other samples could be from the lensed system.
 
