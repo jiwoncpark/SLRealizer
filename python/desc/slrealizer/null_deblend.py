@@ -61,8 +61,9 @@ def generate_data(currLens, currObs, manual_error=True):
     e_squared = (e1*e1+e2*e2)
     e = np.sqrt(e_squared)
     if e1 is 0:
-        e1 = 0.0001 # to solve the division error
-    phi = np.arctan(e2/e1)/2
+        e1 = 0.001 # to solve the division error
+    print(e2/e1, e1)
+    phi = np.arctan(e2/e1)/2.0
     size_err = 0
     if manual_error:
         size += size * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())

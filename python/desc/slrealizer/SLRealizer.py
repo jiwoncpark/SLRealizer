@@ -161,7 +161,7 @@ class SLRealizer(object):
                         df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
-        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
+#        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
@@ -186,4 +186,4 @@ class SLRealizer(object):
                 source_table.loc[len(source_table)]= np.array(lens_row)
         source_table = source_table.dropna(how='any')
         source_table.to_csv(save_dir, index=False)
-        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv')
+#        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
