@@ -169,14 +169,11 @@ class SLRealizer(object):
         """
         print('Reading in the catalog')
         df = pandas.read_csv(source_table_dir)
-        print('here')
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
         column_name = ['lensid', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e1', 'u_e2', 'u_e', 'u_phi','g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e1', 'g_e2', 'g_e', 'g_phi', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err\
 ', 'r_size_err', 'r_e1', 'r_e2', 'r_e', 'r_phi', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e1', 'i_e2', 'i_e', 'i_phi', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e1', 'z_e2', 'z_e', 'z_phi']
-        print(len(column_name))
         source_table = pd.DataFrame(columns=column_name)
-        print('here2')
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]

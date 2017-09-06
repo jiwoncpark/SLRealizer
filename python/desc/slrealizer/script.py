@@ -17,5 +17,5 @@ db.paint(synthetic=True)
 db.calculate_size()
 # initialize realizer
 realizer = desc.slrealizer.SLRealizer(catalog=db, observation="../../../data/twinkles_observation_history.csv")
-#realizer.make_source_catalog(dir='../../../data/source_catalog_galsim_noise_perfect.csv')
+realizer.make_source_catalog(dir='../../../data/source_catalog_galsim_noise_perfect.csv')
 realizer.make_object_catalog(source_table_dir='../../../data/source_catalog_galsim_noise_perfect.csv', save_dir='../../../data/object_catalog_galsim_noise_perfect.csv')

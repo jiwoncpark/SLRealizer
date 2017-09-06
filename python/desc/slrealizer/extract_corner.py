@@ -57,7 +57,6 @@ def calculate_size(df):
         labels.append(axis_labels[filter+'size'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
 
 def calculate_phi(df):
@@ -136,7 +135,6 @@ def calculate_magnitude(df):
         labels.append(axis_labels[filter+'mag'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_color(df):
 
@@ -152,7 +150,6 @@ def calculate_color(df):
         labels.append(axis_labels[filters[0]+filters[1]])
 
     return features, labels
-    #return magnitude.reshape(3, len(df)).transpose(), labels
 
 def calculate_position(df):
     # using pythagorean theorem calculate the distance between centroids
@@ -192,7 +189,6 @@ def calculate_x_position(df):
         labels.append(axis_labels[filter+'xpos'])
     
     return features, labels
-    #return features.reshape(4, len(df)).transpose(), labels
 
 def calculate_y_position(df):
     # reference filter : i
@@ -220,7 +216,6 @@ def calculate_y_position(df):
         labels.append(axis_labels[filter+'ypos'])
 
     return features, labels
-    #return features.reshape(4, len(df)).transpose(), labels
 
 #============================================================================================
 
