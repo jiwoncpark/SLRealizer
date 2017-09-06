@@ -60,6 +60,8 @@ def generate_data(currLens, currObs, manual_error=True):
     e2 = shape_info.observed_shape.e2
     e_squared = (e1*e1+e2*e2)
     e = np.sqrt(e_squared)
+    if e1 is 0:
+        e1 = 0.0001 # to solve the division error
     phi = np.arctan(e2/e1)/2
     size_err = 0
     if manual_error:
@@ -68,7 +70,6 @@ def generate_data(currLens, currObs, manual_error=True):
         first_moment_y += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_y
         flux += flux*noissify_data(desc.slrealizer.get_flux_err(), desc.slrealizer.get_flux_err_std())
         sample_array =  [MJD, filter, RA, RA_err, DEC, DEC_err, first_moment_x, first_moment_x_err_calc, first_moment_y, first_moment_y_err_calc, flux, flux_err_calc, size, size_err, e1, e2, e, phi, PSF_HWHM, sky_mag, lensID]
-    print('returned')
     return np.array(sample_array)
 
 def noissify_data(mean, stdev):

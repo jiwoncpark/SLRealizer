@@ -52,9 +52,12 @@ class SLRealizer(object):
         plt.imshow(img.array)
         print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
         array = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
-        galaxy = galsim.Gaussian(flux=array[10],sigma=array[12])
-        galaxy = galaxy.shift(array[6],array[8])
-        galaxy = galaxy.shear(e=array[15], beta=array[16]*57.2958*galsim.degrees)
+        print(array)
+        print(array[10])
+        print(type(array[10]))
+        galaxy = galsim.Gaussian(flux=float(array[10]),sigma=float(array[12]))
+        galaxy = galaxy.shift(float(array[6]),float(array[8]))
+        galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
         img = galaxy.drawImage(scale=0.2)
         plt.imshow(img.array)
 
@@ -144,19 +147,18 @@ class SLRealizer(object):
         """
         print('From the OM10 catalog, I am selecting LSST lenses')
         df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
-        ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
+        #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
         num_system = len(self.catalog.sample)
         print('number of system:', num_system)
         num_obs, _ = self.observation.shape
-        for j in xrange(num_obs): # we will select 263 observation - first three years amount
-            if self.observation[j][1] != 'y' and self.observation[j][0] < 60919:
+        for j in xrange(50): # we will select 263 observation - first three years amount
+            if self.observation[j][1] != 'y': #and self.observation[j][0] < 60919:
                 for i in xrange(100):
-                    debug_count += 1
-                    if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                        data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                        if data is not None:
-                            df.loc[len(df)]= data
+                    #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
+                    data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                    if data is not None:
+                        df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
         desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
