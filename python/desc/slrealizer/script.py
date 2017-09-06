@@ -8,7 +8,7 @@ import desc.slrealizer
 import format_sdss_to_om10
 
 db = om10.DB(vb=False, catalog='../../../data/qso_mock.fits')
-#db.select_random(maglim=23.3,area=20000.0,IQ=0.75)
+db.select_random(maglim=23.3,area=20000.0,IQ=0.75)
 #print(len(db.sample))
 #db.paint(synthetic=True)
 #db.calculate_size()
