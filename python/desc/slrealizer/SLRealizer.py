@@ -180,7 +180,7 @@ class SLRealizer(object):
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
-            for filter in ['g', 'z', 'i', 'r', 'u']:
+            for filter in ['u', 'g', 'r', 'i', 'z']:
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
             if np.isfinite(lens_row).all():
                 source_table.loc[len(source_table)]= np.array(lens_row)
