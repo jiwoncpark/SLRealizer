@@ -152,9 +152,9 @@ class SLRealizer(object):
         num_system = len(self.catalog.sample)
         print('number of system:', num_system)
         num_obs, _ = self.observation.shape
-        for j in xrange(50): # we will select 263 observation - first three years amount
-            if self.observation[j][1] != 'y': #and self.observation[j][0] < 60919:
-                for i in xrange(100):
+        for j in xrange(len(num_obs)): # we will select 263 observation - first three years amount
+            if self.observation[j][1] != 'y' and self.observation[j][0] < 60919:
+                for i in xrange(num_system):
                     #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
                     data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
                     if data is not None:
