@@ -13,6 +13,7 @@ import corner
 import dropbox
 import extract_corner
 import om10
+import galsim
 #from corner import corner
 #=====================================================
 
@@ -45,9 +46,18 @@ class SLRealizer(object):
             randomIndex = random.randint(0, 200)
             filter = self.observation[randomIndex][1]
         # Now visualize the lens system at the epoch defined by the randomIndex:
+        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75, Nlens=20)
         img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex])
-        plt.imshow(img.array)
-        return
+        print('THIS IS HOW THE SYSTEM LOOKS LIKE BEFORE DEBLENDING ********************************')
+        plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
+        print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
+        array = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
+        galaxy = galsim.Gaussian(flux=float(array[10]),sigma=float(array[12]))
+        galaxy = galaxy.shift(float(array[6]),float(array[8]))
+        galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
+        img = galaxy.drawImage(scale=0.2)
+        plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
+        plt.savefig('after_deblend.png')
 
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
@@ -101,7 +111,7 @@ class SLRealizer(object):
         Returns cornerplot (matplotlib.pyplot)
         """
 
-        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position', 'custom']
+        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position', 'phi', 'custom']
         object_table = pd.read_csv(object_table_dir)
         if ((option is None) and (params is None)):
             print('either specify params or option. You can choose among :')
@@ -133,26 +143,23 @@ class SLRealizer(object):
         """
         Generates a full catalog(for each filter) of 200 lensed system and saves it 
         """
-        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75)
         print('From the OM10 catalog, I am selecting LSST lenses')
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
-        ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
+        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
+        #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         debug_count = 0
         num_system = len(self.catalog.sample)
         print('number of system:', num_system)
-        for j in xrange(263): # we will select 263 observation - first three years amount
-            if self.observation[j][1] != 'y':
-                print(self.observation[j][0])
-                for i in xrange(len(self.catalog.sample)): # we will use first 400 lenses
-                    print('debug_count: ***************************** : ', debug_count)
-                    debug_count += 1
-                    if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                        data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                        if data is not None:
-                            df.loc[len(df)]= data
+        num_obs, _ = self.observation.shape
+        for j in xrange(num_obs): # we will select 263 observation - first three years amount
+            if self.observation[j][1] != 'y' and self.observation[j][0] < 60919:
+                for i in xrange(num_system):
+                    #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
+                    data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
+                    if data is not None:
+                        df.loc[len(df)]= data
         df.set_index('lensid', inplace=True)
         df.to_csv(dir, index=True)
-        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
+#        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
@@ -162,23 +169,16 @@ class SLRealizer(object):
         df = pandas.read_csv(source_table_dir)
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['lensid', 'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e', 'g_phi', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e', 'z_phi', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e', 'i_phi', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err','r_e', 'r_phi', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e', 'u_phi']
+        column_name = ['lensid', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e1', 'u_e2', 'u_e', 'u_phi','g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e1', 'g_e2', 'g_e', 'g_phi', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err\
+', 'r_size_err', 'r_e1', 'r_e2', 'r_e', 'r_phi', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e1', 'i_e2', 'i_e', 'i_phi', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e1', 'z_e2', 'z_e', 'z_phi']
         source_table = pd.DataFrame(columns=column_name)
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
-            print('**********LENSARRAY**********')
-            print(lens_array)
-            for filter in ['g', 'z', 'i', 'r', 'u']:
-                print('*******INPUT****************')
-                print(lens_array.loc[lens_array['filter'] == filter])
-                print('*******RETURNED**************')
-                print(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
+            for filter in ['u', 'g', 'r', 'i', 'z']:
                 lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
-            source_table.loc[len(source_table)]= np.array(lens_row)
+            if np.isfinite(lens_row).all():
+                source_table.loc[len(source_table)]= np.array(lens_row)
+        source_table = source_table.dropna(how='any')
         source_table.to_csv(save_dir, index=False)
-        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv')
-
-    def test(self):
-        desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[0]['LENSID']), self.observation[0])
-        print('*************!******************!*******************')
+#        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account

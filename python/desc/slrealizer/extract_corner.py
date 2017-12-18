@@ -57,7 +57,33 @@ def calculate_size(df):
         labels.append(axis_labels[filter+'size'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
+
+
+def calculate_phi(df):
+
+    """                                                                         
+    Parameters                                                                  
+    ----------                                                                  
+    df : csv toy catalog                                                        
+                                                                                
+    Returns                                                                     
+    ----------                                                                  
+    features: float, ndarray                                                    
+    rotation angle for each filter                                                       
+                                                                                
+    labels: string, list                                                        
+    Corresponding axis labels                                                   
+    """
+
+    features = np.array([])
+    labels = []
+
+    for filter in ['u', 'g', 'r', 'i', 'z']:
+        features = np.append(features, df[filter+'_phi'])
+        labels.append(axis_labels[filter+'phi'])
+
+    return features, labels
+    #return features.reshape(5, len(df)).transpose(), labels  
 
 def calculate_ellipticity(df):
 
@@ -109,7 +135,6 @@ def calculate_magnitude(df):
         labels.append(axis_labels[filter+'mag'])
 
     return features, labels
-    #return features.reshape(5, len(df)).transpose(), labels
 
 def calculate_color(df):
 
@@ -125,7 +150,6 @@ def calculate_color(df):
         labels.append(axis_labels[filters[0]+filters[1]])
 
     return features, labels
-    #return magnitude.reshape(3, len(df)).transpose(), labels
 
 def calculate_position(df):
     # using pythagorean theorem calculate the distance between centroids
@@ -165,7 +189,6 @@ def calculate_x_position(df):
         labels.append(axis_labels[filter+'xpos'])
     
     return features, labels
-    #return features.reshape(4, len(df)).transpose(), labels
 
 def calculate_y_position(df):
     # reference filter : i
@@ -193,7 +216,6 @@ def calculate_y_position(df):
         labels.append(axis_labels[filter+'ypos'])
 
     return features, labels
-    #return features.reshape(4, len(df)).transpose(), labels
 
 #============================================================================================
 
@@ -246,3 +268,8 @@ axis_labels['zpos'] = '$pos_z / arcsec$'
 axis_labels['gpos'] = '$pos_g / arcsec$'
 axis_labels['upos'] = '$pos_u / arcsec$'
 axis_labels['ipos'] = '$pos_i / arcsec$'
+axis_labels['gphi'] = '$phi_g$'
+axis_labels['zphi'] = '$phi_z$'
+axis_labels['rphi'] = '$phi_r$'
+axis_labels['uphi'] = '$phi_u$'
+axis_labels['iphi'] = '$phi_i$'
