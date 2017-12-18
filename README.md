@@ -1,4 +1,4 @@
-<img src="https://imgur.com/AKdUANu" width="150" href="https://github.com/jennykim1016/SLRealizer/">
+<img src="https://i.imgur.com/AKdUANu.png" width="150" href="https://github.com/jennykim1016/SLRealizer/">
 
 <a href='https://travis-ci.org/jennykim1016/SLRealizer'>
 <img src='https://secure.travis-ci.org/jennykim1016/SLRealizer.png?branch=master'></a>
