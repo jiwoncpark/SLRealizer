@@ -9,7 +9,7 @@ import math
 def make_catalog(currLens, currObs):
     image = plot_all_objects(currLens, currObs)
 
-def plot_all_objects(currLens, currObs):
+def plot_all_objects(currLens, currObs, save_dir=None):
     MJD, filter, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
     filter_AB_offset = 0.00
     curr_galaxy_mag = currLens[currObs[1]+'_SDSS_lens'][0]
@@ -31,7 +31,8 @@ def plot_all_objects(currLens, currObs):
     galaxy = galsim.Convolve(galaxy, psf, gsparams=big_fft_params)
     img = galaxy.drawImage(scale=0.2)
     plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
-    plt.savefig('before_deblend.png')
+    if save_dir is not None:
+        plt.savefig(save_dir+'before_deblend.png')
     return img
 
 def generate_data(currLens, currObs, manual_error=True):

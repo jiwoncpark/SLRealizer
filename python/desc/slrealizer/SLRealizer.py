@@ -33,7 +33,7 @@ class SLRealizer(object):
         self.catalog = catalog
         self.observation = pd.read_csv(observation,index_col=0).as_matrix()
 
-    def plot_lens_random_date(self, lensID=None, convolve=False):
+    def plot_lens_random_date(self, lensID=None, convolve=False, save_dir=None):
         """                                                                                                                      
                 Given a specific lens, this code plots a lens after choosing a random observation epoch.                                 
         """
@@ -47,7 +47,7 @@ class SLRealizer(object):
             filter = self.observation[randomIndex][1]
         # Now visualize the lens system at the epoch defined by the randomIndex:
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75, Nlens=20)
-        img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex])
+        img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex], save_dir)
         print('THIS IS HOW THE SYSTEM LOOKS LIKE BEFORE DEBLENDING ********************************')
         plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
         print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
@@ -56,8 +56,10 @@ class SLRealizer(object):
         galaxy = galaxy.shift(float(array[6]),float(array[8]))
         galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
         img = galaxy.drawImage(scale=0.2)
+        # given scale of 0.2, the unit of the axis will be arcseconds.
         plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
-        plt.savefig('after_deblend.png')
+        if save_dir is not None:
+            plt.savefig(save_dir+'after_deblend.png')
 
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
