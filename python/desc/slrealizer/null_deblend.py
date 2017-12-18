@@ -30,6 +30,8 @@ def plot_all_objects(currLens, currObs):
     psf = galsim.Gaussian(flux=1, sigma=PSF_HWHM)
     galaxy = galsim.Convolve(galaxy, psf, gsparams=big_fft_params)
     img = galaxy.drawImage(scale=0.2)
+    plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
+    plt.savefig('before_deblend.png')
     return img
 
 def generate_data(currLens, currObs, manual_error=True):

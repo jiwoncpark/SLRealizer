@@ -49,14 +49,15 @@ class SLRealizer(object):
         self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75, Nlens=20)
         img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex])
         print('THIS IS HOW THE SYSTEM LOOKS LIKE BEFORE DEBLENDING ********************************')
-        plt.imshow(img.array)
+        plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
         print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
         array = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
         galaxy = galsim.Gaussian(flux=float(array[10]),sigma=float(array[12]))
         galaxy = galaxy.shift(float(array[6]),float(array[8]))
         galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
         img = galaxy.drawImage(scale=0.2)
-        plt.imshow(img.array)
+        plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
+        plt.savefig('after_deblend.png')
 
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
