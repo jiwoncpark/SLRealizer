@@ -56,6 +56,7 @@ class SLRealizer(object):
         galaxy = galaxy.shift(float(array[6]),float(array[8]))
         galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
         img = galaxy.drawImage(scale=0.2)
+        # given scale of 0.2, the unit of the axis will be arcseconds.
         plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
         plt.savefig('after_deblend.png')
 
