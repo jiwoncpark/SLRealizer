@@ -38,6 +38,8 @@ nosetests
 * [Feature Comparison between SDSS and OM10](https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb)
 * [Classification of lensed systems](https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/Scikit_Classifying_Lensed_Systems.ipynb)
 
+## Written Logs
+DESC note can be viewed either by going into the `descWriteUp` branch's `doc` folder and searching for `main.pdf`. Else, just click [here](https://github.com/jennykim1016/SLRealizer/blob/descWriteUp/doc/desc-0000-slrealizer-concept/main.pdf)
 
 ## Repository Structure
 
