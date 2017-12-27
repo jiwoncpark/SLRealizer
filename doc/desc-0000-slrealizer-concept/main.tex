@@ -58,14 +58,14 @@ The scale of the LSST dataset will be enormous that we need a different method t
 The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
 
 
-LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Cosmology from Gravitational Lens Time Delays and Planck Data} \cite{Dissecting the Gravitational Lens B1608+656} \cite{Treu2010} which describes the state of the universe.
+LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Treu2010} which describes the state of the universe.
 
 In order to perform such research, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabytes of data each night \cite{LSSTScienceBookv2}.
 Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer). 
 
 The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) could be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system.
 
-The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.  
+The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms. 
 
 
 
@@ -109,11 +109,9 @@ In order to do so, we used Galsim package in Python. For each lensed system, we 
         \includegraphics[width=\linewidth, height=8cm]{afternulldeblend.png}
         \caption{After null-deblending, the whole system looks like this image. All the sources look like one big source observed at once.                                                                                                                                                                                 The color scheme used in matplotlib could be a little misleading here, but overall luminosity has not changed.}
     \end{subfigure}
-    \caption{Example null-deblending. The number on the axis corresponds to arcseconds, (0,0) being the center of the lensed system.} 
+    \caption{Example null-deblending. The number on the axis corresponds to arcseconds, (0,0) being the center of the lensed system. We used a lensed system with ID 4898214 to demonstrate the above figure. } 
     \label{fig:null-deblend}
 \end{figure}
-
-We used a lensed system with ID 4898214. 
 
 The toy catalog is in \ref{sssec:toysource}.
 
