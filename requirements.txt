@@ -1,0 +1,9 @@
+numpy
+nose
+scikit-learn
+astropy
+matplotlib
+corner
+om10
+scipy
+git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
