@@ -61,17 +61,42 @@ simulation and direct model inference.
 \section{Introduction}
 \label{sec:intro}
 
-The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}.
+The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter
+of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This
+telescope has a 3.5 $deg$ of field of view, would cover around 30000
+$\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$
+filters \cite{LSSTScienceBookv2}. The telescope will give an extensive
+amount of astronomical data that could be used for the study of Solar
+System, Extragalactic structures, near-Earth asteroids, radiant radio
+sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}.
 
+LSST Dark Energy Science Collaboration (DESC) also anticipate to detect
+around 8000 strongly lensed systems that will provide useful information
+such as cosmological time delay or lens mass distribution
+\cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay
+could be used to infer cosmological parameters \cite{Treu2010} which
+describes the state of the universe.
 
-LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Treu2010} which describes the state of the universe.
+In order to perform such research, finding the lensed system among the
+enormous set of data is crucial. However, LSST is also expected to
+produce 80 terabytes of data each night \cite{LSSTScienceBookv2}.
+Considering the amount of the data that LSST will produce, pixel-level
+searching with images(\cite{RINGFINDER}) may be impossible. In order to
+solve the problem, we propose the lens classification with catalog-level
+searching with machine learning techniques (SLRealizer).
 
-In order to perform such research, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabytes of data each night \cite{LSSTScienceBookv2}.
-Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer).
+The attempt to use Machine Learning to detect lensed system is not a
+completely new idea. \citep{convolution_neural_network} suggests that
+morphological classification of the lensed system using the
+Convolutional Neural Network(CNN) could be effective.
+\citep{LensExtractor} has developed \texttt{lensextractor} that uses
+convolution neural network to train and test the software to detect the
+lensed system.
 
-The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) could be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system.
-
-The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.
+The \SLRealizer project largely consists of two major parts: finding the
+useful feature sets to classify the lensed systems from other objects
+and classifying the lensed systems with different machine learning
+algorithms.
 
 
 
@@ -81,16 +106,25 @@ The 'SL Realizer' project largely consists of two major parts: finding the usefu
 \subsection{Preparation of Data}
 \label{subsec:dataprep}
 
-Twinkles, a simulated LSST sky with observed with six filters for ten years, provided the ten years of mock observation history. We also had OM10 mock lensed systems \cite{TimeDelayOverall}.
+Twinkles, a simulated LSST sky with observed with six filters for ten
+years, provided the ten years of mock observation history. We also had
+OM10 mock lensed systems \cite{TimeDelayOverall}.
 
-We assumed that OM10 mock lensed systems are composed of point-like sources. This means that the size of the galaxies as well as the quasar images had the effective radius of zero.
+We assumed that OM10 mock lensed systems are composed of point-like
+sources. This means that the size of the galaxies as well as the quasar
+images had the effective radius of zero.
 
 \begin{table}[!h]
 \csvautotabular{../../data/twinkles_observation_history.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
-\caption{A few entries of the Twinkles mock observation history data. The full dataset can be accessed \href{https://github.com/LSSTDESC/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
+\caption{A few entries of the Twinkles mock observation history data.
+The full dataset can be accessed
+\href{https://github.com/LSSTDESC/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
 \end{table}
 
-In order to save some computation time, we queried the first three years of the observation which yields 263 observation epochs. We also selected LSST-like OM10 mock lensed systems by querying with magnitude cut of 22.5.
+In order to save some computation time, we queried the first three years
+of the observation which yields 263 observation epochs. We also selected
+LSST-like OM10 mock lensed systems by querying with magnitude cut of
+22.5.
 
 % ----------------------------------------------------------------------
 
@@ -100,9 +134,25 @@ In order to save some computation time, we queried the first three years of the 
 
 \label{sssec:toysource}
 
-Using the data from \autoref{subsec:dataprep}, we were able to make an each entry of catalog describing how each lensed system would look like on a particular night. While doing this, we assumed that all the sources in the lensed system have Gaussian point spread functions. Also, we realized the systems with a null-deblender, meaning that we assumed that all the lensed images and the lens were observed as one big source.
+Using the data from \autoref{subsec:dataprep}, we were able to make an
+each entry of catalog describing how each lensed system would look like
+on a particular night. While doing this, we assumed that all the sources
+in the lensed system have Gaussian point spread functions. Also, we
+realized the systems with a null-deblender, meaning that we assumed that
+all the lensed images and the lens were observed as one big source.
 
-In order to do so, we used Galsim package in Python. For each lensed system, we drew a Gaussian that has an effective radius of a galaxy as well as adding the rotation angle and shears to the values. We also drew the Gaussians that have an effective radius of zero in the position for the quasar images. Then, we convolved the Gaussians with the Gaussian point spread functions. After then, we added all the convolved Gaussian onto the two-dimensional grid that has the same degree-to-pixel ratio (0.2 arcseconds per pixels) as LSST, realizing the total sum as one Gaussian. After the realization, we could get ellipticity, zeroth moment, the first moment, and the second moment per one big convolved Gaussian.
+In order to do so, we used Galsim package in Python. For each lensed
+system, we drew a Gaussian that has an effective radius of a galaxy as
+well as adding the rotation angle and shears to the values. We also drew
+the Gaussians that have an effective radius of zero in the position for
+the quasar images. Then, we convolved the Gaussians with the Gaussian
+point spread functions. After then, we added all the convolved Gaussian
+onto the two-dimensional grid that has the same degree-to-pixel ratio
+(0.2 arcseconds per pixels) as LSST, realizing the total sum as one
+Gaussian. After the realization, we could get ellipticity, zeroth
+moment, the first moment, and the second moment per one big convolved
+Gaussian.
+
 \begin{figure}
     \centering
     \begin{minipage}{0.48\linewidth}
@@ -113,7 +163,16 @@ In order to do so, we used Galsim package in Python. For each lensed system, we 
         \centering
         \includegraphics[width=\linewidth]{afternulldeblend.png}
     \end{minipage}
-    \caption{Example null-deblending in OM10 lens system 4898214. Image axes show offsets from the  center of the lensed system in arcsec. Left: Realization of the lens system with zero-width PSF. The brightest source is the lensing galaxy, and there are two dimmer quasar images near the galaxy. There is only one quasar image that is obvious; this makes the blended object appear elliptical. Right: Realization of the lens system with realistic PSF. All the components of the system appear blended together. The color bar shows rescaled surface brightness: overall, flux is conserved between the two images.}
+    \caption{Example null-deblending in OM10 lens system 4898214. Image
+    axes show offsets from the  center of the lensed system in arcsec.
+    Left: Realization of the lens system with zero-width PSF. The
+    brightest source is the lensing galaxy, and there are two dimmer
+    quasar images near the galaxy. There is only one quasar image that
+    is obvious; this makes the blended object appear elliptical. Right:
+    Realization of the lens system with realistic PSF. All the
+    components of the system appear blended together. The color bar
+    shows rescaled surface brightness: overall, flux is conserved
+    between the two images.}
     \label{fig:null-deblend}
 \end{figure}
 
@@ -122,29 +181,73 @@ The toy catalog is in \autoref{sssec:toysource}.
 \subsection{Toy Object Catalog}
 \label{sssec:toyobject}
 
-After generating the source catalog, we computed the object table whose entree describes average properties of each lensed system per filter. In order to do so, we queried each lensed system in the source catalog. Then, for each lensed system, we computed the average properties for each filter.
+After generating the source catalog, we computed the object table whose
+entree describes average properties of each lensed system per filter. In
+order to do so, we queried each lensed system in the source catalog.
+Then, for each lensed system, we computed the average properties for
+each filter.
 
 The toy catalog is in \autoref{subsec:toyobject}.
 
 \subsection{Feature Selection}
 \label{subsec:feature}
 
-For now, we focused on classifying the lensed systems from the SDSS galaxies. We expect the lensed images to appear near the bright, massive galaxies. Thus, if we can differentiate the galaxies with lensed images with the galaxies without them, it would be really helpful.
+For now, we focused on classifying the lensed systems from the SDSS
+galaxies. We expect the lensed images to appear near the bright, massive
+galaxies. Thus, if we can differentiate the galaxies with lensed images
+with the galaxies without them, it would be really helpful.
 
-We expect that the quasar images will be brighter in the shorter wavelength filters. The galaxies will be brighter in the longer wavelength filters. Thus, when we observe a lensed system through a $u$ filter (the shortest wavelength filter that OM10 has), we will see the more stretched object because of the contribution from the quasar images. However, in the $z$ band, we will see a round object because of the contribution from the lens. By comparing the features in the $u$ filter and the $z$ filter, we will thus be able to see bigger changes in the properties for the lensed systems than SDSS galaxies.
+We expect that the quasar images will be brighter in the shorter
+wavelength filters. The galaxies will be brighter in the longer
+wavelength filters. Thus, when we observe a lensed system through a $u$
+filter (the shortest wavelength filter that OM10 has), we will see the
+more stretched object because of the contribution from the quasar
+images. However, in the $z$ band, we will see a round object because of
+the contribution from the lens. By comparing the features in the $u$
+filter and the $z$ filter, we will thus be able to see bigger changes in
+the properties for the lensed systems than SDSS galaxies.
 
-The features that we could get from the object table is changes in the first moment along the x-axis (reference to the $r$ filter), changes in the first moment along the y-axis (reference to the $r$ filter), changes in the position (reference to the $r$ filter), ellipticities, rotation angles, fluxes, and sizes.
+The features that we could get from the object table is changes in the
+first moment along the x-axis (reference to the $r$ filter), changes in
+the first moment along the y-axis (reference to the $r$ filter), changes
+in the position (reference to the $r$ filter), ellipticities, rotation
+angles, fluxes, and sizes.
 
-The catalog of SDSS galaxies also provides the same features. Magnitude systems are the same in both SDSS and OM10, and the units are scaled to be the same. However, the only difference was in the sizes. SDSS's definition of size was $I_{xx}$ + $I_{yy}$. Galsim calculates the size of OM10 systems by calculating the determinant of the second moment(M $=$ $I_{xx}$ * $I_{yy}$ - $I_{xy}$ * $I_{xy}$) and applying the fourth root on it ($\sqrt[4]{M}$). In order to solve the problem by scaling the SDSS sizes, we multiplied the power of pixel-to-arcsec ratio to change the unit to arcseconds, multiplied two to convert the half size to the full size, and applied the square root to the value to get a right dimension.
+The catalog of SDSS galaxies also provides the same features. Magnitude
+systems are the same in both SDSS and OM10, and the units are scaled to
+be the same. However, the only difference was in the sizes. SDSS's
+definition of size was $I_{xx}$ + $I_{yy}$. Galsim calculates the size
+of OM10 systems by calculating the determinant of the second moment
+($M=I_{xx}I_{yy}-I_{xy}I_{xy}$) and applying the fourth root on it
+($\sqrt[4]{M}$). In order to solve the problem by scaling the SDSS
+sizes, we multiplied the power of pixel-to-arcsec ratio to change the
+unit to arcseconds, multiplied two to convert the half size to the full
+size, and applied the square root to the value to get a right dimension.
 
-Using these values, we computed various additional features. We plotted SDSS galaxies and OM10 lensed systems onto the corner plot \autoref{subsec:feature}, and chose the features that differentiated OM10 lensed systems from SDSS galaxies the most.
+Using these values, we computed various additional features. We plotted
+SDSS galaxies and OM10 lensed systems onto the corner plot
+\autoref{subsec:feature}, and chose the features that differentiated
+OM10 lensed systems from SDSS galaxies the most.
 
 \subsection{Classification}
 \label{subsec:classification}
 
-We have 2323 OM10 lensed systems and 16000 SDSS galaxies. In order to make the balanced test data set, we randomly selected 2323 SDSS galaxies. We mixed the order of those two samples so that there will be a roughly same number of each OM10 and SDSS samples in both the test and the training data. Then, using the scikit train$\_$test$\_$split method, we selected 75$\%$ of the data to be the training set and performed the test on the remaining 25$\%$.
+We have 2323 OM10 lensed systems and 16000 SDSS galaxies. In order to
+make the balanced test data set, we randomly selected 2323 SDSS
+galaxies. We mixed the order of those two samples so that there will be
+a roughly same number of each OM10 and SDSS samples in both the test and
+the training data. Then, using the scikit train$\_$test$\_$split method,
+we selected 75$\%$ of the data to be the training set and performed the
+test on the remaining 25$\%$.
 
-According to the scikit's \href{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html} {choosing the right estimator}, we were able to choose three different algorithms for the classification purposes. We did have more than 50 samples, we were predicting a category, we did have a labeled data, and we had less than 100K samples in a text data. This yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such as Random Forest.
+According to the \texttt{scikit-learn}'s
+\href{http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html}
+{flowchart for choosing the right estimator}, we were able to choose
+three different algorithms for the classification purposes. We did have
+more than 50 samples, we were predicting a category, we did have a
+labeled data, and we had less than 100K samples in a text data. This
+yields Linear SVC, KNeighbors Classifier, and Ensemble classifiers such
+as Random Forest.
 
 Detailed results are in \autoref{subsec:classification_data}.
 
@@ -178,7 +281,8 @@ flux          & flux\_err       & size          & size\_err & e1               &
 \label{table:source_table}
 \end{table}
 
-The above is the toy source catalog that we generated. For now, we haven't added error terms and calculated the positions (RA and DEC).
+The above is the toy source catalog that we generated. For now, we
+haven't added error terms and calculated the positions (RA and DEC).
 
 \subsection{Toy Object Catalog}
 \label{subsec:toyobject}
@@ -222,18 +326,28 @@ z\_flux & z\_x   & z\_y   & z\_size & z\_flux\_err & z\_x\_com\_err & z\_y\_com\
 18.0387 & 0.1216 & 0.7587 & 1.0622  & 0.0315       & 0.0            & 0.0            & 0.0          & -0.0751 & -0.0064 & 0.0754 & 0.0426 \\ \hline
 \end{tabular}
 
-\caption{Few sample enrees of the toy object catalog. The full toy object catalog can be viewed \href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
-\label{table:object_table}
-\end{table}
+\caption{Few sample enrees of the toy object catalog. The full toy
+object catalog can be viewed
+\href{https://www.dropbox.com/s/ob51rxjexzuervl/toy_object_catalog.csv?dl=0}{here}}
+\label{table:object_table} \end{table}
 
-\autoref{table:object_table} is the toy object catalog that we generated.
+\autoref{table:object_table} is the toy object catalog that we
+generated.
 
 \subsection{Feature Selection}
 \label{subsec:feature_data}
 
-Full corner plots can be viewed in the \href{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb}{SLRealizer's GitHub repository's notebook folder}.
+Full corner plots can be viewed in the
+\href{https://github.com/jennykim1016/SLRealizer/blob/master/notebooks/SDSSvsOM10.ipynb}{SLRealizer's
+GitHub repository's notebook folder}.
 
-As mentioned in \autoref{subsec:feature}, we thought comparing features between $u$ and $z$ filter will be discriminatory. We chose six main features that we thought would change dramatically between the filters for OM10 lenses -- sizes, ellipticities (e), rotation angles of galaxies ($\phi$), magnitudes, positions($\Delta$ x), and the angle between ellipticity vector and the rotation vector ($\omega = \frac{e \cdot \phi}{ \left | e \right | \left | \phi \right |}$).
+As mentioned in \autoref{subsec:feature}, we thought comparing features
+between $u$ and $z$ filter will be discriminatory. We chose six main
+features that we thought would change dramatically between the filters
+for OM10 lenses -- sizes, ellipticities (e), rotation angles of galaxies
+($\phi$), magnitudes, positions($\Delta$ x), and the angle between
+ellipticity vector and the rotation vector ($\omega = \frac{e \cdot
+\phi}{ \left | e \right | \left | \phi \right |}$).
 
 \begin{figure}
 \includegraphics[width=0.9\columnwidth]{cornerplot.png}
@@ -241,7 +355,10 @@ As mentioned in \autoref{subsec:feature}, we thought comparing features between 
  \label{fig:cornerplot}
 \end{figure}
 
-Here, the centroid of the yellow points(SDSS galaxies) and the purple points(OM10 systems) differed the most for size. Still, we could quantify the importance of the features by putting all the data into the Random Forest Algorithms. The results were as follows.
+Here, the centroid of the yellow points(SDSS galaxies) and the purple
+points(OM10 systems) differed the most for size. Still, we could
+quantify the importance of the features by putting all the data into the
+Random Forest Algorithms. The results were as follows.
 
 \begin{figure}[!h]
 \includegraphics[width=0.4\columnwidth]{FeatureImportance.png}
@@ -252,9 +369,17 @@ Here, the centroid of the yellow points(SDSS galaxies) and the purple points(OM1
 \subsection{Classification}
 \label{subsec:classification_data}
 
-As mentioned in \autoref{subsec:classification}, we used three different algorithms: linear SVC, KNeighbors (Nearest Neighbors), and Random Forest. \autoref{fig:ML_nonmag} is the results that we got for each algorithm.
+As mentioned in \autoref{subsec:classification}, we used three different algorithms: linear SVC, KNeighbors (Nearest Neighbors), and
+Random Forest. \autoref{fig:ML_nonmag} is the results that we got for
+each algorithm.
 
-Random forest showed the best performance among the three different algorithms. If we look into the top left corner where all the curves are overlapped, we can see this more obviously. The best classifiers were Random Forest, and the more the number of estimators were, the better the algorithm performed. For the best algorithm, we were able to achieve ~98$\%$ of the true positive rate(TPR) and ~0.04$\%$ of the false positive rate(FPR).
+Random forest showed the best performance among the three different
+algorithms. If we look into the top left corner where all the curves are
+overlapped, we can see this more obviously. The best classifiers were
+Random Forest, and the more the number of estimators were, the better
+the algorithm performed. For the best algorithm, we were able to achieve
+~98$\%$ of the true positive rate(TPR) and ~0.04$\%$ of the false
+positive rate(FPR).
 
 \begin{figure}
     \centering
@@ -279,87 +404,37 @@ Random forest showed the best performance among the three different algorithms. 
 \section{Conclusions}
 \label{sec:conclusions}
 
-The results suggest that random forest algorithms would be able to differentiate lensed systems from galaxies. Still, even though we have high accuracy, because we expect to have much more non-lensed systems than the lensed systems, we will have more contaminants in the truly-classified lensed systems than the actual lensed systems. For instance, we expect to find 10,000 times more non-lensed systems than the lensed ones. Thus, with 98\% of the TPR and ~0.042\% of the FPR, we will have ~430 contaminants per truly classified lensed systems. Thus, it would also be helpful to have a more rigorous model that actually fits physical models to the systems after rejecting all the non lensed-systems using SLRealizer.
+The results suggest that random forest algorithms would be able to
+differentiate lensed systems from galaxies. Still, even though we have
+high accuracy, because we expect to have much more non-lensed systems
+than the lensed systems, we will have more contaminants in the
+truly-classified lensed systems than the actual lensed systems. For
+instance, we expect to find 10,000 times more non-lensed systems than
+the lensed ones. Thus, with 98\% of the TPR and ~0.042\% of the FPR, we
+will have ~430 contaminants per truly classified lensed systems. Thus,
+it would also be helpful to have a more rigorous model that actually
+fits physical models to the systems after rejecting all the non
+lensed-systems using SLRealizer.
 
-In addition, we only compared the features between OM10 lensed systems and SDSS galaxies. It will also be useful to overlap star-star pairs, star-galaxy pairs, quasar-quasar pairs, or quasar-galaxy pairs to see how different the other samples could be from the lensed system.
+In addition, we only compared the features between OM10 lensed systems
+and SDSS galaxies. It will also be useful to overlap star-star pairs,
+star-galaxy pairs, quasar-quasar pairs, or quasar-galaxy pairs to see
+how different the other samples could be from the lensed system.
 
-There are few ways to further improve the classifiers. If we could implement the working deblender that resembles LSST’s deblender, that will increase the performance of the classifiers. We could also add more features such as time-variabilities of quasar images. While making the source and the object catalog, rather than giving equal weights to all the observations, we could weight by how good the seeing was for each night.
+There are few ways to further improve the classifiers. If we could
+implement the working deblender that resembles LSST’s deblender, that
+will increase the performance of the classifiers. We could also add more
+features such as time-variabilities of quasar images. While making the
+source and the object catalog, rather than giving equal weights to all
+the observations, we could weight by how good the seeing was for each
+night.
 
-In addition, while studying cosmology, gravitationally lensed systems with four images (quads) are generally more useful than the systems with two images (doubles). Thus, comparing how many quads were classified as true out of the testing sample’s quads should also give useful statistics.
+In addition, while studying cosmology, gravitationally lensed systems
+with four images (quads) are generally more useful than the systems with
+two images (doubles). Thus, comparing how many quads were classified as
+true out of the testing sample’s quads should also give useful
+statistics.
 
-% ----------------------------------------------------------------------
-% GUIDELINES FROM THE NOTE TEMPLATE:
-%
-% \section{Introduction}
-% \label{sec:intro}
-%
-% This is a paper and note template for the LSST DESC \citep{Overview,ScienceBook,WhitePaper}.
-% You can delete all this tutorial text whenever you like.
-%
-% You can easily switch between various \LaTeX\xspace styles for internal notes and peer reviewed journals.
-% Documents can be compiled using the provided \code{Makefile}.
-% The command \code{make} with no arguments compiles \code{main.tex} using the  \code{lsstdescnote.cls} style.
-% If you want to upgrade your Note into a journal article, just choose a journal name, between \code{make apj} (ApJ preprint format), \code{make apjl} (which uses the \code{emulateapj} style), \code{make prd}, \code{make prl}, and \code{make mnras}.
-%
-%
-% % ----------------------------------------------------------------------
-%
-% \section{Commands}
-% \label{sec:commands}
-%
-% There are a number of useful \LaTeX\xspace commands predefined in \code{macros.tex}.
-% Notice that the section labels are prefixed with \code{sec:} to allow the use of the \verb=\secref= command to reference a section (\ie, \secref{intro}).
-% Figures can be referenced with the \verb=\figref= command, which assumes that the figure label is prefixed with \code{fig:}.
-% In \figref{example} we show an example figure.
-% You'll notice that the actual figure file is found in the \code{figures} directory.
-% However, because we have specified this directory in our \verb=\graphicspath= we do not need to explicitly specify the path to the image.
-%
-% The \code{macros.tex} package also contains some conventional scientific units like \angstrom, \GeV, \Msun, etc. and some editorial tools for highlighting \FIXME{issues}, \CHECK{text to be checked}, \COMMENT{comments}, and \NEW{new additions}.
-%
-%
-% % ----------------------------------------------------------------------
-%
-% \section{Methods}
-% \label{sec:methods}
-%
-% Similar to the figure before, here we have included a table of data from \code{tables/table.tex}.
-% Notice that again we are able to reference \tabref{example} with the \verb=\tabref= command using the \code{tab:} prefix.
-% Also notice that we haven't needed to specify the full path to the table because in the \code{Makefile} we include \code{./tables} directory in the \code{\$TEXINPUTS} environment variable.
-%
-% \input{table}
-%
-% Equations appear as follows, and can be referred to as, for example, \eqnref{example} -- just as for tables, we use the \verb=\eqnref= command using the \code{eqn:} prefix.
-% \begin{equation}
-%   \label{eqn:example}
-%   \langle f(k) \rangle = \frac{ \sum_{t=0}^{N}f(t,k) }{N}
-% \end{equation}
-%
-%
-% % ----------------------------------------------------------------------
-%
-% \section{Results}
-% \label{sec:results}
-%
-% \figref{example} shows an example figure, referred to with the \verb=\figref= command and the \code{fig:} prefix.
-%
-% \begin{figure}
-% \includegraphics[width=0.9\columnwidth]{example.png}
-% \caption{An example figure: the LSST DESC logo, copied from \code{texmf/logos/desc-logo.png} into \code{figures/example.png}. \label{fig:example}}
-% \end{figure}
-%
-%
-% % ----------------------------------------------------------------------
-%
-% \section{Discussion}
-% \label{sec:discussion}
-%
-% If you are planning on committing your paper to GitHub, it's a good idea to write your tex as one sentence per line.
-% This allows for an easier \code{diff} of changes.
-% It also makes sense to think of latex as \emph{code}, and sentences as logical statements, occupying one line each.
-% Each line must ``compile'' in the mind of the reader.
-%
-%
-%
 % ----------------------------------------------------------------------
 
 \subsection*{Acknowledgments}
