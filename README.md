@@ -40,7 +40,7 @@ nosetests
 
 ## Notes
 
-A draft LSST DESC Note describing the basic operation of `SLRealizer`, and some simple machine learning classification results, can be viewed in the `issue/17/desc-note` branch's `doc` folder [here](https://github.com/LSSTDESC/SLRealizer/tree/issue/17/desc-note/doc/desc-0000-slrealizer-concept/main.pdf).
+A draft LSST DESC Note describing the basic operation of `SLRealizer`, and some simple machine learning classification results, can be viewed in the `issue/17/desc-note` branch's `doc` folder [here](https://github.com/LSSTDESC/SLRealizer/tree/issue/17/desc-note/doc/slrealizer-concept-note/main.pdf).
 
 ## Repository Structure
 
