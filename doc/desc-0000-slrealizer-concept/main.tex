@@ -20,16 +20,16 @@
 \bibliographystyle{apj}
 \usepackage{subcaption}
 % Add your own macros here:
-    \usepackage{etoolbox}
-    %\usepackage{stackengine}
-        \setcounter{secnumdepth}{4}
-      \usepackage{csvsimple}
-      \usepackage{hyperref}
-      \usepackage{adjustbox}
-      %\usepackage{float}
-      \usepackage{numprint}
+\usepackage{etoolbox}
+%\usepackage{stackengine}
+\setcounter{secnumdepth}{4}
+\usepackage{csvsimple}
+\usepackage{hyperref}
+\usepackage{adjustbox}
+%\usepackage{float}
+\usepackage{numprint}
 
-%
+\def\aapr{A\&A~Reviews}
 % ======================================================================
 
 \begin{document}
@@ -55,17 +55,17 @@ The scale of the LSST dataset will be enormous that we need a different method t
 \section{Introduction}
 \label{sec:intro}
 
-The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}. 
+The Large Synoptic Survey Telescope (LSST), a wide-field survey telescope with the diameter of 8.4m, will start running in Chile in 2020 \cite{LSST_overall}. This telescope has a 3.5 $deg$ of field of view, would cover around 30000 $\textit{deg}^2$ in the sky, and uses $u$, $g$, $r$, $i$, $z$, and $y$ filters \cite{LSSTScienceBookv2}. The telescope will give an extensive amount of astronomical data that could be used for the study of Solar System, Extragalactic structures, near-Earth asteroids, radiant radio sources, Dark Matter, and Dark Energy \cite{LSSTScienceBookv2}.
 
 
 LSST Dark Energy Science Collaboration (DESC) also anticipate to detect around 8000 strongly lensed systems that will provide useful information such as cosmological time delay or lens mass distribution \cite{DESC_overall} \cite{TimeDelayOverall} \cite{Twinkles}. Time delay could be used to infer cosmological parameters \cite{Treu2010} which describes the state of the universe.
 
 In order to perform such research, finding the lensed system among the enormous set of data is crucial. However, LSST is also expected to produce 80 terabytes of data each night \cite{LSSTScienceBookv2}.
-Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer). 
+Considering the amount of the data that LSST will produce, pixel-level searching with images(\cite{RINGFINDER}) may be impossible. In order to solve the problem, we propose the lens classification with catalog-level searching with machine learning techniques (SLRealizer).
 
 The attempt to use Machine Learning to detect lensed system is not a completely new idea. \citep{convolution_neural_network} suggests that morphological classification of the lensed system using the Convolutional Neural Network(CNN) could be effective. \citep{LensExtractor} has developed 'lensextractor' that uses convolution neural network to train and test the software to detect the lensed system.
 
-The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms. 
+The 'SL Realizer' project largely consists of two major parts: finding the useful feature sets to classify the lensed systems from other objects and classifying the lensed systems with different machine learning algorithms.
 
 
 
@@ -75,16 +75,16 @@ The 'SL Realizer' project largely consists of two major parts: finding the usefu
 \subsection{Preparation of Data}
 \label{subsec:dataprep}
 
-Twinkles, a simulated LSST sky with observed with six filters for ten years, provided the ten years of mock observation history. We also had OM10 mock lensed systems \cite{TimeDelayOverall}. 
+Twinkles, a simulated LSST sky with observed with six filters for ten years, provided the ten years of mock observation history. We also had OM10 mock lensed systems \cite{TimeDelayOverall}.
 
 We assumed that OM10 mock lensed systems are composed of point-like sources. This means that the size of the galaxies as well as the quasar images had the effective radius of zero.
 
 \begin{table}[!h]
-\csvautotabular{../../data/paper_history.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
-\caption{Few entries of the twinkles mock observation history data. Full data can be accessed \href{https://github.com/jennykim1016/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
+\csvautotabular{../../data/twinkles_observation_history.csv} %https://texblog.org/2012/05/30/generate-latex-tables-from-csv-files-excel/ %bug
+\caption{A few entries of the Twinkles mock observation history data. The full dataset can be accessed \href{https://github.com/LSSTDESC/SLRealizer/blob/master/data/twinkles_observation_history.csv}{here}.}
 \end{table}
 
-In order to save some computation time, we queried the first three years of the observation which yields 263 observation epochs. We also selected LSST-like OM10 mock lensed systems by querying with magnitude cut of 22.5. 
+In order to save some computation time, we queried the first three years of the observation which yields 263 observation epochs. We also selected LSST-like OM10 mock lensed systems by querying with magnitude cut of 22.5.
 
 % ----------------------------------------------------------------------
 
@@ -101,15 +101,15 @@ In order to do so, we used Galsim package in Python. For each lensed system, we 
     \centering
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
         \centering
-        \includegraphics[width=\linewidth, height=8cm]{beforenulldeblend.png}
+        \includegraphics[width=\linewidth]{beforenulldeblend.png}
         \caption{Before null-deblending, the whole system looks like this image. The brightest source is the lensing galaxy, and there are two dimmer quasar images near the galaxy. There is only one quasar images that are obvious that makes the image more elliptical.}
     \end{subfigure}
     \begin{subfigure}[bt]{0.48\linewidth}        %% or \columnwidth
         \centering
-        \includegraphics[width=\linewidth, height=8cm]{afternulldeblend.png}
+        \includegraphics[width=\linewidth]{afternulldeblend.png}
         \caption{After null-deblending, the whole system looks like this image. All the sources look like one big source observed at once.                                                                                                                                                                                 The color scheme used in matplotlib could be a little misleading here, but overall luminosity has not changed.}
     \end{subfigure}
-    \caption{Example null-deblending. The number on the axis corresponds to arcseconds, (0,0) being the center of the lensed system. We used a lensed system with ID 4898214 to demonstrate the above figure. } 
+    \caption{Example null-deblending. The number on the axis corresponds to arcseconds, (0,0) being the center of the lensed system. We used a lensed system with ID 4898214 to demonstrate the above figure. }
     \label{fig:null-deblend}
 \end{figure}
 
@@ -156,7 +156,7 @@ Detailed results are in \ref{subsec:classification_data}.
 \centering
 \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
 \hline
-lensid   & MJD          & filter & RA & RA\_err & DEC & DEC\_err & x              & x\_com\_err & y               & y\_com\_err \\ \hline 
+lensid   & MJD          & filter & RA & RA\_err & DEC & DEC\_err & x              & x\_com\_err & y               & y\_com\_err \\ \hline
 710960   & 59823.286523 & g      & 0  & 0       & 0   & 0        & 2.1350  & 0           & 1.2151 & 0			\\
 17432684 & 59823.286523 & g      & 0  & 0       & 0   & 0        & 0.1226 & 0           & 0.7593  & 0           \\
 50310149 & 59823.286523 & g      & 0  & 0       & 0   & 0        & 0.2527 & 0           & 0.4665  & 0           \\
