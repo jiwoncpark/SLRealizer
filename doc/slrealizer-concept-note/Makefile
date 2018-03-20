@@ -119,7 +119,7 @@ $(DESCTEX):
 #change the compiler call to allow a "." file
 # {% raw %}
 $(main) : $(DESCTEX) authlist
-	STYLEFLAG=$(envflag) latexmk -pdf $(main)
+	STYLEFLAG=$(envflag) latexmk $(main)
 #	latexmk -g -pdf  \
 	-pdflatex='openout_any=a pdflatex %O -interaction=nonstopmode "${flag}\input{%S}"'  \
 	${main}
@@ -127,7 +127,7 @@ $(main) : $(DESCTEX) authlist
 
 diff: $(DIFF).pdf
 $(DIFF).pdf: $(DIFF).tex
-	STYLEFLAG=$(envflag) latexmk -pdf $<
+	STYLEFLAG=$(envflag) latexmk $<
 $(DIFF).tex: $(DRAFT).tex $(main).tex
 	latexdiff --exclude-textcmd="multicolumn" $^ > $@
 # this ensures that the version to latexdiff against is always updated

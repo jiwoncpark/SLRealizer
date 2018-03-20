@@ -66,3 +66,12 @@ target/
 
 # LensPop trash
 *.pkl
+
+# LaTeX stuff
+desc-tex
+*.aux
+*.log
+*.dvi
+*.blg
+*.bbl
+attic
