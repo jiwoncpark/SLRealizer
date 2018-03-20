@@ -167,7 +167,8 @@ $(styleopts):
 
 tidy:
 	rm -f *.log *.aux *.out *.dvi *.synctex.gz *.fdb_latexmk *.fls
-	rm -f *.bbl *.blg *Notes.bib ${main}.pdf
+	rm -f *.bbl *.blg *Notes.bib
+#   rm -f ${main}.pdf
 
 clean: tidy
 	rm -f ${outname}.pdf ${outname}.tar.gz
