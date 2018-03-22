@@ -75,3 +75,7 @@ desc-tex
 *.blg
 *.bbl
 attic
+
+# Data
+toy_object_catalog.csv
+toy_source_catalog.csv
