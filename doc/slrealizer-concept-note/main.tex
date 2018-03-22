@@ -2,7 +2,7 @@
 % ======================================================================
 
 \RequirePackage{docswitch}
-% \FIXME is set by the user, through the makefile:
+% \flag is set by the user, through the makefile:
 %    make note
 %    make apj
 % etc.
@@ -321,14 +321,12 @@ dominated by  the contribution from the lens. When comparing the
 features in the $u$ filter and the $z$ filter, we expect to to see the
 biggest differences between lensed systems and SDSS galaxies.
 
-\FIXME{The features that we derive from the \Object table are as
-follows:}\footnote{These quantities do not seem to be the ones shown in
-the corner plot figure.}
-\begin{itemize}
-    \item Changes in the first moment along the x-axis (reference to the $r$ filter)
-    \item Changes in the first moment along the y-axis (reference to the $r$ filter)
-    \item Changes in the position (reference to the $r$ filter), ellipticities, rotation angles, fluxes, and sizes.
-\end{itemize}
+We began by deriving the following quantities from the \Object table:
+differences (across bands) in the first moment along the x-axis,
+differences in the first moment along the y-axis,  and across-band
+differences in the ellipticities, rotation angles, fluxes, and sizes.
+Where we needed a reference frame, we use the \Object properties in the
+$r$-band.
 
 We can derive the same features from the catalog of SDSS galaxies: we
 approximate the magnitude system in SDSS to be the same in LSST, and the
@@ -341,19 +339,15 @@ sizes, we multiplied the power of pixel-to-arcsec ratio to change the
 unit to arcseconds, multiplied two to convert the half size to the full
 size, and applied the square root to the value to get a right dimension.}\footnote{This text needs clarifying. Which quantity in the  LSST \Object table is being used? Which quantity in the SDSS catalog is being used? Why does the conversion from one to another involve a factor of 2?}
 
-\FIXME{Using these values, we computed various additional features. We
-plotted SDSS galaxies and OM10 lensed systems onto the corner plot
-\autoref{subsec:feature}, and chose the features that differentiated
-OM10 lensed systems from SDSS galaxies the most. We chose six main
-features that we thought would change dramatically between the filters
-for the realized lenses -- sizes, ellipticities (e), rotation angles of
-galaxies ($\phi$), magnitudes, positions($\Delta$ x), and the angle
-between ellipticity vector and the rotation vector ($\omega = \frac{e
-\cdot \phi}{ \left | e \right | \left | \phi \right |}$).}\footnote{This
-paragraph needs to be combined with the description of the itemized list
-above to make a simpler presentation. Why do we need to mention a
-reference to the $r$-band, when we are looking at differences between
-$u$ and $z$?} The distributions of these properties, in both the OM10
+From this initial feature set, we computed various additional features,
+and  plotted them for our SDSS galaxies and OM10 lensed systems, and
+chose the features that differentiated OM10 lensed systems from SDSS
+galaxies the most. We chose the $u-z$ difference in the \Object sizes,
+ellipticities ($e$), orientation angles ($\phi$), magnitudes, positions
+($\Delta$ x), and the angle between the ellipticity vector and the $u-z$
+rotation vector ($\omega = \frac{e \cdot \phi}{ \left| e \right| \left |
+\phi \right |}$).
+The distributions of these properties, in both the OM10
 lenses and SDSS galaxies, are plotted in
 \autoref{fig:cornerplot}.\footnote{Full corner plots can be viewed in
 the
