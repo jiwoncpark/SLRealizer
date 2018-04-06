@@ -41,26 +41,34 @@ class SLRealizer(object):
             print 'No lens system selected for plotting.'
             return
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
-        filter = 'y'
-        while filter == 'y':
+        band = 'y'
+        while band == 'y':
             randomIndex = random.randint(0, 200)
-            filter = self.observation[randomIndex][1]
-        # Now visualize the lens system at the epoch defined by the randomIndex:
-        self.catalog.select_random(maglim=23.3,area=20000.0,IQ=0.75, Nlens=20)
+            band = self.observation[randomIndex][1]
+        # Now visualize the lens system at the epoch defined by the randomIndex
+        # TODO make these parameters globally configurable
+        self.catalog.select_random(maglim=23.3, area=20000.0, IQ=0.75, Nlens=20)
         img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex], save_dir)
-        print('THIS IS HOW THE SYSTEM LOOKS LIKE BEFORE DEBLENDING ********************************')
-        plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
-        print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
-        array = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
-        galaxy = galsim.Gaussian(flux=float(array[10]),sigma=float(array[12]))
-        galaxy = galaxy.shift(float(array[6]),float(array[8]))
-        galaxy = galaxy.shear(e=float(array[15]), beta=float(array[16])*57.2958*galsim.degrees)
+        # TODO delete notebook-like print statements
+        fig, axes = plt.subplots(2, figsize=(5, 10))
+        axes[0].imshow(img.array, interpolation='none', aspect='auto')
+        axes[0].set_title("BEFORE DEBLENDING")
+        #plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
+        # TODO delete notebook-like print statements
+        #print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
+        params = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
+        # FIXIT check if float conversion necessary
+        galaxy = galsim.Gaussian(flux=float(params['flux']), sigma=float(params['size']))
+        galaxy = galaxy.shift(float(params['first_moment_x']), float(params['first_moment_y']))
+        galaxy = galaxy.shear(e=params['e'], beta=params['phi'])
+        # TODO make pixel scale globally configurable
         img = galaxy.drawImage(scale=0.2)
-        # given scale of 0.2, the unit of the axis will be arcseconds.
-        plt.imshow(img.array, interpolation='none', extent=[-10, 10, -10, 10])
+        axes[1].imshow(img.array, interpolation='none', aspect='auto')
+        axes[1].set_title("AFTER DEBLENDING")
         if save_dir is not None:
-            plt.savefig(save_dir+'after_deblend.png')
-
+            plt.savefig(save_dir + 'deblending.png')
+        return params
+            
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
         """
