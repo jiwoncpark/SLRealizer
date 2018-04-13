@@ -25,46 +25,45 @@ class SLRealizer(object):
     Generates the toy catalog, plots the lensed system, and deblends sources using OM10 catalog and observation history.
     """
 
-    def __init__(self, catalog=None, observation="../data/twinkles_observation_history.csv"):
+    def __init__(self, catalog=None, observation="../data/twinkles_observation_history.csv", date_threshold=60919):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is .csv file
         """
         self.catalog = catalog
-        self.observation = pd.read_csv(observation,index_col=0).as_matrix()
+        # TODO query outside class and make resulting matrix a parameter
+        obs = pd.read_csv(observation,index_col=0)
+        obs = obs.query("(expMJD < 60919) & (filter != 'y')")
+        self.observation = obs.as_matrix()
 
-    def plot_lens_random_date(self, lensID=None, convolve=False, save_dir=None):
-        """                                                                                                                      
-                Given a specific lens, this code plots a lens after choosing a random observation epoch.                                 
+    def plot_lens_random_date(self, lensID, convolve=False, save_dir=None):
+        """                                                                                                                   
+        Given a lens, draws the lens with a randomly chosen observation condition.
+                
         """
-        if lensID is None:
-            print 'No lens system selected for plotting.'
-            return
-        # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
-        band = 'y'
-        while band == 'y':
-            randomIndex = random.randint(0, 200)
-            band = self.observation[randomIndex][1]
-        # Now visualize the lens system at the epoch defined by the randomIndex
+        # Randomly select epoch ID
+        epochIdx = random.randint(0, len(self.observation))
+        
         # TODO make these parameters globally configurable
-        self.catalog.select_random(maglim=23.3, area=20000.0, IQ=0.75, Nlens=20)
-        img = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[randomIndex], save_dir)
+        #self.catalog.select_random(maglim=23.3, area=20000.0, IQ=0.75, Nlens=20)
+        img, obj = desc.slrealizer.plot_all_objects(self.catalog.get_lens(lensID), self.observation[epochIdx], save_dir)
         # TODO delete notebook-like print statements
+        
+        # Now visualize the lens system at the epoch defined by epochIdx
         fig, axes = plt.subplots(2, figsize=(5, 10))
         axes[0].imshow(img.array, interpolation='none', aspect='auto')
-        axes[0].set_title("BEFORE DEBLENDING")
-        #plt.imshow(img.array, interpolation='none', extent=[80,120,32,0])
+        axes[0].set_title("TRUE MODEL IMAGE")
+        
         # TODO delete notebook-like print statements
-        #print('THIS IS HOW THE SYSTEM LOOKS LIKE AFTER DEBLENDING **************************')
-        params = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[randomIndex])
+        params = desc.slrealizer.generate_data(self.catalog.get_lens(lensID), self.observation[epochIdx])
         # FIXIT check if float conversion necessary
-        galaxy = galsim.Gaussian(flux=float(params['flux']), sigma=float(params['size']))
-        galaxy = galaxy.shift(float(params['first_moment_x']), float(params['first_moment_y']))
-        galaxy = galaxy.shear(e=params['e'], beta=params['phi'])
+        galaxy = galsim.Gaussian(flux=params['flux'], sigma=params['size'])
+        galaxy = galaxy.shift(float(params['x']), float(params['y']))
+        galaxy = galaxy.shear(e1=params['e1'], e2=params['e2'])
         # TODO make pixel scale globally configurable
-        img = galaxy.drawImage(scale=0.2)
+        img = galaxy.drawImage(scale=0.2, method='no_pixel')
         axes[1].imshow(img.array, interpolation='none', aspect='auto')
-        axes[1].set_title("AFTER DEBLENDING")
+        axes[1].set_title("EMULATED IMAGE")
         if save_dir is not None:
             plt.savefig(save_dir + 'deblending.png')
         return params
@@ -83,12 +82,10 @@ class SLRealizer(object):
         If true, assumes null deblender. Working deblender is currently not being supported
         """
 
-        if lensID is None:
-            print('No lens system selected for calculating the statistics')
-            return
         if null_deblend is False:
             print('Sorry, working deblender is not being supported.')
             return
+        
         # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
         filter = 'y'
         while filter == 'y':
@@ -149,46 +146,64 @@ class SLRealizer(object):
             fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap, hist_kwargs=dict(normed=normed))
         return fig
 
-    def make_source_catalog(self, dir='../../../data/source_catalog.csv'):
+    def make_source_catalog(self, save_dir='../../../data/source_catalog.csv'):
         """
-        Generates a full catalog(for each filter) of 200 lensed system and saves it 
+        Generates a full catalog (for each filter) of 200 lensed system and saves it 
         """
-        print('From the OM10 catalog, I am selecting LSST lenses')
-        df = pd.DataFrame(columns=['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'e', 'phi', 'psf_sigma', 'sky', 'lensid'])
+        print("Began making the source catalog.")
+        # FIXIT do not hardcode
+        # TODO psf_sigma --> psf_fwhm
+        columns_list = ['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'psf_sigma', 'sky', 'lensid']
+        df = pd.DataFrame(columns=columns_list)
         #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
-        debug_count = 0
         num_system = len(self.catalog.sample)
-        print('number of system:', num_system)
-        num_obs, _ = self.observation.shape
-        for j in xrange(num_obs): # we will select 263 observation - first three years amount
-            if self.observation[j][1] != 'y' and self.observation[j][0] < 60919:
-                for i in xrange(num_system):
-                    #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                    data = desc.slrealizer.generate_data(self.catalog.get_lens(self.catalog.sample[i]['LENSID']), self.observation[j])
-                    if data is not None:
-                        df.loc[len(df)]= data
+        num_obs = len(self.observation)
+        print("number of systems: %d, number of observations: %d" %(num_system, num_obs))
+        # TODO get rid of nested for loop
+        hsm_failed = 0
+        for j in xrange(num_obs): # we will select 263 observations - first three years amount
+            for i in xrange(num_system):
+                #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
+                params_dict = desc.slrealizer.generate_data(currLens=self.catalog.get_lens(self.catalog.sample[i]['LENSID']),\
+                                                            currObs=self.observation[j])
+                if params_dict == None:
+                    hsm_failed += 1
+                else:
+                    # FIXIT try not to use list comprehension...
+                    vals_arr = np.array([params_dict[k] for k in columns_list])
+                    df.loc[len(df)]= vals_arr
+            if j % 20 == 0:
+                print("Done with %d observations..." %j)
         df.set_index('lensid', inplace=True)
-        df.to_csv(dir, index=True)
+        df.to_csv(save_dir, index=True)
+        print("Done making the source table, with %d errors from HSM failure." %hsm_failed)
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
     def make_object_catalog(self, source_table_dir='../../../data/source_catalog.csv', save_dir='../../../data/object_catalog.csv'):
         """
         From the source_table, make an object table by averaging the quantities for each filter and saves into the save_dir.
         """
-        print('Reading in the catalog')
+        print("Reading in the source catalog...")
         df = pandas.read_csv(source_table_dir)
         lensID = df['lensid']
         lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['lensid', 'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e1', 'u_e2', 'u_e', 'u_phi','g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e1', 'g_e2', 'g_e', 'g_phi', 'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err\
-', 'r_size_err', 'r_e1', 'r_e2', 'r_e', 'r_phi', 'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e1', 'i_e2', 'i_e', 'i_phi', 'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e1', 'z_e2', 'z_e', 'z_phi']
+        column_name = ['lensid', \
+                       'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e1', 'u_e2',\
+                       'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e1', 'g_e2', \
+                       'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err', 'r_e1', 'r_e2',\
+                       'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e1', 'i_e2',\
+                       'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e1', 'z_e2']
         source_table = pd.DataFrame(columns=column_name)
+        # TODO collapse querying
         for lens in lensID:
             lens_row = [lens]
             lens_array = df.loc[df['lensid'] == lens]
-            for filter in ['u', 'g', 'r', 'i', 'z']:
-                lens_row.extend(desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == filter]))
+            for b in ['u', 'g', 'r', 'i', 'z']:
+                lens_row += desc.slrealizer.return_mean_properties(lens_array.loc[lens_array['filter'] == b])
+            # TODO why is this check necessary?
             if np.isfinite(lens_row).all():
                 source_table.loc[len(source_table)]= np.array(lens_row)
         source_table = source_table.dropna(how='any')
         source_table.to_csv(save_dir, index=False)
+        print("Done making the object table.")
 #        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account

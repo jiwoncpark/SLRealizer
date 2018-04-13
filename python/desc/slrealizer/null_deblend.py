@@ -8,15 +8,14 @@ def make_catalog(currLens, currObs):
     image = plot_all_objects(currLens, currObs)
 
 def plot_all_objects(currLens, currObs, save_dir=None):
-    MJD, filter, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
+    MJD, band, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
     filter_AB_offset = 0.00
     curr_galaxy_mag = currLens[currObs[1]+'_SDSS_lens'][0] # 0-indexing just gets the magnitude value
     galaxy_flux = np.power(2.5, desc.slrealizer.return_zeropoint() - 
                                 curr_galaxy_mag + 
                                 filter_AB_offset) # Note mag diff ~ 2.5**(flux ratio)
     #Only one of sigma, fwhm, and half_light_radius may be specified for Gaussian, so we just add the values!
-    # TODO unit of REFF?
-    galaxy = galsim.Gaussian(half_light_radius=currLens['REFF'][0], flux=galaxy_flux)
+    galaxy = galsim.Gaussian(half_light_radius=currLens['REFF_T'][0], flux=galaxy_flux)
     big_fft_params = galsim.GSParams(maximum_fft_size=10240)
     phi_angle = currLens['PHIE'][0] * galsim.degrees
     galaxy = galaxy.shear(e=currLens['ELLIP'][0], beta=phi_angle)
@@ -27,20 +26,20 @@ def plot_all_objects(currLens, currObs, save_dir=None):
         lens = galsim.Gaussian(flux=mag_ratio, sigma=0.0) # we are going to convolve later, so lens is a point source for now
         lens = lens.shift([currLens['XIMG'][0][i], currLens['YIMG'][0][i]])
         galaxy += lens
+    # TODO match parameters
     psf = galsim.Gaussian(flux=1.0, sigma=PSF_HWHM)
-    galaxy = galsim.Convolve(galaxy, psf, gsparams=big_fft_params)
+    obj = galsim.Convolve(galaxy, psf, gsparams=big_fft_params)
     # TODO make pixel scale globally configurable
     # TODO since precision of HSM depends on pixel resolution, either don't pass in img to HSM OR manually define good resolution
-    img = galaxy.drawImage(scale=0.2)
+    img = obj.drawImage(scale=0.2)
     if save_dir is not None:
         plt.imshow(img.array, interpolation='none', aspect='auto')
         plt.savefig(save_dir+'before_deblend.png')
         plt.close()
-    # TODO need to close fig
-    return img
+    return img, obj
 
 def generate_data(currLens, currObs, manual_error=True):
-    img = desc.slrealizer.plot_all_objects(currLens, currObs)
+    img, obj = desc.slrealizer.plot_all_objects(currLens, currObs)
     MJD, band, PSF_HWHM, sky_mag = currObs[0], currObs[1], currObs[2], currObs[3]
     RA, RA_err, DEC, DEC_err, first_moment_x_err_calc, first_moment_y_err_calc, size_err = 0, 0, 0, 0, 0, 0, 0
     flux_err_calc = np.power(10, (22.5 - sky_mag)/2.5)/5. # because Fb = 5 \sigma_b
@@ -60,11 +59,13 @@ def generate_data(currLens, currObs, manual_error=True):
     size = shape_info.moments_sigma * pixel_scale # unit of pixels is returned, so change units for arcsec
     lensID = currLens['LENSID'][0]
     
-    e = shape_info.observed_shape.e
+    #e = shape_info.observed_shape.e
     # FIXIT not sure if flooring necessary. ceiling?
-    e = max(0.001, e)
+    #e = max(0.001, e)
     #if e == 0: e = 0.001 # prevent division by zero
-    phi = shape_info.observed_shape.beta
+    #phi = shape_info.observed_shape.beta
+    e1 = shape_info.observed_shape.e1
+    e2 = shape_info.observed_shape.e2
     size_err = 0
     if manual_error:
         size += size * noissify_data(desc.slrealizer.get_second_moment_err(), desc.slrealizer.get_second_moment_err_std())
@@ -72,11 +73,11 @@ def generate_data(currLens, currObs, manual_error=True):
         first_moment_y += noissify_data(desc.slrealizer.get_first_moment_err(), desc.slrealizer.get_first_moment_err_std()) * first_moment_y
         flux += flux*noissify_data(desc.slrealizer.get_flux_err(), desc.slrealizer.get_flux_err_std())
     # TODO consider just returning shear object, etc.
-    params_dict = {'MJD': MJD, 'band': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
-                   'first_moment_x': first_moment_x, 'first_moment_x_err_calc': first_moment_x_err_calc,
-                   'first_moment_y': first_moment_y, 'first_moment_y_err_calc': first_moment_y_err_calc,
-                   'flux': flux, 'flux_err_calc': flux_err_calc, 'size': size, 'size_err': size_err,
-                   'e': e, 'phi': phi, 'PSF_HWHM': PSF_HWHM, 'sky_mag': sky_mag, 'lensID': lensID}
+    params_dict = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
+                   'x': first_moment_x, 'x_com_err': first_moment_x_err_calc,
+                   'y': first_moment_y, 'y_com_err': first_moment_y_err_calc,
+                   'flux': flux, 'flux_err': flux_err_calc, 'size': size, 'size_err': size_err, 'e1': e1, 'e2': e2,
+                   'psf_sigma': PSF_HWHM, 'sky': sky_mag, 'lensid': lensID}
     return params_dict
 
 def noissify_data(mean, stdev):
