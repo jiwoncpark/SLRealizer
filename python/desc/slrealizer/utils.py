@@ -5,7 +5,7 @@ import numpy as np
 import pandas
 
 def from_flux_to_mag(flux_ratio):
-    return (-2.5)**flux_ratio
+    return (-2.5)*np.log10(flux_ratio)
 
 def from_mag_to_flux(mag_diff):
     return 10.0**(-0.4*mag_diff)

@@ -1,7 +1,6 @@
 #=====================================================
 import numpy as np
-import null_deblend as nd
-import utils
+from utils import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import pylab
@@ -34,7 +33,11 @@ class SLRealizer(object):
         self.observation = observation
         self.num_obs = len(self.observation)
         
-    def _get_observation(self, obsID=None, rownum=None):
+        # GalSim drawImage params
+        self.fft_params = galsim.GSParams(maximum_fft_size=10240)
+        self.pixel_scale = 0.2
+        
+    def get_observation(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
             raise ValueError("Need to define either obsID or rownum, not both.")
         
@@ -47,49 +50,62 @@ class SLRealizer(object):
         # This function will depend on the format of each lens catalog
         raise NotImplementedError
         
-    def get_lens_params(self, lensID, obsID, manual_error=True):
-        '''
-        Returns a dictionary of lens system's properties
-        computed from one lens system and one observation,
-        which makes up a row of the source table.
-
-        Keyword arguments:
-        currLens -- a row of the OM10 DB
-        currObs -- a row of the observation history df
-        manual_error -- if True, adds some predefined noise (default: True)
-        '''
-        lensID = currLens['LENSID'][0]
-        img, obj = draw_system(currLens, currObs)
-        histID, MJD, band, PSF_FWHM, sky_mag = currObs
-        RA, RA_err, DEC, DEC_err, first_moment_x_err_calc, first_moment_y_err_calc, size_err = 0, 0, 0, 0, 0, 0, 0
+    def estimate_hsm(self, image, obsInfo):
+        """
+        Performs HSM shape estimation on the image 
+        under the observation conditions obsInfo
+        
+        Returns
+        a dictionary of the shape info relevant to drawing the emulated image
+        """
+        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        
         flux_err_calc = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         try:
             shape_info = img.FindAdaptiveMom()
         except:
             print "HSM failed"
             return None
+        
         nx, ny = img.array.shape
         # Calculate the real position from the arbitrary pixel position
-        first_moment_x, first_moment_y = (shape_info.moments_centroid.x - 0.5*nx)*get_pixel_scale(),\
-                                         (shape_info.moments_centroid.y - 0.5*ny)*get_pixel_scale()
+        first_moment_x, first_moment_y = (shape_info.moments_centroid.x - 0.5*nx)*self.pixel_scale,\
+                                         (shape_info.moments_centroid.y - 0.5*ny)*self.pixel_Scale
         # TODO just use known flux?
         flux = shape_info.moments_amp
-        size = shape_info.moments_sigma * get_pixel_scale() # unit of pixels is returned, so change units for arcsec
+        size = shape_info.moments_sigma * self.pixel_scale # unit of pixels is returned, so change units for arcsec
         e1 = shape_info.observed_shape.e1
         e2 = shape_info.observed_shape.e2
-        size_err = 0
+        
+    
+    def create_source_row(self, hsm_dict, manual_error=True):
+        '''
+        Returns a dictionary of lens system's properties
+        computed the image of one lens system and the observation conditions,
+        which makes up a row of the source table.
+
+        Keyword arguments:
+        image -- a Numpy array of the lens system's image
+        observation -- a row of the observation history df
+        manual_error -- if True, adds some predefined noise (default: True)
+        
+        Returns
+        A dictionary with properties derived from HSM estimation
+        (See code for which properties)
+        '''
+        RA, RA_err, DEC, DEC_err, first_moment_x_err_calc, first_moment_y_err_calc, size_err = 0, 0, 0, 0, 0, 0, 0
         if manual_error:
             size += noissify_data(get_second_moment_err(), get_second_moment_err_std())
             first_moment_x += noissify_data(get_first_moment_err(), get_first_moment_err_std(), first_moment_x)
             first_moment_y += noissify_data(get_first_moment_err(), get_first_moment_err_std(), first_moment_y) 
             flux += noissify_data(get_flux_err(), get_flux_err_std(), flux)
         # TODO consider just returning shear object, etc.
-        params_dict = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
+        hsm = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
                        'x': first_moment_x, 'x_com_err': first_moment_x_err_calc,
                        'y': first_moment_y, 'y_com_err': first_moment_y_err_calc,
                        'flux': flux, 'flux_err': flux_err_calc, 'size': size, 'size_err': size_err, 'e1': e1, 'e2': e2,
                        'psf_sigma': PSF_HWHM, 'sky': sky_mag, 'lensid': lensID}
-        return params_dict
+        return hsm
 
     def make_source_table(self, save_dir='../../../data/source_table.csv'):
         """

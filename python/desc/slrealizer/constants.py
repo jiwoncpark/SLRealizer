@@ -49,15 +49,6 @@ def get_x_max():
 def get_y_max():
     return 5.0
 
-def get_distance():
-    return 0.2
-
-def get_pixel_arcsec_conversion():
-    return get_distance()
-
-def get_galsim_pixel_arcsec_conversion():
-    return 0.2
-
 def get_ellipticity_cut():
     return 0.4
 
