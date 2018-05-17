@@ -4,11 +4,15 @@ import math
 import numpy as np
 import pandas
 
-def from_flux_to_mag(flux_ratio):
-    return (-2.5)*np.log10(flux_ratio)
+def from_flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
+    if from_unit=='nMgy':
+        zeropoint_mag=22.5
+    return zeropoint_mag-2.5*np.log10(flux)
 
-def from_mag_to_flux(mag_diff):
-    return 10.0**(-0.4*mag_diff)
+def from_mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
+    if to_unit=='nMgy':
+        zeropoint_mag=22.5
+    return 10.0**(-0.4*(mag - zeropoint_mag))
 
 def noissify_data(mean, stdev, measurement=1.):
     """

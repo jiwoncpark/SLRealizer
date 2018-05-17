@@ -14,6 +14,17 @@ model lenses as mixtures of Gaussians. Our goals are to
 
 2. Enable a model-based interpretation of the LSST catalogs, for use in lens finding and light curve extraction.
 
+## Required Packages
+
+1. For Ubuntu 16.04, the matplotlib.pyplot.imshow module in Jupyter Notebook requires a manual installation of `texlive-latex-base`, `texlive-latex-extra`, `texlive-fonts-recommended`, and `dvipng`.
+
+2. Astropy
+
+3. Scikit-learn
+
+4. Pandas
+
+5. Numpy
 
 ## Set-up and testing
 

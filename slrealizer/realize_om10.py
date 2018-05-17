@@ -1,26 +1,31 @@
-from slrealize_base import SLRealizer
-from constants import *
-from utils import *
-import constants
+#from __future__ import absolute_import
+#from __future__ import division
+#from __future__ import print_function
+
+from realize_sl import SLRealizer
+from utils.constants import *
+from utils.utils import *
 import pandas
 import numpy as np
 import galsim
 
 class OM10Realizer(SLRealizer):
-
-    def __init__(self, catalog, observation):
-        super(OM10Realizer, self).__init__(observation=observation)
-        self._catalog = catalog
-        self._num_systems = len(self._catalog.sample)
+    
+    def __init__(self, observation, catalog):
+        #super(OM10Realizer, self).__init__(observation) # Didn't work for some reason
+        self.as_super = super(OM10Realizer, self)
+        self.as_super.__init__(observation)
+        self.catalog = catalog
+        self.num_systems = len(self.catalog.sample)
         
     def get_lensInfo(self, lensID=None, rownum=None):
         if lensID is not None and rownum is not None:
             raise ValueError("Need to define either lensID or rownum, not both.")
         
         if lensID is not None:
-            return self._catalog.get_lens(lensID) # Don't use this (?)
+            return self.catalog.get_lens(lensID) # Don't use this (?)
         elif rownum is not None:
-            return self._catalog.sample[rownum]
+            return self.catalog.sample[rownum]
        
     def _from_om10_to_galsim(self, lensInfo, band):
         # TODO check if interpreted units correctly
@@ -29,20 +34,21 @@ class OM10Realizer(SLRealizer):
         
         Keyword arguments:
         lensInfo -- a row of the OM10 DB
-        band -- the filter observed
+        band -- the filter used to observe
 
         Returns:
-        A dictionary containing properties that can be passed into GalSim
-        (See code for which properties)
+        A dictionary (named galsimInput) containing properties that 
+        can be passed into GalSim (See code for which properties)
         """
         
-        mag   = lensInfo[band + '_SDSS_lens']
-        flux  = from_mag_to_flux(mag - return_zeropoint() - get_filter_AB_offset())
+        # We will input flux in units of nMgy
+        mag   = lensInfo[band + '_SDSS_lens'] 
+        flux  = from_mag_to_flux(mag, to_unit='nMgy') # in nMgy
         hlr   = lensInfo['REFF_T'] # REFF_T is in arcsec
         e     = lensInfo['ELLIP']
         beta  = lensInfo['PHIE'] * galsim.degrees # PHIE is in degrees
         
-        galsim_params={'flux': flux,
+        galsimInput={'flux': flux,
                        'half_light_radius': hlr,
                        'e': e,
                        'beta': beta,
@@ -50,49 +56,24 @@ class OM10Realizer(SLRealizer):
         
         for obj in xrange(lensInfo['NIMG']):
             obj_mag = lensInfo[band + '_SDSS_quasar']\
-                      + from_flux_to_mag(lensInfo['MAG'][obj] + get_filter_AB_offset())
-            galsim_params['flux_'+str(obj)] = from_mag_to_flux(obj_mag - return_zeropoint()) # don't subtract AB offset?
-            galsim_params['xy_'+str(obj)] = lensInfo['XIMG'][obj], lensInfo['YIMG'][obj]
+                      + from_flux_to_mag(abs(lensInfo['MAG'][obj]))
+                      #+ from_flux_to_mag(lensInfo['MAG'][obj] + get_filter_AB_offset())
+            galsimInput['flux_'+str(obj)] = from_mag_to_flux(obj_mag, to_unit='nMgy') # don't subtract AB offset?
+            galsimInput['xy_'+str(obj)] = lensInfo['XIMG'][obj], lensInfo['YIMG'][obj]
             
-        return galsim_params        
+        return galsimInput        
             
-    def draw_system(self, lensInfo, obsInfo, save_dir=None):
-        '''
-        Draws all objects of the given lens system
-        in the given observation conditions using GalSim
-
-        Keyword arguments:
-        lensInfo -- a row of the OM10 DB
-        obsInfo -- a row of the observation history df
-        save_dir -- directory in which to save the image
-
-        Returns:
-        A tuple of
-        - a Numpy array of the image
-        - a GalSim object of the aggregate system used to render
-          the image
-        '''
-        MJD, band, PSF_FWHM, sky_mag = obsInfo
-        galsim_params = self._from_om10_to_galsim(lensInfo, band)
-        # Lens galaxy
-        galaxy = galsim.Gaussian(half_light_radius=galsim_params['half_light_radius'],\
-                                 flux=galsim_params['flux'])\
-                       .shear(e=galsim_params['e'], beta=galsim_params['beta'])
-        # Lensed quasar
-        for i in xrange(galsim_params['num_objects']):
-            lens = galsim.Gaussian(flux=galsim_params['flux_'+i], sigma=0.0)\
-                         .shift(galsim_params['xy_'+i])
-            galaxy += lens
-            
-        psf = galsim.Gaussian(flux=1.0, fwhm=PSF_FWHM)
-        galsim_obj = galsim.Convolve(galaxy, psf, gsparams=self.fft_params)
-        # TODO since precision of HSM depends on pixel resolution, either don't pass in img to HSM OR manually define good resolution
-        img = galsim_obj.drawImage(scale=self.pixel_scale)
-        if save_dir is not None:
-            plt.imshow(img.array, interpolation='none', aspect='auto')
-            plt.savefig(save_dir+'before_deblend.png')
-            plt.close()
-        return img, galsim_obj
+    def draw_system(self, obsInfo, lensInfo, save_dir=None):
+        galsimInput = self._from_om10_to_galsim(lensInfo, obsInfo['filter'])
+        return self.as_super.draw_system(galsimInput=galsimInput, obsInfo=obsInfo, save_dir=save_dir)
+    
+    def estimate_hsm(self, obsInfo, lensInfo):
+        galsim_img = self.draw_system(lensInfo=lensInfo, obsInfo=obsInfo, save_dir=None)
+        return self.as_super.estimate_hsm(galsim_img=galsim_img, obsInfo=obsInfo)
+    
+    def draw_emulated_system(self, obsInfo, lensInfo):
+        hsmOutput = self.estimate_hsm(obsInfo, lensInfo)
+        return self.as_super.draw_emulated_system(hsmOutput)
     
     def draw_lens_random_date(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   

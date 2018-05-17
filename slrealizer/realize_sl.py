@@ -1,21 +1,22 @@
-#=====================================================
+#from __future__ import absolute_import
+#from __future__ import division
+#from __future__ import print_function
+
 import numpy as np
-from utils import *
+from utils.utils import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import pylab
 import matplotlib
-import math
-import skimage
+#import skimage
 import random
-import corner
-import dropbox
-import extract_corner
+#import corner
+#import dropbox
+#import extract_corner
 import om10
 import galsim
 from astropy.utils.console import ProgressBar
 #from corner import corner
-#=====================================================
 
 class SLRealizer(object):
 
@@ -24,7 +25,7 @@ class SLRealizer(object):
     using the OM10 catalog and observation history provided in constructor.
     '''
 
-    def __init__(self, observation=None):
+    def __init__(self, observation):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is a pandas df
@@ -35,7 +36,7 @@ class SLRealizer(object):
         
         # GalSim drawImage params
         self.fft_params = galsim.GSParams(maximum_fft_size=10240)
-        self.pixel_scale = 0.2
+        self.pixel_scale = 0.1
         
     def get_observation(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -50,33 +51,87 @@ class SLRealizer(object):
         # This function will depend on the format of each lens catalog
         raise NotImplementedError
         
-    def estimate_hsm(self, image, obsInfo):
+    def draw_system(self, galsimInput, obsInfo, save_dir=None):
+        '''
+        Draws all objects of the given lens system
+        in the given observation conditions using GalSim
+
+        Keyword arguments:
+        lensInfo -- a row of the OM10 DB
+        obsInfo -- a row of the observation history df
+        save_dir -- directory in which to save the image
+
+        Returns:
+        A GalSim object of the aggregate system used to render
+        the image
+        '''
+        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+
+        # Lens galaxy
+        galaxy = galsim.Gaussian(half_light_radius=galsimInput['half_light_radius'],\
+                                 flux=galsimInput['flux'])\
+                       .shear(e=galsimInput['e'], beta=galsimInput['beta'])
+        # Lensed quasar
+        for i in xrange(galsimInput['num_objects']):
+            lens = galsim.Gaussian(flux=galsimInput['flux_'+str(i)], sigma=0.0)\
+                         .shift(galsimInput['xy_'+str(i)])
+            galaxy += lens
+            
+        psf = galsim.Gaussian(flux=1.0, fwhm=PSF_FWHM)
+        galsim_obj = galsim.Convolve([galaxy, psf], gsparams=self.fft_params)
+        galsim_img = galsim_obj.drawImage(scale=self.pixel_scale)
+        if save_dir is not None:
+            plt.imshow(galsim_img.array, interpolation='none', aspect='auto')
+            plt.savefig(save_dir+'before_deblend.png')
+            plt.close()
+        return galsim_img
+        
+    def estimate_hsm(self, galsim_img, obsInfo):
         """
         Performs HSM shape estimation on the image 
         under the observation conditions obsInfo
         
         Returns
-        a dictionary of the shape info relevant to drawing the emulated image
+        a dictionary (named hsm) of the shape info relevant to drawing the emulated image
         """
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        hsmOutput = {}
         
         flux_err_calc = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
+        
+        #shape_info = galsim_img.FindAdaptiveMom()
         try:
-            shape_info = img.FindAdaptiveMom()
+            shape_info = galsim_img.FindAdaptiveMom(guess_sig=self.pixel_scale*10.0)
         except:
             print "HSM failed"
             return None
         
-        nx, ny = img.array.shape
+        nx, ny = galsim_img.array.shape
+        hsmOutput['nx'], hsmOutput['ny'] = nx, ny
         # Calculate the real position from the arbitrary pixel position
-        first_moment_x, first_moment_y = (shape_info.moments_centroid.x - 0.5*nx)*self.pixel_scale,\
-                                         (shape_info.moments_centroid.y - 0.5*ny)*self.pixel_Scale
+        hsmOutput['x'], hsmOutput['y'] = (shape_info.moments_centroid.x - 0.5*nx)*self.pixel_scale,\
+                                         (shape_info.moments_centroid.y - 0.5*ny)*self.pixel_scale
         # TODO just use known flux?
-        flux = shape_info.moments_amp
-        size = shape_info.moments_sigma * self.pixel_scale # unit of pixels is returned, so change units for arcsec
-        e1 = shape_info.observed_shape.e1
-        e2 = shape_info.observed_shape.e2
+        hsmOutput['flux'] = shape_info.moments_amp
+        hsmOutput['size'] = shape_info.moments_sigma * self.pixel_scale
+        hsmOutput['e1'] = shape_info.observed_shape.e1
+        hsmOutput['e2'] = shape_info.observed_shape.e2
+        return hsmOutput
+    
+    def draw_emulated_system(self, hsmOutput):
+        """
+        Draws the emulated system, i.e. draws the aggregate system
+        from properties HSM derived from the image, which was in turn
+        drawn from the catalog's truth properties
         
+        Returns
+        a GalSim Image object of the emulated system
+        """
+        system = galsim.Gaussian(flux=hsmOutput['flux'], sigma=hsmOutput['size'])\
+                       .shift(float(hsmOutput['x']), float(hsmOutput['y']))\
+                       .shear(e1=hsmOutput['e1'], e2=hsmOutput['e2'])
+        emulatedImg = system.drawImage(scale=self.pixel_scale, method='no_pixel')
+        return emulatedImg
     
     def create_source_row(self, hsm_dict, manual_error=True):
         '''
