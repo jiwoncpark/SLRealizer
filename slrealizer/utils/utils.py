@@ -4,6 +4,12 @@ import math
 import numpy as np
 import pandas
 
+def pixel_to_physical(pixelPos, canvasSize, pixel_scale):
+    return (pixelPos - 0.5*canvasSize)*pixel_scale
+
+def physical_to_pixel(physicalPos, canvasSize, pixel_scale):
+    return physicalPos/pixel_scale + 0.5*canvasSize
+
 def from_flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
     if from_unit=='nMgy':
         zeropoint_mag=22.5

@@ -11,12 +11,13 @@ import galsim
 
 class OM10Realizer(SLRealizer):
     
-    def __init__(self, observation, catalog):
+    def __init__(self, observation, catalog, debug=False):
         #super(OM10Realizer, self).__init__(observation) # Didn't work for some reason
         self.as_super = super(OM10Realizer, self)
         self.as_super.__init__(observation)
         self.catalog = catalog
         self.num_systems = len(self.catalog.sample)
+        self.DEBUG = debug
         
     def get_lensInfo(self, lensID=None, rownum=None):
         if lensID is not None and rownum is not None:

@@ -37,6 +37,7 @@ class SLRealizer(object):
         # GalSim drawImage params
         self.fft_params = galsim.GSParams(maximum_fft_size=10240)
         self.pixel_scale = 0.1
+        self.nx, self.ny = 48, 48 
         
     def get_observation(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -79,7 +80,7 @@ class SLRealizer(object):
             
         psf = galsim.Gaussian(flux=1.0, fwhm=PSF_FWHM)
         galsim_obj = galsim.Convolve([galaxy, psf], gsparams=self.fft_params)
-        galsim_img = galsim_obj.drawImage(scale=self.pixel_scale)
+        galsim_img = galsim_obj.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale)
         if save_dir is not None:
             plt.imshow(galsim_img.array, interpolation='none', aspect='auto')
             plt.savefig(save_dir+'before_deblend.png')
@@ -106,14 +107,17 @@ class SLRealizer(object):
             print "HSM failed"
             return None
         
-        nx, ny = galsim_img.array.shape
-        hsmOutput['nx'], hsmOutput['ny'] = nx, ny
         # Calculate the real position from the arbitrary pixel position
-        hsmOutput['x'], hsmOutput['y'] = (shape_info.moments_centroid.x - 0.5*nx)*self.pixel_scale,\
-                                         (shape_info.moments_centroid.y - 0.5*ny)*self.pixel_scale
+        pixelCenter = galsim.PositionD(x=shape_info.moments_centroid.x, y=shape_info.moments_centroid.y)
+        hsmOutput['x'], hsmOutput['y'] = pixel_to_physical(shape_info.moments_centroid.x, self.nx, self.pixel_scale),\
+                                         pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
+        
         # TODO just use known flux?
-        hsmOutput['flux'] = shape_info.moments_amp
-        hsmOutput['size'] = shape_info.moments_sigma * self.pixel_scale
+        hsmOutput['flux'] = float(np.sum(galsim_img.array))
+        if self.DEBUG:
+            hsmOutput['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
+            hsmOutput['det'] = shape_info.moments_sigma * self.pixel_scale
+        hsmOutput['trace'] = 2.0*galsim_img.calculateMomentRadius(center=pixelCenter, rtype='trace')**2.0
         hsmOutput['e1'] = shape_info.observed_shape.e1
         hsmOutput['e2'] = shape_info.observed_shape.e2
         return hsmOutput
@@ -122,18 +126,21 @@ class SLRealizer(object):
         """
         Draws the emulated system, i.e. draws the aggregate system
         from properties HSM derived from the image, which was in turn
-        drawn from the catalog's truth properties
+        drawn from the catalog's truth properties.
+        Only runs when DEBUG == True.
         
         Returns
         a GalSim Image object of the emulated system
         """
-        system = galsim.Gaussian(flux=hsmOutput['flux'], sigma=hsmOutput['size'])\
+        if not self.DEBUG:
+            raise ValueError("Only runs in debug mode")
+        system = galsim.Gaussian(flux=hsmOutput['flux'], half_light_radius=hsmOutput['hlr'])\
                        .shift(float(hsmOutput['x']), float(hsmOutput['y']))\
                        .shear(e1=hsmOutput['e1'], e2=hsmOutput['e2'])
-        emulatedImg = system.drawImage(scale=self.pixel_scale, method='no_pixel')
+        emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')
         return emulatedImg
     
-    def create_source_row(self, hsm_dict, manual_error=True):
+    def create_source_row(self, hsmOutput, manual_error=True):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
@@ -155,12 +162,12 @@ class SLRealizer(object):
             first_moment_y += noissify_data(get_first_moment_err(), get_first_moment_err_std(), first_moment_y) 
             flux += noissify_data(get_flux_err(), get_flux_err_std(), flux)
         # TODO consider just returning shear object, etc.
-        hsm = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
+        row = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
                        'x': first_moment_x, 'x_com_err': first_moment_x_err_calc,
                        'y': first_moment_y, 'y_com_err': first_moment_y_err_calc,
                        'flux': flux, 'flux_err': flux_err_calc, 'size': size, 'size_err': size_err, 'e1': e1, 'e2': e2,
                        'psf_sigma': PSF_HWHM, 'sky': sky_mag, 'lensid': lensID}
-        return hsm
+        return row
 
     def make_source_table(self, save_dir='../../../data/source_table.csv'):
         """
