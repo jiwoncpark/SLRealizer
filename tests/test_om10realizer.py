@@ -59,7 +59,8 @@ class OM10RealizerTest(unittest.TestCase):
         # We can access lens and observation rows through these variables.
         self.__class__.test_lensInfo = test_db.sample[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
-        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests')
+        # Path where we will save our test source table
+        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_source_table.csv')
     
     def test_from_om10_to_galsim(self):
         self.realizer._from_om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
@@ -74,7 +75,7 @@ class OM10RealizerTest(unittest.TestCase):
         print(self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo))
         
     def test_make_source_table(self):
-        self.realizer.make_source_table(self, save_dir=self.test_datapath)
+        self.realizer.make_source_table(save_dir=self.test_datapath)
 
 if __name__ == '__main__':
     unittest.main()

@@ -41,7 +41,7 @@ class SLRealizer(object):
         self.nx, self.ny = 48, 48 
         
         # Source table column list
-        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'sky', 'objectId']
+        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
         
     def get_observation(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -180,7 +180,7 @@ class SLRealizer(object):
         """
         print("Began making the source catalog.")
         
-        df = pd.DataFrame(columns=columns_list)
+        df = pd.DataFrame(columns=self.sourceCols)
         #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         print("Number of systems: %d, number of observations: %d" %(self.num_systems, self.num_obs))
         
@@ -188,19 +188,17 @@ class SLRealizer(object):
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
-                    #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                    params_dict = self.get_lens_params(currLens=self.catalog.sample[i],\
-                                                                currObs=self.observation.loc[j])
-                    if params_dict == None:
+                    row = self.create_source_row(lensInfo=self.catalog.sample[i], obsInfo=self.observation.loc[j])
+                    if row == None:
                         hsm_failed += 1
                     else:
                         # FIXIT try not to use list comprehension...
-                        vals_arr = np.array([params_dict[c] for c in self.sourceCols])
+                        vals_arr = np.array([row[c] for c in self.sourceCols])
                         df.loc[len(df)]= vals_arr
                 bar.update()
-        df.set_index('lensid', inplace=True)
+        df.set_index('objectId', inplace=True)
         df.to_csv(save_dir, index=True)
-        print("Done making the source table which has %d rows, after getting %d errors from HSM failure." %(len(df), hsm_failed))
+        print("Done making the source table which has %d row(s), after getting %d errors from HSM failure." %(len(df), hsm_failed))
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
 # TODO need to debug past this point.
