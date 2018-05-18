@@ -55,7 +55,7 @@ class OM10RealizerTest(unittest.TestCase):
         test_db = DB(catalog=test_catalog_f)
         test_db.paint(synthetic=True)
         test_obs = pd.read_csv(observation_f).sample(1, random_state=123).reset_index(drop=True)
-        self.__class__.realizer = OM10Realizer(observation=test_obs, catalog=test_db, debug=True) 
+        self.__class__.realizer = OM10Realizer(observation=test_obs, catalog=test_db, debug=False) 
         # We can access lens and observation rows through these variables.
         self.__class__.test_lensInfo = test_db.sample[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
