@@ -20,14 +20,12 @@ def from_mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
         zeropoint_mag=22.5
     return 10.0**(-0.4*(mag - zeropoint_mag))
 
-def noissify_data(mean, stdev, measurement=1.):
+def add_noise(mean, stdev, measurement=1.0):
     """
     Given a mean and a standard deviation of a measurement, add a noise to the data
     """
     return measurement*np.random.normal(loc=mean, scale=stdev)
 
-def get_pixel_scale():
-    return 0.2
 '''
 def return_coordinate(first_moment_x, first_moment_y):
     """

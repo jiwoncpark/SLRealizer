@@ -4,6 +4,7 @@
 
 import numpy as np
 from utils.utils import *
+from utils.constants import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import pylab
@@ -98,7 +99,7 @@ class SLRealizer(object):
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         hsmOutput = {}
         
-        flux_err_calc = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
+        hsmOutput['skyErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         
         #shape_info = galsim_img.FindAdaptiveMom()
         try:
@@ -113,7 +114,7 @@ class SLRealizer(object):
                                          pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
         
         # TODO just use known flux?
-        hsmOutput['flux'] = float(np.sum(galsim_img.array))
+        hsmOutput['appFlux'] = float(np.sum(galsim_img.array))
         if self.DEBUG:
             hsmOutput['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
             hsmOutput['det'] = shape_info.moments_sigma * self.pixel_scale
@@ -140,7 +141,7 @@ class SLRealizer(object):
         emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')
         return emulatedImg
     
-    def create_source_row(self, hsmOutput, manual_error=True):
+    def create_source_row(self, hsmOutput, objectId, obsInfo):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
@@ -148,28 +149,27 @@ class SLRealizer(object):
 
         Keyword arguments:
         image -- a Numpy array of the lens system's image
-        observation -- a row of the observation history df
+        obsInfo -- a row of the observation history df
         manual_error -- if True, adds some predefined noise (default: True)
         
         Returns
         A dictionary with properties derived from HSM estimation
         (See code for which properties)
         '''
-        RA, RA_err, DEC, DEC_err, first_moment_x_err_calc, first_moment_y_err_calc, size_err = 0, 0, 0, 0, 0, 0, 0
-        if manual_error:
-            size += noissify_data(get_second_moment_err(), get_second_moment_err_std())
-            first_moment_x += noissify_data(get_first_moment_err(), get_first_moment_err_std(), first_moment_x)
-            first_moment_y += noissify_data(get_first_moment_err(), get_first_moment_err_std(), first_moment_y) 
-            flux += noissify_data(get_flux_err(), get_flux_err_std(), flux)
-        # TODO consider just returning shear object, etc.
-        row = {'MJD': MJD, 'filter': band, 'RA': RA, 'RA_err': RA_err, 'DEC': DEC, 'DEC_err': DEC_err,
-                       'x': first_moment_x, 'x_com_err': first_moment_x_err_calc,
-                       'y': first_moment_y, 'y_com_err': first_moment_y_err_calc,
-                       'flux': flux, 'flux_err': flux_err_calc, 'size': size, 'size_err': size_err, 'e1': e1, 'e2': e2,
-                       'psf_sigma': PSF_HWHM, 'sky': sky_mag, 'lensid': lensID}
+        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        
+        hsmOutput['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), hsmOutput['trace'])
+        hsmOutput['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), hsmOutput['x'])
+        hsmOutput['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), hsmOutput['y']) 
+        hsmOutput['appFlux'] += add_noise(get_flux_err(), get_flux_err_std(), hsmOutput['appFlux'])
+        
+        row = {'MJD': MJD, 'filter': band, 'x': hsmOutput['x'], 'y': hsmOutput['y'],
+               'flux': hsmOutput['appFlux'], 'skyErr': hsmOutput['skyErr'],
+               'trace': hsmOutput['trace'],
+               'e1': hsmOutput['e1'], 'e2': hsmOutput['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
-    def make_source_table(self, save_dir='../../../data/source_table.csv'):
+    def make_source_table(self, save_dir):
         """
         Returns a source table generated from all the lens systems in the catalog
         under all the observation conditions in the observation history,
@@ -177,8 +177,7 @@ class SLRealizer(object):
         """
         print("Began making the source catalog.")
         # FIXIT do not hardcode
-        # TODO psf_sigma --> psf_fwhm
-        columns_list = ['MJD', 'filter', 'RA', 'RA_err', 'DEC', 'DEC_err', 'x', 'x_com_err', 'y', 'y_com_err', 'flux', 'flux_err', 'size', 'size_err', 'e1', 'e2', 'psf_sigma', 'sky', 'lensid']
+        columns_list = ['MJD', 'filter','x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'sky', 'objectId']
         df = pd.DataFrame(columns=columns_list)
         #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         print("Number of systems: %d, number of observations: %d" %(self.num_systems, self.num_obs))

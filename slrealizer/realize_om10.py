@@ -76,6 +76,11 @@ class OM10Realizer(SLRealizer):
         hsmOutput = self.estimate_hsm(obsInfo, lensInfo)
         return self.as_super.draw_emulated_system(hsmOutput)
     
+    def create_source_row(self, obsInfo, lensInfo):
+        hsmOutput = self.estimate_hsm(obsInfo, lensInfo)
+        objectId = lensInfo['LENSID']
+        return self.as_super.create_source_row(hsmOutput=hsmOutput, objectId=objectId, obsInfo=obsInfo)
+    
     def draw_lens_random_date(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   
         Draws two images of the lens system with the given rownum
