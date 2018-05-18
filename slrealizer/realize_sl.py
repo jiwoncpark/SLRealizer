@@ -40,6 +40,9 @@ class SLRealizer(object):
         self.pixel_scale = 0.1
         self.nx, self.ny = 48, 48 
         
+        # Source table column list
+        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'sky', 'objectId']
+        
     def get_observation(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
             raise ValueError("Need to define either obsID or rownum, not both.")
@@ -176,24 +179,23 @@ class SLRealizer(object):
         and saves it as a .csv file.
         """
         print("Began making the source catalog.")
-        # FIXIT do not hardcode
-        columns_list = ['MJD', 'filter','x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'sky', 'objectId']
+        
         df = pd.DataFrame(columns=columns_list)
         #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         print("Number of systems: %d, number of observations: %d" %(self.num_systems, self.num_obs))
-        # TODO get rid of nested for loop
+        
         hsm_failed = 0
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
                     #if self.catalog.sample[i]['ELLIP'] < ellipticity_upper_limit: # ellipticity cut : 0.5
-                    params_dict = self.get_lens_params(currLens=self.catalog.get_lens(rownum=i),\
+                    params_dict = self.get_lens_params(currLens=self.catalog.sample[i],\
                                                                 currObs=self.observation.loc[j])
                     if params_dict == None:
                         hsm_failed += 1
                     else:
                         # FIXIT try not to use list comprehension...
-                        vals_arr = np.array([params_dict[k] for k in columns_list])
+                        vals_arr = np.array([params_dict[c] for c in self.sourceCols])
                         df.loc[len(df)]= vals_arr
                 bar.update()
         df.set_index('lensid', inplace=True)

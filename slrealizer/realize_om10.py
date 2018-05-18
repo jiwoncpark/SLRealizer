@@ -29,7 +29,6 @@ class OM10Realizer(SLRealizer):
             return self.catalog.sample[rownum]
        
     def _from_om10_to_galsim(self, lensInfo, band):
-        # TODO check if interpreted units correctly
         """
         Converts OM10's column values into GalSim terms
         
@@ -80,6 +79,9 @@ class OM10Realizer(SLRealizer):
         hsmOutput = self.estimate_hsm(obsInfo, lensInfo)
         objectId = lensInfo['LENSID']
         return self.as_super.create_source_row(hsmOutput=hsmOutput, objectId=objectId, obsInfo=obsInfo)
+    
+    def make_source_table(self, save_dir):
+        return self.as_super.make_source_table(self, save_dir)
     
     def draw_lens_random_date(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   

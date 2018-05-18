@@ -1,6 +1,6 @@
 #from SLRealizer import *
 #from distance import *
-from constant import *
+from constants import *
 #from null_deblend import *
 #from catalog import *
 #from test import *
