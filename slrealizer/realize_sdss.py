@@ -42,7 +42,7 @@ class SDSSRealizer(SLRealizer):
         row['appFlux'] = lensInfo['modelFlux_' + band]
         row['x'] = np.cos(np.deg2rad(lensInfo['offsetDec_' + band]*3600.0)) * lensInfo['offsetRa_' + band]
         row['y'] = lensInfo['offsetDec_' + band]
-        row['trace'] = lensInfo['mRrCc_' + band]
+        row['trace'] = lensInfo['mRrCc_' + band] + 2.0*fwhm_to_sigma(PSF_FWHM)**2.0
         row['e1'] = lensInfo['mE1_' + band]
         row['e2'] = lensInfo['mE2_' + band]
         
