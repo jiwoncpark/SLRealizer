@@ -13,15 +13,15 @@ import matplotlib.pyplot as plt
 import sys
 realizer_path = os.path.join(os.environ['SLREALIZERDIR'], 'slrealizer')
 sys.path.insert(0, realizer_path)
-from realize_om10 import OM10Realizer
+from realize_sdss import SDSSRealizer
 from utils.utils import *
 #from realize_sl import SLRealizer
 # ======================================================================
 
-class OM10RealizerTest(unittest.TestCase):
+class SDSSRealizerTest(unittest.TestCase):
     
     """
-    Tests the OM10 Realizer subclass.
+    Tests the SDSS Realizer subclass.
     
     NOTE
     Execute these tests with:
@@ -49,27 +49,18 @@ class OM10RealizerTest(unittest.TestCase):
         # you want to have persistent things to test
         
         data_path = os.path.join(os.environ['SLREALIZERDIR'], 'data')
-        test_catalog_f = os.path.join(data_path, 'test_catalog.fits')
+        catalog_f = os.path.join(data_path, 'sdss_test_processed.csv')
         observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
     
-        test_db = DB(catalog=test_catalog_f)
-        test_db.paint(synthetic=True)
+        test_db = pd.read_csv(catalog_f).sample(1, random_state=123).reset_index(drop=True)
         test_obs = pd.read_csv(observation_f).sample(1, random_state=123).reset_index(drop=True)
-        self.__class__.realizer = OM10Realizer(observation=test_obs, catalog=test_db, debug=False) 
+        
+        self.__class__.realizer = SDSSRealizer(observation=test_obs, catalog=test_db, debug=False) 
         # We can access lens and observation rows through these variables.
-        self.__class__.test_lensInfo = test_db.sample[0]
+        self.__class__.test_lensInfo = test_db.loc[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
         # Path where we will save our test source table
-        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_source_table.csv')
-    
-    def test_from_om10_to_galsim(self):
-        self.realizer._from_om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
-    
-    def test_draw_system(self):
-        self.realizer.draw_system(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo) 
-    
-    def test_estimate_hsm(self):
-        self.realizer.estimate_hsm(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo)
+        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_nonlens_source_table.csv')
     
     def test_create_source_row(self):
         print(self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo))

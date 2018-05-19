@@ -19,12 +19,12 @@ class OM10Realizer(SLRealizer):
         self.num_systems = len(self.catalog.sample)
         self.DEBUG = debug
         
-    def get_lensInfo(self, lensID=None, rownum=None):
-        if lensID is not None and rownum is not None:
-            raise ValueError("Need to define either lensID or rownum, not both.")
+    def get_lensInfo(self, objID=None, rownum=None):
+        if objID is not None and rownum is not None:
+            raise ValueError("Need to define either objID or rownum, not both.")
         
-        if lensID is not None:
-            return self.catalog.get_lens(lensID) # Don't use this (?)
+        if objID is not None:
+            return self.catalog['objectId']==objID # Don't use this (?)
         elif rownum is not None:
             return self.catalog.sample[rownum]
        
@@ -82,4 +82,5 @@ class OM10Realizer(SLRealizer):
         objectId = lensInfo['LENSID']
         return self.as_super.create_source_row(hsmOutput=hsmOutput, objectId=objectId, obsInfo=obsInfo)
     
-    #def make_source_table(self, save_file)
+    #def make_source_table INHERITED
+    #def compare_truth_vs_emulated INHERITED

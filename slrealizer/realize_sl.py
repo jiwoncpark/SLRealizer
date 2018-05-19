@@ -43,9 +43,9 @@ class SLRealizer(object):
         self.nx, self.ny = 48, 48 
         
         # Source table column list
-        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'flux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
+        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'appFlux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
         
-    def get_observation(self, obsID=None, rownum=None):
+    def get_obsInfo(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
             raise ValueError("Need to define either obsID or rownum, not both.")
         
@@ -54,7 +54,7 @@ class SLRealizer(object):
         elif rownum is not None:
             return self.observation.loc[rownum]
     
-    def _get_lens(self, lensID):
+    def _get_lensInfo(self, lensID):
         # This function will depend on the format of each lens catalog
         raise NotImplementedError
         
@@ -118,7 +118,6 @@ class SLRealizer(object):
         hsmOutput['x'], hsmOutput['y'] = pixel_to_physical(shape_info.moments_centroid.x, self.nx, self.pixel_scale),\
                                          pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
         
-        # TODO just use known flux?
         hsmOutput['appFlux'] = float(np.sum(galsim_img.array))
         if self.DEBUG:
             hsmOutput['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
@@ -169,7 +168,7 @@ class SLRealizer(object):
         hsmOutput['appFlux'] += add_noise(get_flux_err(), get_flux_err_std(), hsmOutput['appFlux'])
         
         row = {'MJD': MJD, 'filter': band, 'x': hsmOutput['x'], 'y': hsmOutput['y'],
-               'flux': hsmOutput['appFlux'], 'skyErr': hsmOutput['skyErr'],
+               'appFlux': hsmOutput['appFlux'], 'skyErr': hsmOutput['skyErr'],
                'trace': hsmOutput['trace'],
                'e1': hsmOutput['e1'], 'e2': hsmOutput['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
@@ -190,7 +189,7 @@ class SLRealizer(object):
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
-                    row = self.create_source_row(lensInfo=self.catalog.sample[i], obsInfo=self.observation.loc[j])
+                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i), obsInfo=self.observation.loc[j])
                     if row == None:
                         hsm_failed += 1
                     else:
