@@ -82,8 +82,8 @@ class OM10Realizer(SLRealizer):
         objectId = lensInfo['LENSID']
         return self.as_super.create_source_row(hsmOutput=hsmOutput, objectId=objectId, obsInfo=obsInfo)
     
-    def make_source_table(self, save_dir):
-        return self.as_super.make_source_table(save_dir=save_dir)
+    def make_source_table(self, save_file):
+        return self.as_super.make_source_table(save_file=save_file)
     
     def draw_lens_random_date(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   

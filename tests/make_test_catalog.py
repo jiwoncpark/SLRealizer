@@ -1,6 +1,7 @@
 import pyfits
 import os
-catalog_f = os.path.join('..', '..', '..', '..', 'data', 'qso_mock.fits')
+
+catalog_f = os.path.join(os.environ['SLREALIZERDIR'], 'data', 'qso_mock.fits')
 catalog = pyfits.open(catalog_f)[1].data
 
 mask = catalog['LENSID'] == 6136045

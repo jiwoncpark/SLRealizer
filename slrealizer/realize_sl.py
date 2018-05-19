@@ -172,7 +172,7 @@ class SLRealizer(object):
                'e1': hsmOutput['e1'], 'e2': hsmOutput['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
-    def make_source_table(self, save_dir):
+    def make_source_table(self, save_file):
         """
         Returns a source table generated from all the lens systems in the catalog
         under all the observation conditions in the observation history,
@@ -197,7 +197,7 @@ class SLRealizer(object):
                         df.loc[len(df)]= vals_arr
                 bar.update()
         df.set_index('objectId', inplace=True)
-        df.to_csv(save_dir, index=True)
+        df.to_csv(save_file, index=True)
         print("Done making the source table which has %d row(s), after getting %d errors from HSM failure." %(len(df), hsm_failed))
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
