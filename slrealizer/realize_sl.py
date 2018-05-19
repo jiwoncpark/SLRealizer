@@ -21,17 +21,19 @@ from astropy.utils.console import ProgressBar
 
 class SLRealizer(object):
 
-    '''
-    Generates the toy catalog, plots the lensed system, and deblends sources
-    using the OM10 catalog and observation history provided in constructor.
-    '''
+    """
+    Class equipped with utility functions
+    for making the LSST-like object and source tables
+    inherited by child classes which are associated with a specific
+    non-LSST catalogs, e.g. child class OM10Realizer converts
+    the OM10 catalog into an LSST catalog
+    """
 
     def __init__(self, observation):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is a pandas df
         """
-        # TODO query outside class and make resulting matrix a parameter
         self.observation = observation
         self.num_obs = len(self.observation)
         
@@ -311,3 +313,41 @@ class SLRealizer(object):
         else:
             fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap, hist_kwargs=dict(normed=normed))
         return fig
+    
+    def compare_truth_vs_emulated(self, lensID=None, rownum=None, save_dir=None):
+        """                                                                                                                   
+        Draws two images of the lens system with the given rownum
+        under randomly chosen observation conditions,
+        one from the catalog info (truth image) and
+        another from HSM's estimation of the truth image
+
+        Keyword arguments:
+        - lensID: an integer specifying the ID of the lens system in the OM10 catalog
+
+        Returns:
+        A tuple of
+        - the truth image drawn from the catalog info
+        - the emulated image drawn from HSM's derived info of aggregate system 
+
+        """
+        # Only works in debug mode.
+        self.debug = True
+        # Randomly select observation ID
+        obs_rownum = random.randint(0, self.num_obs)
+        
+        # Render the truth image
+        truth_img = self.draw_system(self.get_lensInfo(lensID=lensID, rownum=rownum),\
+                                    self.get_observation(rownum=obs_rownum),\
+                                    save_dir)
+        
+        # Render the emulated image under observation conditions indexed by obs_rownum
+        fig, axes = plt.subplots(2, figsize=(5, 10))
+        axes[0].imshow(truth_img.array, interpolation='none', aspect='auto')
+        axes[0].set_title("TRUE MODEL IMAGE")
+        hsmOutput = self.estimate_hsm(image=truth_img, observation=self.observation.loc[obs_rownum])
+        emulated_img = self.draw_emulated_system(hsmOutput)
+        axes[1].imshow(img.array, interpolation='none', aspect='auto')
+        axes[1].set_title("EMULATED IMAGE")
+        if save_dir is not None:
+            plt.savefig(save_dir + 'truth_vs_emulated.png')
+        return truth_img, emulated_img

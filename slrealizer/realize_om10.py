@@ -82,44 +82,4 @@ class OM10Realizer(SLRealizer):
         objectId = lensInfo['LENSID']
         return self.as_super.create_source_row(hsmOutput=hsmOutput, objectId=objectId, obsInfo=obsInfo)
     
-    def make_source_table(self, save_file):
-        return self.as_super.make_source_table(save_file=save_file)
-    
-    def draw_lens_random_date(self, lensID=None, rownum=None, save_dir=None):
-        """                                                                                                                   
-        Draws two images of the lens system with the given rownum
-        under randomly chosen observation conditions,
-        one from the catalog info (truth image) and
-        another from HSM's estimation of the truth image
-
-        Keyword arguments:
-        - lensID: an integer specifying the ID of the lens system in the OM10 catalog
-
-        Returns:
-        A tuple of
-        - the truth image drawn from the catalog info
-        - the emulated image drawn from HSM's derived info of aggregate system 
-
-        """
-        # Randomly select observation ID
-        obs_rownum = random.randint(0, self.num_obs)
-        # Render an image of the system using GalSim
-        truth_img, obj = self.draw_system(self.get_lensInfo(lensID=lensID, rownum=rownum),\
-                                    self.get_observation(rownum=obs_rownum),\
-                                    save_dir)
-        # Draw the lens system under conditions defined by obs_rownum
-        fig, axes = plt.subplots(2, figsize=(5, 10))
-        axes[0].imshow(truth_img.array, interpolation='none', aspect='auto')
-        axes[0].set_title("TRUE MODEL IMAGE")
-        hsm = self.estimate_hsm(image=truth_img, observation=self.observation.loc[obs_rownum])
-        # Define a GalSim object using the properties derived from the aggregate system 
-        galaxy = galsim.Gaussian(flux=hsm['flux'], sigma=hsm['size'])\
-                       .shift(float(hsm['x']), float(hsm['y']))\
-                       .shear(e1=hsm['e1'], e2=hsm['e2'])
-        # Draw the emulated image
-        emulated_img = galaxy.drawImage(scale=self.pixel_scale, method='no_pixel')
-        axes[1].imshow(img.array, interpolation='none', aspect='auto')
-        axes[1].set_title("EMULATED IMAGE")
-        if save_dir is not None:
-            plt.savefig(save_dir + 'truth_vs_emulated.png')
-        return truth_img, emulated_img
+    #def make_source_table(self, save_file)
