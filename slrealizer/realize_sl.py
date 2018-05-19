@@ -93,11 +93,11 @@ class SLRealizer(object):
         
     def estimate_hsm(self, galsim_img, obsInfo):
         """
-        Performs HSM shape estimation on the image 
+        Performs GalSim's HSM shape estimation on the galsim_img 
         under the observation conditions obsInfo
         
         Returns
-        a dictionary (named hsm) of the shape info relevant to drawing the emulated image
+        a dictionary (named hsmOutput) of the shape info relevant to drawing the emulated image
         """
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         hsmOutput = {}
