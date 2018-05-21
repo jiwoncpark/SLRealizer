@@ -4,6 +4,9 @@ import math
 import numpy as np
 import pandas
 
+def fwhm_to_sigma(fwhm):
+    return fwhm/np.sqrt(8.0*np.log(2.0))
+
 def pixel_to_physical(pixelPos, canvasSize, pixel_scale):
     return (pixelPos - 0.5*canvasSize)*pixel_scale
 
