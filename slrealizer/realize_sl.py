@@ -145,7 +145,7 @@ class SLRealizer(object):
         emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')
         return emulatedImg
     
-    def create_source_row(self, hsmOutput, objectId, obsInfo):
+    def create_source_row(self, derivedProps, objectId, obsInfo):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
@@ -162,15 +162,15 @@ class SLRealizer(object):
         '''
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         
-        hsmOutput['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), hsmOutput['trace'])
-        hsmOutput['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), hsmOutput['x'])
-        hsmOutput['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), hsmOutput['y']) 
-        hsmOutput['appFlux'] += add_noise(get_flux_err(), get_flux_err_std(), hsmOutput['appFlux'])
+        derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
+        derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
+        derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
+        derivedProps['appFlux'] += add_noise(get_flux_err(), get_flux_err_std(), derivedProps['appFlux'])
         
-        row = {'MJD': MJD, 'filter': band, 'x': hsmOutput['x'], 'y': hsmOutput['y'],
-               'appFlux': hsmOutput['appFlux'], 'skyErr': hsmOutput['skyErr'],
-               'trace': hsmOutput['trace'],
-               'e1': hsmOutput['e1'], 'e2': hsmOutput['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
+        row = {'MJD': MJD, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
+               'appFlux': derivedProps['appFlux'], 'skyErr': derivedProps['skyErr'],
+               'trace': derivedProps['trace'],
+               'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
     def make_source_table(self, save_file):
