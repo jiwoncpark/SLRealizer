@@ -44,7 +44,7 @@ class OM10Realizer(SLRealizer):
         # We will input flux in units of nMgy
         mag   = lensInfo[band + '_SDSS_lens'] 
         flux  = from_mag_to_flux(mag, to_unit='nMgy') # in nMgy
-        hlr   = lensInfo['REFF_T'] # REFF_T is in arcsec
+        hlr   = 1.0 # lensInfo['REFF_T'] # REFF_T is in arcsec
         e     = lensInfo['ELLIP']
         beta  = lensInfo['PHIE'] * galsim.degrees # PHIE is in degrees
         

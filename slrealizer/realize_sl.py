@@ -165,7 +165,7 @@ class SLRealizer(object):
         derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
         derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
         derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
-        derivedProps['appFlux'] += add_noise(get_flux_err(), get_flux_err_std(), derivedProps['appFlux'])
+        derivedProps['appFlux'] += add_noise(0.0, derivedProps['skyErr']) # flux rms not skyErr
         
         row = {'MJD': MJD, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
                'appFlux': derivedProps['appFlux'], 'skyErr': derivedProps['skyErr'],
