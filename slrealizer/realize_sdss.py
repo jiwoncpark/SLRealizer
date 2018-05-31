@@ -48,5 +48,4 @@ class SDSSRealizer(SLRealizer):
         
         return row
     
-    def make_source_table(self, save_file):
-        return self.as_super.make_source_table(save_file=save_file)
+    #def make_source_table INHERITED

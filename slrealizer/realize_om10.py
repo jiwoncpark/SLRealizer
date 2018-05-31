@@ -65,42 +65,57 @@ class OM10Realizer(SLRealizer):
     
     def _om10_to_lsst(self, obsInfo, lensInfo):
         derivedProps = {}
-        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         
+        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         derivedProps['skyErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         
-        derivedProps['x'] = np.sum(lensInfo['XIMG'])
-        derivedProps['y'] = np.sum(lensInfo['YIMG'])
-        
         lens_mag = lensInfo[band + '_SDSS_lens'] 
-        lens_flux = from_mag_to_flux(mag, to_unit='nMgy')
+        lens_flux = from_mag_to_flux(lens_mag, to_unit='nMgy')
         q_mag_arr = lensInfo[band + '_SDSS_quasar'] + from_flux_to_mag(np.abs(np.array(lensInfo['MAG'])))
         q_flux_arr = from_mag_to_flux(q_mag_arr, to_unit='nMgy')
         q_tot_flux = np.sum(q_flux_arr)
         derivedProps['appFlux'] = lens_flux + q_tot_flux
         
-        # TODO add derivations
-        mus = np.array(zip(test_lensInfo['XIMG'], test_lensInfo['YIMG']))
-        outerProdMus = map(lambda m: np.outer(m, m), mus)
-        outerProdMuTot = np.sum(np.array(outerProdMus), axis=0)
+        #################################
+        # Analytical moment calculation #
+        #################################
         
-        sigma_sq = PSF_FWHM**2.0/(8.0*np.log(2))
-        bigSigma = np.diag([sigma_sq, sigma_sq])
-        bigSigmaInv = np.diag([1.0/sigma_sq, 1.0/sigma_sq])
+        # Flux ratios weight the moment contributions from the lens and each quasar image
+        lensFluxRatio = lens_flux/derivedProps['appFlux']
+        qFluxRatios = q_flux_arr/derivedProps['appFlux']
         
-        bigSigmaCross = np.diag([sigma_sq*0.5, sigma_sq*0.5])
-        mus = np.concatenate([mus, np.array([0.0, 0.0]).reshape(1, 2)], axis=0)
+        # Convert Gaussian FWHM, HLR to sigma of the covariance matrix
+        sigmaSqPSF = fwhm_to_sigma(PSF_FWHM)**2.0
+        sigmaSqLens = hlr_to_sigma(lensInfo['REFF_T'])**2.0
         
-        muPairSum = lensInfo['NIMG']*np.sum(mus, axis=0).reshape(2, 1)
-        muCrossSum = np.dot(np.dot(bigSigmaCross, bigSigmaInv), muPairSum)
-                         
-        secondMom = outerProdMuTot + lensInfo['NIMG']*bigSigma + 2.0*muCrossSum
+        # Compute first moment contributions from the lens and each quasar image
+        lensIxContrib = lensIyContrib = 0.0 # because lens is centered at (0, 0)
+        qIxContrib = qFluxRatios*lensInfo['XIMG']
+        qIyContrib = qFluxRatios*lensInfo['YIMG']
+        derivedProps['x'] = lensIxContrib + np.sum(qIxContrib)
+        derivedProps['y'] = lensIyContrib + np.sum(qIyContrib)
         
-        Ixx, Iyy, Ixy = secondMom[0, 0], secondMom[1, 1], secondMom[0, 1] 
+        # Compute second moment contributions from the lens and each quasar image
+        lensIxxContrib = lensFluxRatio*(sigmaSqPSF + sigmaSqLens + derivedProps['x']**2.0)
+        lensIyyContrib = lensFluxRatio*(sigmaSqPSF + sigmaSqLens + derivedProps['y']**2.0)
+        lensIxyContrib = lensFluxRatio*derivedProps['x']*derivedProps['y'] # because lens is centered at (0, 0)
+        qIxxContrib = qFluxRatios*((lensInfo['XIMG'] - derivedProps['x'])**2.0 + sigmaSqPSF)
+        qIyyContrib = qFluxRatios*((lensInfo['YIMG'] - derivedProps['y'])**2.0 + sigmaSqPSF)
+        qIxyContrib = qFluxRatios*(lensInfo['XIMG'] - derivedProps['x'])*(lensInfo['YIMG'] - derivedProps['y'])
+        
+        # Add to get total second moments
+        Ixx = lensIxxContrib + np.sum(qIxxContrib)
+        Iyy = lensIyyContrib + np.sum(qIyyContrib)
+        Ixy = lensIxyContrib + np.sum(qIxyContrib)
         derivedProps['trace'] = Ixx + Iyy
-        denom = Ixx + Iyy + 2.0(Ixx*Iyy - Ixy*Ixy)**0.5
+        if self.DEBUG: derivedProps['det'] = Ixx*Iyy - Ixy**2.0
+        
+        # Compute ellipticities from second moments
+        denom = Ixx + Iyy #+ 2.0*(Ixx*Iyy - Ixy**2.0)**0.5 # uncommenting gives g1, g2 
         derivedProps['e1'] = (Ixx - Iyy)/denom
         derivedProps['e2'] = 2.0*Ixy/denom
+        
+        if self.DEBUG: derivedProps['test'] = Ixx, Iyy, Ixy
         
         return derivedProps
             
@@ -110,7 +125,7 @@ class OM10Realizer(SLRealizer):
     
     def estimate_hsm(self, obsInfo, lensInfo):
         galsim_img = self.draw_system(lensInfo=lensInfo, obsInfo=obsInfo, save_dir=None)
-        return self.as_super.estimate_hsm(galsim_img=galsim_img, obsInfo=obsInfo)
+        return self.as_super.estimate_hsm(galsim_img=galsim_img)
     
     def draw_emulated_system(self, obsInfo, lensInfo):
         hsmOutput = self.estimate_hsm(obsInfo, lensInfo)

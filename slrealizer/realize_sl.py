@@ -93,7 +93,7 @@ class SLRealizer(object):
             plt.close()
         return galsim_img
         
-    def estimate_hsm(self, galsim_img, obsInfo):
+    def estimate_hsm(self, galsim_img):
         """
         Performs GalSim's HSM shape estimation on the galsim_img 
         under the observation conditions obsInfo
@@ -101,11 +101,8 @@ class SLRealizer(object):
         Returns
         a dictionary (named hsmOutput) of the shape info relevant to drawing the emulated image
         """
-        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         hsmOutput = {}
-        
-        hsmOutput['skyErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
-        
+                
         #shape_info = galsim_img.FindAdaptiveMom()
         try:
             shape_info = galsim_img.FindAdaptiveMom(guess_sig=self.pixel_scale*10.0)
@@ -118,10 +115,10 @@ class SLRealizer(object):
         hsmOutput['x'], hsmOutput['y'] = pixel_to_physical(shape_info.moments_centroid.x, self.nx, self.pixel_scale),\
                                          pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
         
-        hsmOutput['appFlux'] = float(np.sum(galsim_img.array))
+        hsmOutput['apFlux'] = float(np.sum(galsim_img.array))
         if self.DEBUG:
             hsmOutput['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
-            hsmOutput['det'] = shape_info.moments_sigma * self.pixel_scale
+            hsmOutput['det'] = (shape_info.moments_sigma * self.pixel_scale)**4.0
         hsmOutput['trace'] = 2.0*galsim_img.calculateMomentRadius(center=pixelCenter, rtype='trace')**2.0
         hsmOutput['e1'] = shape_info.observed_shape.e1
         hsmOutput['e2'] = shape_info.observed_shape.e2
@@ -162,13 +159,14 @@ class SLRealizer(object):
         '''
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         
+        derivedProps['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
         derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
         derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
-        derivedProps['appFlux'] += add_noise(0.0, derivedProps['skyErr']) # flux rms not skyErr
+        derivedProps['apFlux'] += add_noise(0.0, derivedProps['apFluxErr']) # flux rms not skyErr
         
         row = {'MJD': MJD, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
-               'appFlux': derivedProps['appFlux'], 'skyErr': derivedProps['skyErr'],
+               'apFlux': derivedProps['apFlux'], 'apFluxErr': derivedProps['apFluxErr'],
                'trace': derivedProps['trace'],
                'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row

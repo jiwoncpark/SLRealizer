@@ -4,14 +4,17 @@ import math
 import numpy as np
 import pandas
 
+def hlr_to_sigma(hlr):
+    return hlr/np.sqrt(2.0*np.log(2.0))
+
 def fwhm_to_sigma(fwhm):
     return fwhm/np.sqrt(8.0*np.log(2.0))
 
 def pixel_to_physical(pixelPos, canvasSize, pixel_scale):
-    return (pixelPos - 0.5*canvasSize)*pixel_scale
+    return (pixelPos - 0.5*canvasSize - 0.5)*pixel_scale
 
 def physical_to_pixel(physicalPos, canvasSize, pixel_scale):
-    return physicalPos/pixel_scale + 0.5*canvasSize
+    return physicalPos/pixel_scale + 0.5*canvasSize + 0.5
 
 def from_flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
     if from_unit=='nMgy':
