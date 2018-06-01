@@ -60,22 +60,32 @@ class OM10RealizerTest(unittest.TestCase):
         self.__class__.test_lensInfo = test_db.sample[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
         # Path where we will save our test source table
-        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_source_table.csv')
+        self.__class__.test_analytical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_ana_source_table.csv')
+        self.__class__.test_numerical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_num_source_table.csv')
     
-    def test_from_om10_to_galsim(self):
-        self.realizer._from_om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
+    def test_om10_to_galsim(self):
+        self.realizer._om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
     
     def test_draw_system(self):
         self.realizer.draw_system(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo) 
     
     def test_estimate_hsm(self):
         self.realizer.estimate_hsm(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo)
-    
-    def test_create_source_row(self):
-        print(self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo))
+
+    def test_om10_to_lsst(self):
+        self.realizer._om10_to_lsst(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo)
         
-    def test_make_source_table(self):
-        self.realizer.make_source_table(save_file=self.test_datapath)
+    def test_create_source_row_numerical(self):
+        print("numerical: ", self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo, use_hsm=True))
+        
+    def test_create_source_row_analytical(self):
+        print("analytical: ", self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo, use_hsm=False))
+        
+    def test_make_source_table_numerical(self):
+        self.realizer.make_source_table(save_file=self.test_numerical_savepath, use_hsm=True)
+
+    def test_make_source_table_analytical(self):
+        self.realizer.make_source_table(save_file=self.test_analytical_savepath, use_hsm=False)
 
 if __name__ == '__main__':
     unittest.main()

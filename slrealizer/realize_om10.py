@@ -28,7 +28,7 @@ class OM10Realizer(SLRealizer):
         elif rownum is not None:
             return self.catalog.sample[rownum]
        
-    def _from_om10_to_galsim(self, lensInfo, band):
+    def _om10_to_galsim(self, lensInfo, band):
         """
         Converts OM10's column values into GalSim terms
         
@@ -67,22 +67,26 @@ class OM10Realizer(SLRealizer):
         derivedProps = {}
         
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
-        derivedProps['skyErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         
-        lens_mag = lensInfo[band + '_SDSS_lens'] 
+        numQuasars = lensInfo['NIMG']
+        lens_mag = lensInfo[band + '_SDSS_lens']
         lens_flux = from_mag_to_flux(lens_mag, to_unit='nMgy')
-        q_mag_arr = lensInfo[band + '_SDSS_quasar'] + from_flux_to_mag(np.abs(np.array(lensInfo['MAG'])))
+        q_mag_arr = lensInfo[band + '_SDSS_quasar'] + from_flux_to_mag(np.abs(np.array(lensInfo['MAG'][:numQuasars])))
         q_flux_arr = from_mag_to_flux(q_mag_arr, to_unit='nMgy')
         q_tot_flux = np.sum(q_flux_arr)
-        derivedProps['appFlux'] = lens_flux + q_tot_flux
+        derivedProps['apFlux'] = lens_flux + q_tot_flux
         
         #################################
         # Analytical moment calculation #
         #################################
         
         # Flux ratios weight the moment contributions from the lens and each quasar image
-        lensFluxRatio = lens_flux/derivedProps['appFlux']
-        qFluxRatios = q_flux_arr/derivedProps['appFlux']
+        lensFluxRatio = lens_flux/derivedProps['apFlux']
+        qFluxRatios = q_flux_arr/derivedProps['apFlux']
+        
+        # Slice x, y positions to number of quasars
+        lensInfo['XIMG'] = lensInfo['XIMG'][:numQuasars]
+        lensInfo['YIMG'] = lensInfo['YIMG'][:numQuasars]
         
         # Convert Gaussian FWHM, HLR to sigma of the covariance matrix
         sigmaSqPSF = fwhm_to_sigma(PSF_FWHM)**2.0
@@ -115,12 +119,15 @@ class OM10Realizer(SLRealizer):
         derivedProps['e1'] = (Ixx - Iyy)/denom
         derivedProps['e2'] = 2.0*Ixy/denom
         
-        if self.DEBUG: derivedProps['test'] = Ixx, Iyy, Ixy
+        if self.DEBUG:
+            derivedProps['Ixx'] = Ixx
+            derivedProps['Iyy'] = Iyy
+            derivedProps['Ixy'] = Ixy
         
         return derivedProps
             
     def draw_system(self, obsInfo, lensInfo, save_dir=None):
-        galsimInput = self._from_om10_to_galsim(lensInfo, obsInfo['filter'])
+        galsimInput = self._om10_to_galsim(lensInfo, obsInfo['filter'])
         return self.as_super.draw_system(galsimInput=galsimInput, obsInfo=obsInfo, save_dir=save_dir)
     
     def estimate_hsm(self, obsInfo, lensInfo):
@@ -138,9 +145,13 @@ class OM10Realizer(SLRealizer):
             if derivedProps is None:
                 return None
         else:
-            derivedProps = self._from_om10_to_lsst(obsInfo=obsInfo, lensInfo=lensInfo)
+            derivedProps = self._om10_to_lsst(obsInfo=obsInfo, lensInfo=lensInfo)
         
         return self.as_super.create_source_row(derivedProps=derivedProps, objectId=objectId, obsInfo=obsInfo)
     
+    def create_source_table_vectorized(self, observation, catalog):
+        catalog
+        
+        
     #def make_source_table INHERITED
     #def compare_truth_vs_emulated INHERITED

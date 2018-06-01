@@ -40,10 +40,10 @@ class SLRealizer(object):
         # GalSim drawImage params
         self.fft_params = galsim.GSParams(maximum_fft_size=10240)
         self.pixel_scale = 0.1
-        self.nx, self.ny = 48, 48 
+        self.nx, self.ny = 49, 49 
         
         # Source table column list
-        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'appFlux', 'trace', 'skyErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
+        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'apFlux', 'trace', 'apFluxErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
         
     def get_obsInfo(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -171,7 +171,7 @@ class SLRealizer(object):
                'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
-    def make_source_table(self, save_file):
+    def make_source_table(self, save_file, use_hsm):
         """
         Returns a source table generated from all the lens systems in the catalog
         under all the observation conditions in the observation history,
@@ -187,7 +187,7 @@ class SLRealizer(object):
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
-                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i), obsInfo=self.observation.loc[j])
+                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i), obsInfo=self.observation.loc[j], use_hsm=use_hsm)
                     if row == None:
                         hsm_failed += 1
                     else:
