@@ -55,13 +55,14 @@ class OM10RealizerTest(unittest.TestCase):
         test_db = DB(catalog=test_catalog_f)
         test_db.paint(synthetic=True)
         test_obs = pd.read_csv(observation_f).sample(1, random_state=123).reset_index(drop=True)
-        self.__class__.realizer = OM10Realizer(observation=test_obs, catalog=test_db, debug=False) 
+        self.__class__.realizer = OM10Realizer(observation=test_obs, catalog=test_db, debug=True) 
         # We can access lens and observation rows through these variables.
         self.__class__.test_lensInfo = test_db.sample[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
         # Path where we will save our test source table
         self.__class__.test_analytical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_ana_source_table.csv')
         self.__class__.test_numerical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_num_source_table.csv')
+        self.__class__.test_vectorized_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_vectorized_source_table.csv') 
     
     def test_om10_to_galsim(self):
         self.realizer._om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
@@ -84,8 +85,19 @@ class OM10RealizerTest(unittest.TestCase):
     def test_make_source_table_numerical(self):
         self.realizer.make_source_table(save_file=self.test_numerical_savepath, use_hsm=True)
 
-    def test_make_source_table_analytical(self):
-        self.realizer.make_source_table(save_file=self.test_analytical_savepath, use_hsm=False)
+    #def test_make_source_table_analytical(self):
+    #    self.realizer.make_source_table(save_file=self.test_analytical_savepath, use_hsm=False)
+
+    def test_vectorized_source_table(self):
+
+        rowbyrow = self.realizer.make_source_table(save_file=self.test_analytical_savepath, use_hsm=False)[['e1', 'e2', 'trace', 'x', 'y', 'apFlux']].values.astype(float)
+        #print("Row by row: ", rowbyrow)
+        
+        vectorized = self.realizer.make_source_table_vectorized(save_file=self.test_vectorized_savepath)[['e1', 'e2', 'trace', 'x', 'y', 'apFlux']].values.astype(float)
+        #print("Vectorized: ", vectorized)
+        
+        self.assertTrue(np.allclose(rowbyrow, vectorized, rtol=1e-04, atol=1e-04))
+        
 
 if __name__ == '__main__':
     unittest.main()

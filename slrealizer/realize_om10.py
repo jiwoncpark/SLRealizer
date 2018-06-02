@@ -5,7 +5,6 @@
 from realize_sl import SLRealizer
 from utils.constants import *
 from utils.utils import *
-import pandas
 import numpy as np
 import galsim
 
@@ -19,12 +18,14 @@ class OM10Realizer(SLRealizer):
         self.num_systems = len(self.catalog.sample)
         self.DEBUG = debug
         
+        np.random.seed(self.seed)
+        
     def get_lensInfo(self, objID=None, rownum=None):
         if objID is not None and rownum is not None:
             raise ValueError("Need to define either objID or rownum, not both.")
         
         if objID is not None:
-            return self.catalog['objectId']==objID # Don't use this (?)
+            return self.catalog['objectId'] # Don't use this (?)
         elif rownum is not None:
             return self.catalog.sample[rownum]
        
@@ -149,9 +150,146 @@ class OM10Realizer(SLRealizer):
         
         return self.as_super.create_source_row(derivedProps=derivedProps, objectId=objectId, obsInfo=obsInfo)
     
-    def create_source_table_vectorized(self, observation, catalog):
-        catalog
+    def make_source_table_vectorized(self, save_file):
+        from astropy.table import Table, Column
+        import pandas as pd
+        import gc # need this to optimize memory usage
+        import time
         
+        start = time.time()
+        catalogAstropy = self.catalog.sample # the Astropy table underlying OM10 object
+        
+        #################################
+        # OM10 --> Pandas DF conversion #
+        #################################
+        
+        lensMagCols = [b + '_SDSS_lens' for b in 'ugriz']
+        qMagCols = [b + '_SDSS_quasar' for b in 'ugriz']
+        saveCols = lensMagCols + qMagCols + ['REFF_T', 'NIMG', 'LENSID']
+        saveValues = [catalogAstropy[c] for c in saveCols]
+        saveColDict = dict(zip(saveCols, saveValues))
+        collapsedColDict = get_1D_columns(multidimColNames=['MAG', 'XIMG', 'YIMG'], table=catalogAstropy)
+        saveColDict.update(collapsedColDict)
+        catalog = Table(saveColDict.values(), names=saveColDict.keys()).to_pandas()
+
+        ####################################
+        # Merging catalog with observation #
+        ####################################
+        
+        observation = self.observation.copy()
+        catalog['key'] = 0
+        observation['key'] = 0
+        src = catalog.merge(observation, how='left', on='key')
+        src.drop('key', 1, inplace=True)
+        gc.collect()
+        
+        ####################################
+        # Observation parameter conversion #
+        ####################################
+        
+        src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth']-22.5)/5.0 # because Fb = 5 \sigma_b
+        src['sigmaSqPSF'] = np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
+        src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
+        src.rename(columns={'FWHMeff': 'psf_fwhm'}, inplace=True) 
+        src.drop(['fiveSigmaDepth', 'REFF_T'], axis=1, inplace=True)
+        gc.collect()
+        
+        ###############################
+        # Adaptive moment calculation #
+        ###############################
+        
+        # Set unused band magnitudes to zero, and
+        # work with one magnitude in the observed filter
+        for b in 'ugriz': # b = observed filter
+            setZeroLens = lensMagCols[:]
+            setZeroLens.remove(b + '_SDSS_lens')
+            setZeroQ = qMagCols[:]
+            setZeroQ.remove(b + '_SDSS_quasar')
+            src.loc[src['filter'] == b, setZeroLens] = 0.0
+            src.loc[src['filter'] == b, setZeroQ] = 0.0
+        src['lens_mag'] = src[lensMagCols].sum(axis=1)
+        src['q_mag'] = src[qMagCols].sum(axis=1)
+        src.drop(lensMagCols + qMagCols, axis=1, inplace=True)
+        gc.collect()
+        
+        # Convert magnitudes into fluxes
+        src['lens_flux'] = from_mag_to_flux(src['lens_mag'], to_unit='nMgy')
+        for q in range(4):
+            src['q_flux_' + str(q)] = from_mag_to_flux(src['q_mag'] +\
+                                                       from_flux_to_mag(np.abs(src['MAG_' + str(q)])),\
+                                                       to_unit='nMgy')
+
+        # Set fluxes of nonexistent quasar images to zero
+        src.loc[src['NIMG'] == 2, ['q_flux_2', 'q_flux_3']] = 0.0
+        src.loc[src['NIMG'] == 3, ['q_flux_3']] = 0.0
+            
+        # Get total flux
+        fluxCols = ['q_flux_' + str(q) for q in range(4)] + ['lens_flux']
+        src['apFlux'] = src[fluxCols].sum(axis=1)
+
+        # Calculate flux ratios (for moment calculation)
+        src['lensFluxRatio'] = src['lens_flux']/src['apFlux']
+        for q in range(4):
+            src['qFluxRatio_' + str(q)] = src['q_flux_' + str(q)]/src['apFlux']
+        src.drop(['lens_flux'] + ['q_flux_' + str(q) for q in range(4)], axis=1, inplace=True)
+        gc.collect()
+
+        # FIRST MOMENTS
+        src['x'], src['y'] = 0.0, 0.0
+        for q in range(4):
+            src['x'] += src['qFluxRatio_' + str(q)]*src['XIMG_' + str(q)]
+            src['y'] += src['qFluxRatio_' + str(q)]*src['YIMG_' + str(q)]
+            
+        # SECOND MOMENTS
+        # Initialize with lens contributions
+        src['Ixx'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['sigmaSqLens'] + np.power(src['x'], 2.0)) 
+        src['Iyy'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['sigmaSqLens'] + np.power(src['y'], 2.0))
+        src['Ixy'] = src['lensFluxRatio']*src['x']*src['y']
+        # Add quasar contributions
+        for q in range(4):
+            src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0) + src['sigmaSqPSF'])
+            src['Iyy'] += src['qFluxRatio_' + str(q)]*(np.power(src['YIMG_' + str(q)] - src['y'], 2.0) + src['sigmaSqPSF'])
+            src['Ixy'] += src['qFluxRatio_' + str(q)]*(src['XIMG_' + str(q)] - src['x'])\
+                                                     *(src['YIMG_' + str(q)] - src['y'])
+
+        # Get trace and ellipticities
+        src['trace'] = src['Ixx'] + src['Iyy']
+        if self.DEBUG: src['det'] = src['Ixx']*src['Iyy'] - np.power(src['Ixy'], 2.0)
+        src['e1'] = (src['Ixx'] - src['Iyy'])/src['trace']
+        src['e2'] = 2.0*src['Ixy']/src['trace']
+        
+        # Remove remaining unused columns
+        src.drop(['lensFluxRatio', 'lens_mag', 'q_mag', 'sigmaSqLens', 'sigmaSqPSF', 'NIMG',], axis=1, inplace=True)
+        for q in range(4):
+            src.drop(['MAG_%d'%q] + ['XIMG_%d'%q] + ['YIMG_%d'%q] + ['qFluxRatio_%d'%q], axis=1, inplace=True)
+        gc.collect()
+        
+        ################
+        # Adding noise #
+        ################
+        
+        if not self.DEBUG:
+            src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
+            src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
+            src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
+            src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        
+        #####################################################
+        # Final column renaming/reordering & saving to file #
+        #####################################################
+        
+        src.rename(columns={'obsHistID': 'ccdVisitId', 'LENSID': 'objectId', 'expMJD': 'MJD',}, inplace=True)
+        src = src[self.sourceCols]
+        gc.collect()
+        
+        src.set_index('objectId', inplace=True)
+        src.to_csv(save_file, index=True)
+        end = time.time()
+        
+        print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
+        
+        if self.DEBUG:
+            return src
         
     #def make_source_table INHERITED
     #def compare_truth_vs_emulated INHERITED

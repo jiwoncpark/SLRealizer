@@ -36,6 +36,7 @@ class SLRealizer(object):
         """
         self.observation = observation
         self.num_obs = len(self.observation)
+        self.seed = 123
         
         # GalSim drawImage params
         self.fft_params = galsim.GSParams(maximum_fft_size=10240)
@@ -43,7 +44,7 @@ class SLRealizer(object):
         self.nx, self.ny = 49, 49 
         
         # Source table column list
-        self.sourceCols = ['MJD', 'filter', 'x', 'y', 'apFlux', 'trace', 'apFluxErr', 'e1', 'e2', 'psf_fwhm', 'objectId']
+        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'trace', 'e1', 'e2',]
         
     def get_obsInfo(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -160,23 +161,26 @@ class SLRealizer(object):
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         
         derivedProps['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
-        derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
-        derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
-        derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
-        derivedProps['apFlux'] += add_noise(0.0, derivedProps['apFluxErr']) # flux rms not skyErr
+        if not self.DEBUG:
+            derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
+            derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
+            derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
+            derivedProps['apFlux'] += add_noise(0.0, derivedProps['apFluxErr']) # flux rms not skyErr
         
-        row = {'MJD': MJD, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
+        row = {'MJD': MJD, 'ccdVisitId': histID, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
                'apFlux': derivedProps['apFlux'], 'apFluxErr': derivedProps['apFluxErr'],
                'trace': derivedProps['trace'],
                'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
     def make_source_table(self, save_file, use_hsm):
+        import time
         """
         Returns a source table generated from all the lens systems in the catalog
         under all the observation conditions in the observation history,
         and saves it as a .csv file.
         """
+        start = time.time()
         print("Began making the source catalog.")
         
         df = pd.DataFrame(columns=self.sourceCols)
@@ -187,18 +191,28 @@ class SLRealizer(object):
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
-                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i), obsInfo=self.observation.loc[j], use_hsm=use_hsm)
+                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i),
+                                                 obsInfo=self.observation.loc[j],
+                                                 use_hsm=use_hsm)
                     if row == None:
                         hsm_failed += 1
                     else:
                         # FIXIT try not to use list comprehension...
                         vals_arr = np.array([row[c] for c in self.sourceCols])
-                        df.loc[len(df)]= vals_arr
+                        df.loc[len(df)] = vals_arr
                 bar.update()
         df.set_index('objectId', inplace=True)
         df.to_csv(save_file, index=True)
-        print("Done making the source table which has %d row(s), after getting %d errors from HSM failure." %(len(df), hsm_failed))
+        
+        end = time.time()
+        if use_hsm:
+            print("Done making the source table which has %d row(s) in %0.2f hours, after getting %d errors from HSM failure." %(len(df), (end - start)/3600.0, hsm_failed))
+        else:
+            print("Done making the source table with analytical moments in %0.2f hours." %((end - start)/3600.0))
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
+
+        if self.DEBUG:
+            return df
 
 # TODO need to debug past this point.
 

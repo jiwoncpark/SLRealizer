@@ -1,8 +1,18 @@
+#import numpy as np
+#from fractions import Fraction
+#import math
 import numpy as np
-from fractions import Fraction
-import math
-import numpy as np
-import pandas
+#import pandas as pd
+
+def get_1D_columns(multidimColNames, table):
+    totalColDict = {}
+    for mc in multidimColNames:
+        colSize = 4 #table[mc].shape[1] is always 4
+        colNames = [mc + '_' + str(c) for c in range(colSize)]
+        colValues = [table[mc][:, c].data for c in range(colSize)]
+        colDict = dict(zip(colNames, colValues))
+        totalColDict.update(colDict)
+    return totalColDict
 
 def hlr_to_sigma(hlr):
     return hlr/np.sqrt(2.0*np.log(2.0))
@@ -24,7 +34,7 @@ def from_flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
 def from_mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
     if to_unit=='nMgy':
         zeropoint_mag=22.5
-    return 10.0**(-0.4*(mag - zeropoint_mag))
+    return np.power(10.0, -0.4*(mag - zeropoint_mag))
 
 def add_noise(mean, stdev, measurement=1.0):
     """
