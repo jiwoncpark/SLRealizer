@@ -1,6 +1,6 @@
 #from __future__ import absolute_import
 #from __future__ import division
-#from __future__ import print_function
+from __future__ import print_function
 
 import numpy as np
 from utils.utils import *
@@ -43,6 +43,8 @@ class SLRealizer(object):
         self.pixel_scale = 0.1
         self.nx, self.ny = 49, 49 
         
+        # Source table df
+        self.sourceTable = None
         # Source table column list
         self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'trace', 'e1', 'e2',]
         
@@ -211,41 +213,52 @@ class SLRealizer(object):
             print("Done making the source table with analytical moments in %0.2f hours." %((end - start)/3600.0))
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
+        self.sourceTable = df
         if self.DEBUG:
             return df
 
 # TODO need to debug past this point.
 
-    def make_object_table(self, source_table_dir='../../../data/source_table.csv', save_dir='../../../data/object_catalog.csv'):
+    def make_object_table(self, sourceTablePath, objectTablePath):
+
         """
-        Generates the object table from the given source table at source_table_dir
-        by averaging the properties for each filter,
-        and saves it into save_dir.
+        Generates the object table from the given source table at sourceTablePath
+        by averaging the properties for each filter, and saves it as objectTablePath.
         """
-        print("Reading in the source catalog...")
-        df = pd.read_csv(source_table_dir)
-        lensID = df['lensid']
-        lensID = lensID.drop_duplicates().as_matrix()
-        column_name = ['lensid', \
-                       'u_flux', 'u_x', 'u_y', 'u_size', 'u_flux_err', 'u_x_com_err', 'u_y_com_err', 'u_size_err', 'u_e1', 'u_e2',\
-                       'g_flux', 'g_x', 'g_y', 'g_size', 'g_flux_err', 'g_x_com_err', 'g_y_com_err', 'g_size_err', 'g_e1', 'g_e2', \
-                       'r_flux', 'r_x', 'r_y', 'r_size', 'r_flux_err', 'r_x_com_err', 'r_y_com_err', 'r_size_err', 'r_e1', 'r_e2',\
-                       'i_flux', 'i_x', 'i_y', 'i_size', 'i_flux_err', 'i_x_com_err', 'i_y_com_err', 'i_size_err', 'i_e1', 'i_e2',\
-                       'z_flux', 'z_x', 'z_y', 'z_size', 'z_flux_err', 'z_x_com_err', 'z_y_com_err', 'z_size_err', 'z_e1', 'z_e2']
-        source_table = pd.DataFrame(columns=column_name)
-        # TODO collapse querying
-        for lens in lensID:
-            lens_row = [lens]
-            lens_array = df.loc[df['lensid'] == lens]
-            for b in ['u', 'g', 'r', 'i', 'z']:
-                lens_row += utils.return_mean_properties(lens_array.loc[lens_array['filter'] == b])
-            # TODO why is this check necessary?
-            if np.isfinite(lens_row).all():
-                source_table.loc[len(source_table)]= np.array(lens_row)
-        source_table = source_table.dropna(how='any')
-        source_table.to_csv(save_dir, index=False)
-        print("Done making the object table.")
-#        desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
+        
+        if objectTablePath is None:
+            raise ValueError("Must provide save path of the output object table.")
+        
+        if sourceTablePath is not None:
+            print("Reading in the source table at %s ..." %sourceTablePath)
+            obj = pd.read_csv(sourceTablePath)
+            obj.set_index('objectId', inplace=True)
+        elif objectTablePath is not None:            
+            print("Reading in Pandas Dataframe of most recent source table generated... ")
+            obj = self.sourceTable.copy()
+        else:
+            raise ValueError("Must provide a source table path or generate a source table at least once using this Realizer object.")
+        
+        obj.drop(['ccdVisitId', 'psf_fwhm'], axis=1, inplace=True)
+        # Define (filter-nonspecific) properties to go in object table columns
+        keepCols = list(obj.columns.values)
+        keepCols.remove('filter')
+        # Pivot the filter values to the column axis
+        obj = obj.pivot_table(values=keepCols, index=[obj.index, 'MJD'], columns='filter', aggfunc='first')
+        # Collapse multi-indexed column using filter_property formatting
+        obj.columns = obj.columns.map('{0[1]}_{0[0]}'.format)
+        
+        #if self.DEBUG: print(obj.columns.values)
+        
+        # Take mean of properties across observed times for each object
+        obj = obj.reset_index().drop('MJD', axis=1).groupby('objectId', sort=False).mean()
+        # Drop examples with missing values
+        obj.dropna(how='any', inplace=True)
+        # Save as csv file
+        obj.to_csv(objectTablePath, index=False)
+        print("Done making the object table with columns: \n", obj.columns.values)
+
+        #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
            
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
@@ -281,13 +294,13 @@ class SLRealizer(object):
 
     def generate_cornerplot(self, color='black', object_table_dir = '../data/object_catalog_galsim_noise.csv', option = None, params = None, range=None, overlap=None, normed=False, data=None, label=None):
         """
-        Given a source table, this method plots the cornerplot. The user has to specify which attributes they want to look at.
+        Plots the cornerplot given an object table. The user has to specify which attributes they want to look at.
 
         Parameters
         ----------
         option : list of string/strings
         Choose from size, position, color, ellipticity, and magnitude. The cornerplot will show the attribute that the user selected.
-        If None, the user should specify the parameters(column names) in the source table.
+        If None, the user should specify the parameters(column names) in the object table.
 
         params : tuples of strings
         Names of columns in source_table that the user wants to see in the cornerplot.

@@ -2,6 +2,7 @@
 # Unit tests for OM10Realizer functions
 
 # ======================================================================
+from __future__ import print_function
 import os, unittest
 import galsim
 from om10 import DB
@@ -37,7 +38,7 @@ class OM10RealizerTest(unittest.TestCase):
     def setUp(self):
         # If it was not setup yet, do it
         if not self.classIsSetup:
-            print "Initializing testing environment"
+            print("Initializing testing environment...")
             # run the real setup
             self.setupClass()
             # remember that it was setup already
@@ -49,6 +50,7 @@ class OM10RealizerTest(unittest.TestCase):
         # you want to have persistent things to test
         
         data_path = os.path.join(os.environ['SLREALIZERDIR'], 'data')
+        test_path = os.path.join(os.environ['SLREALIZERDIR'], 'tests')
         test_catalog_f = os.path.join(data_path, 'test_catalog.fits')
         observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
     
@@ -60,9 +62,10 @@ class OM10RealizerTest(unittest.TestCase):
         self.__class__.test_lensInfo = test_db.sample[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
         # Path where we will save our test source table
-        self.__class__.test_analytical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_ana_source_table.csv')
-        self.__class__.test_numerical_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_num_source_table.csv')
-        self.__class__.test_vectorized_savepath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_vectorized_source_table.csv') 
+        self.__class__.test_analytical_savepath = os.path.join(test_path, 'test_ana_source_table.csv')
+        self.__class__.test_numerical_savepath = os.path.join(test_path, 'test_num_source_table.csv')
+        self.__class__.test_vectorized_savepath = os.path.join(test_path, 'test_vectorized_source_table.csv')
+        self.__class__.test_object_savepath = os.path.join(test_path, 'test_object_table.csv')
     
     def test_om10_to_galsim(self):
         self.realizer._om10_to_galsim(lensInfo=self.test_lensInfo, band=self.test_obsInfo['filter'])
@@ -97,7 +100,9 @@ class OM10RealizerTest(unittest.TestCase):
         #print("Vectorized: ", vectorized)
         
         self.assertTrue(np.allclose(rowbyrow, vectorized, rtol=1e-04, atol=1e-04))
-        
+
+    def test_make_object_table(self):
+        self.realizer.make_object_table(sourceTablePath=self.test_vectorized_savepath, objectTablePath=self.test_object_savepath)
 
 if __name__ == '__main__':
     unittest.main()

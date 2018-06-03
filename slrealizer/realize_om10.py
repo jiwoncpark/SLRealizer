@@ -288,6 +288,7 @@ class OM10Realizer(SLRealizer):
         
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
         
+        self.sourceTable = src
         if self.DEBUG:
             return src
         

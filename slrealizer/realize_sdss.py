@@ -28,7 +28,22 @@ class SDSSRealizer(SLRealizer):
         elif rownum is not None:
             return self.catalog.loc[rownum]
     
-    def create_source_row(self, obsInfo, lensInfo):
+    def _sdss_to_galsim(self, lensInfo, band):
+        raise NotImplementedError
+    
+    def _sdss_to_lsst(self, obsInfo, lensInfo):
+        raise NotImplementedError
+    
+    def draw_system(self, obsInfo, lensInfo, save_dir=None):
+        raise NotImplementedError
+        
+    def estimate_hsm(self, obsInfo, lensInfo):
+        raise NotImplementedError
+    
+    def draw_emulated_system(self, obsInfo, lensInfo):
+        raise NotImplementedError
+    
+    def create_source_row(self, obsInfo, lensInfo, use_hsm=False):
         
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         row = {}
