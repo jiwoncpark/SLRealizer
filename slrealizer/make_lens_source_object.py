@@ -18,7 +18,7 @@ if __name__=='__main__':
     observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
 
     db = DB(catalog=catalog_f)
-    db.select_random(maglim=23.3, area=500.0, IQ=0.75)
+    db.select_random(maglim=23.3, area=18000.0, IQ=0.75)
     db.paint(synthetic=True)
     obs = pd.read_csv(observation_f)\
             .query("(expMJD < 60919) & (filter != 'y')")\
@@ -26,6 +26,6 @@ if __name__=='__main__':
     realizer = OM10Realizer(observation=obs, catalog=db, debug=False)
     table_path = os.path.join(data_path, 'lens_source_table.csv')
 
-    realizer.make_source_table(save_file=table_path)
-
+    realizer.make_source_table_vectorized(save_file=table_path)
+    realizer.make_object_table(sourceTablePath=table_path, objectTablePath='lens_object_table.csv')
     

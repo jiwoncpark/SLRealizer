@@ -2,6 +2,7 @@
 # Unit tests for OM10Realizer functions
 
 # ======================================================================
+from __future__ import print_function
 import os, unittest
 import galsim
 from om10 import DB
@@ -37,7 +38,7 @@ class SDSSRealizerTest(unittest.TestCase):
     def setUp(self):
         # If it was not setup yet, do it
         if not self.classIsSetup:
-            print "Initializing testing environment"
+            print("Initializing testing environment...")
             # run the real setup
             self.setupClass()
             # remember that it was setup already
@@ -49,7 +50,8 @@ class SDSSRealizerTest(unittest.TestCase):
         # you want to have persistent things to test
         
         data_path = os.path.join(os.environ['SLREALIZERDIR'], 'data')
-        catalog_f = os.path.join(data_path, 'sdss_test_processed.csv')
+        test_path = os.path.join(os.environ['SLREALIZERDIR'], 'tests')
+        catalog_f = os.path.join(data_path, 'sdss_toy_processed.csv')
         observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
     
         test_db = pd.read_csv(catalog_f).sample(1, random_state=123).reset_index(drop=True)
@@ -59,14 +61,23 @@ class SDSSRealizerTest(unittest.TestCase):
         # We can access lens and observation rows through these variables.
         self.__class__.test_lensInfo = test_db.loc[0]
         self.__class__.test_obsInfo = test_obs.loc[0]
-        # Path where we will save our test source table
-        self.__class__.test_datapath = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_nonlens_source_table.csv')
+        # Path where we will save our output tables
+        self.__class__.test_source_savepath = os.path.join(test_path, 'test_nonlens_source_table.csv')
+        self.__class__.test_vectorized_savepath = os.path.join(test_path, 'test_nonlens_vectorized_st.csv')
+        self.__class__.test_object_savepath = os.path.join(test_path, 'test_nonlens_object_table.csv')
     
     def test_create_source_row(self):
         print(self.realizer.create_source_row(lensInfo=self.test_lensInfo, obsInfo=self.test_obsInfo))
         
     def test_make_source_table(self):
-        self.realizer.make_source_table(save_file=self.test_datapath)
+        self.realizer.make_source_table(save_file=self.test_source_savepath)
+
+    def test_make_source_table_vectorized(self):
+        self.realizer.make_source_table_vectorized(save_path=self.test_vectorized_savepath)
+
+    def test_make_object_table(self):
+        self.realizer.make_object_table(sourceTablePath=self.test_vectorized_savepath,
+                                        objectTablePath=self.test_object_savepath)
 
 if __name__ == '__main__':
     unittest.main()

@@ -102,7 +102,13 @@ class OM10RealizerTest(unittest.TestCase):
         self.assertTrue(np.allclose(rowbyrow, vectorized, rtol=1e-04, atol=1e-04))
 
     def test_make_object_table(self):
-        self.realizer.make_object_table(sourceTablePath=self.test_vectorized_savepath, objectTablePath=self.test_object_savepath)
+        print("Testing object table generation with provided source table...")
+        self.realizer.make_object_table(sourceTablePath=self.test_vectorized_savepath,
+                                        objectTablePath=self.test_object_savepath)
+        #print("Testing object table generation without provided source table...")
+        #self.realizer.make_object_table(sourceTablePath=None,
+        #                                objectTablePath=self.test_object_savepath)
+        
 
 if __name__ == '__main__':
     unittest.main()

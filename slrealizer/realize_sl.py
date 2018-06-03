@@ -175,7 +175,7 @@ class SLRealizer(object):
                'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
-    def make_source_table(self, save_file, use_hsm):
+    def make_source_table(self, save_file, use_hsm=False):
         import time
         """
         Returns a source table generated from all the lens systems in the catalog
@@ -217,9 +217,7 @@ class SLRealizer(object):
         if self.DEBUG:
             return df
 
-# TODO need to debug past this point.
-
-    def make_object_table(self, sourceTablePath, objectTablePath):
+    def make_object_table(self, objectTablePath, sourceTablePath=None):
 
         """
         Generates the object table from the given source table at sourceTablePath
@@ -233,7 +231,7 @@ class SLRealizer(object):
             print("Reading in the source table at %s ..." %sourceTablePath)
             obj = pd.read_csv(sourceTablePath)
             obj.set_index('objectId', inplace=True)
-        elif objectTablePath is not None:            
+        elif self.sourceTable is not None:            
             print("Reading in Pandas Dataframe of most recent source table generated... ")
             obj = self.sourceTable.copy()
         else:
@@ -259,6 +257,8 @@ class SLRealizer(object):
         print("Done making the object table with columns: \n", obj.columns.values)
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
+
+# TODO need to debug past this point.
            
     # after merging, change this one to deblend_test
     def deblend(self, lensID=None, null_deblend=True):
@@ -291,52 +291,6 @@ class SLRealizer(object):
         image = desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
         print('##################### AFTER NULL DEBLENDING ##################################')
         desc.slrealizer.show_color_map(image)
-
-    def generate_cornerplot(self, color='black', object_table_dir = '../data/object_catalog_galsim_noise.csv', option = None, params = None, range=None, overlap=None, normed=False, data=None, label=None):
-        """
-        Plots the cornerplot given an object table. The user has to specify which attributes they want to look at.
-
-        Parameters
-        ----------
-        option : list of string/strings
-        Choose from size, position, color, ellipticity, and magnitude. The cornerplot will show the attribute that the user selected.
-        If None, the user should specify the parameters(column names) in the object table.
-
-        params : tuples of strings
-        Names of columns in source_table that the user wants to see in the cornerplot.
-        Only works when option is not specified.
-
-        range : list of tuples for each plot
-        Returns cornerplot (matplotlib.pyplot)
-        """
-
-        options = [None, 'size', 'x_position', 'y_position', 'color', 'ellipticity', 'magnitude', 'position', 'phi', 'custom']
-        object_table = pd.read_csv(object_table_dir)
-        if ((option is None) and (params is None)):
-            print('either specify params or option. You can choose among :')
-            print(options)
-            print('or specify columns in the source table that you want to see in the cornerplot.')
-            return
-        elif 'custom' in option:
-            print('custom input')
-        elif option is not None:
-            data, label = np.array([]), []
-            for elem in option:
-                if elem not in options:
-                    print(elem, 'is not in the option')
-                    return
-                method_name = 'calculate_'+elem
-                cur_data, cur_label = getattr(extract_corner, method_name)(object_table)
-                data = np.append(data, cur_data)
-                label.extend(cur_label)
-            data = data.reshape(len(label), len(object_table)).transpose()
-        else:
-            data, label = desc.slrealizer.extract_features(object_table, params)
-        if overlap is None:
-            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, hist_kwargs=dict(normed=normed))
-        else:
-            fig = corner.corner(data, labels=label, color=color, smooth=1.0, range=range, fig=overlap, hist_kwargs=dict(normed=normed))
-        return fig
     
     def compare_truth_vs_emulated(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   

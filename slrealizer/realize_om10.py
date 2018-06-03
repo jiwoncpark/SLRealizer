@@ -283,7 +283,7 @@ class OM10Realizer(SLRealizer):
         gc.collect()
         
         src.set_index('objectId', inplace=True)
-        src.to_csv(save_file, index=True)
+        src.to_csv(save_file)
         end = time.time()
         
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
