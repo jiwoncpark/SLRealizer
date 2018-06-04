@@ -32,10 +32,10 @@ def get_first_moment_err_std():
     return 0.005
 
 def get_second_moment_err():
-    return 0.05
+    return 0.15 # changed from 0.05
 
 def get_second_moment_err_std():
-    return 0.01
+    return 0.03 # changed from 0.01
 
 def get_x_min():
     return -5.0

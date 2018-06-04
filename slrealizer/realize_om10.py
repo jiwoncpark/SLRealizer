@@ -189,7 +189,9 @@ class OM10Realizer(SLRealizer):
         
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth']-22.5)/5.0 # because Fb = 5 \sigma_b
         src['sigmaSqPSF'] = np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
-        src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
+        # Arbitrarily set REFF_T to 1.0
+        #src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
+        src['sigmaSqLens'] = np.power(hlr_to_sigma(1.0), 2.0)
         src.rename(columns={'FWHMeff': 'psf_fwhm'}, inplace=True) 
         src.drop(['fiveSigmaDepth', 'REFF_T'], axis=1, inplace=True)
         gc.collect()
