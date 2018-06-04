@@ -139,7 +139,7 @@ class SLRealizer(object):
         """
         if not self.DEBUG:
             raise ValueError("Only runs in debug mode")
-        system = galsim.Gaussian(flux=hsmOutput['appFlux'], half_light_radius=hsmOutput['hlr'])\
+        system = galsim.Gaussian(flux=hsmOutput['apFlux'], half_light_radius=hsmOutput['hlr'])\
                        .shift(float(hsmOutput['x']), float(hsmOutput['y']))\
                        .shear(e1=hsmOutput['e1'], e2=hsmOutput['e2'])
         emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')

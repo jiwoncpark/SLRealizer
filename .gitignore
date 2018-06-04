@@ -61,6 +61,9 @@ target/
 # Ipython Notebook
 .ipynb_checkpoints
 
+# Practice notebook
+./tests/practice+notebook.ipynb
+
 # Backup files
 *~
 
