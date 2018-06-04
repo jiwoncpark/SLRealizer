@@ -18,6 +18,7 @@ class SDSSRealizer(SLRealizer):
         self.catalog = catalog
         self.num_systems = len(self.catalog)
         self.DEBUG = debug
+        self.sdss_pixel_scale = 0.396 #arcsec/pixel
         
     def get_lensInfo(self, objID=None, rownum=None):
         if objID is not None and rownum is not None:
@@ -58,7 +59,7 @@ class SDSSRealizer(SLRealizer):
         row['apFlux'] = lensInfo['modelFlux_' + band]
         row['x'] = np.cos(np.deg2rad(lensInfo['offsetDec_' + band]*3600.0)) * lensInfo['offsetRa_' + band]
         row['y'] = lensInfo['offsetDec_' + band]
-        row['trace'] = lensInfo['mRrCc_' + band] + 2.0*fwhm_to_sigma(PSF_FWHM)**2.0
+        row['trace'] = lensInfo['mRrCc_' + band]*(self.sdss_pixel_scale)**2.0 + 2.0*fwhm_to_sigma(PSF_FWHM)**2.0
         row['e1'] = lensInfo['mE1_' + band]
         row['e2'] = lensInfo['mE2_' + band]
         
@@ -108,7 +109,7 @@ class SDSSRealizer(SLRealizer):
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth'] - 22.5)/5.0
         src['x'] = np.cos(np.deg2rad(src['offsetDec']*3600.0))*src['offsetRa']
         src['y'] = src['offsetDec']
-        src['trace'] = src['mRrCc'] + 2.0*np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
+        src['trace'] = src['mRrCc']*(self.sdss_pixel_scale**2.0) + 2.0*np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
         
         #####################################################
         # Final column renaming/reordering & saving to file #

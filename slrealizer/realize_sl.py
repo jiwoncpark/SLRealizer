@@ -252,6 +252,11 @@ class SLRealizer(object):
         obj = obj.reset_index().drop('MJD', axis=1).groupby('objectId', sort=False).mean()
         # Drop examples with missing values
         obj.dropna(how='any', inplace=True)
+        # Get x, y values relative to the r-band
+        for b in 'ugriz':
+            obj[b + '_' + 'x'] = obj[b + '_' + 'x'] - obj['r_x']
+            obj[b + '_' + 'y'] = obj[b + '_' + 'y'] - obj['r_y']
+        
         # Save as csv file
         obj.to_csv(objectTablePath, index=False)
         print("Done making the object table with columns: \n", obj.columns.values)
