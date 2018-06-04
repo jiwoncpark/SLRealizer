@@ -51,7 +51,7 @@ class SDSSRealizerTest(unittest.TestCase):
         
         data_path = os.path.join(os.environ['SLREALIZERDIR'], 'data')
         test_path = os.path.join(os.environ['SLREALIZERDIR'], 'tests')
-        catalog_f = os.path.join(data_path, 'sdss_toy_processed.csv')
+        catalog_f = os.path.join(data_path, 'sdss_processed.csv')
         observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
     
         test_db = pd.read_csv(catalog_f).sample(1, random_state=123).reset_index(drop=True)

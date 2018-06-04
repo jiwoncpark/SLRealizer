@@ -120,6 +120,9 @@ class SDSSRealizer(SLRealizer):
                             'mE1': 'e1',
                             'mE2': 'e2'}, inplace=True)
         src.drop(['mRrCc', 'offsetRa', 'offsetDec', 'fiveSigmaDepth'], axis=1, inplace=True)
+        gc.collect()
+        
+        src = src[self.sourceCols]
         src.set_index('objectId', inplace=True)
         src.to_csv(save_path)
         end = time.time()
