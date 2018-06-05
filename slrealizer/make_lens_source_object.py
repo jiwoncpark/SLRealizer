@@ -24,7 +24,7 @@ if __name__=='__main__':
     db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
     db.paint(synthetic=True)
     obs = pd.read_csv(observation_f)\
-            .query("(expMJD < 60919) & (filter != 'y')")\
+            .query("(expMJD < 62450) & (filter != 'y')")\
             .reset_index(drop=True)
     realizer = OM10Realizer(observation=obs, catalog=db, debug=False)
 

@@ -6,12 +6,12 @@ import numpy as np
 
 def e1e2_to_ephi(e1, e2):
     e = np.power(np.power(e1, 2.0) + np.power(e2, 2.0), 0.5)
-    phi = np.arctan(e2/e1)
+    phi = 0.5*np.arctan(e2/e1)
     return e, phi
 
 def ephi_to_e1e2(e, phi):
-    e1 = e*np.cos(phi)
-    e2 = e*np.sin(phi)
+    e1 = e*np.cos(2.0*phi)
+    e2 = e*np.sin(2.0*phi)
     return e1, e2
 
 def get_1D_columns(multidimColNames, table):
