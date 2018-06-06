@@ -76,6 +76,11 @@ class OM10Realizer(SLRealizer):
         q_flux_arr = from_mag_to_flux(q_mag_arr, to_unit='nMgy')
         q_tot_flux = np.sum(q_flux_arr)
         derivedProps['apFlux'] = lens_flux + q_tot_flux
+        derivedProps['apMag'] = from_flux_to_mag(derivedProps['apFlux'], from_unit='nMgy')
+        
+        #TODO
+        derivedProps['apMag'] = 0.0
+        derivedProps['apMagErr'] = 0.0
         
         #################################
         # Analytical moment calculation #
@@ -171,6 +176,7 @@ class OM10Realizer(SLRealizer):
         collapsedColDict = get_1D_columns(multidimColNames=['MAG', 'XIMG', 'YIMG'], table=catalogAstropy)
         saveColDict.update(collapsedColDict)
         catalog = Table(saveColDict.values(), names=saveColDict.keys()).to_pandas()
+        catalog.drop_duplicates('LENSID', inplace=True)
 
         ####################################
         # Merging catalog with observation #
@@ -188,6 +194,7 @@ class OM10Realizer(SLRealizer):
         ####################################
         
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth']-22.5)/5.0 # because Fb = 5 \sigma_b
+        src['apMagErr'] = scale_mag_as_flux(mag=src['fiveSigmaDepth'], flux_scale=0.2)
         src['sigmaSqPSF'] = np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
         # Arbitrarily set REFF_T to 1.0
         #src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
@@ -228,6 +235,7 @@ class OM10Realizer(SLRealizer):
         # Get total flux
         fluxCols = ['q_flux_' + str(q) for q in range(4)] + ['lens_flux']
         src['apFlux'] = src[fluxCols].sum(axis=1)
+        src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
 
         # Calculate flux ratios (for moment calculation)
         src['lensFluxRatio'] = src['lens_flux']/src['apFlux']

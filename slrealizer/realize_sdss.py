@@ -107,9 +107,11 @@ class SDSSRealizer(SLRealizer):
         # Unit conversion #
         ###################
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth'] - 22.5)/5.0
+        src['apMagErr'] = scale_mag_as_flux(mag=src['fiveSigmaDepth'], flux_scale=0.2)
         src['x'] = np.cos(np.deg2rad(src['offsetDec']*3600.0))*src['offsetRa']
         src['y'] = src['offsetDec']
         src['trace'] = src['mRrCc']*(self.sdss_pixel_scale**2.0) + 2.0*np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
+        src['apMag'] = from_flux_to_mag(src['modelFlux'], from_unit='nMgy')
         
         #####################################################
         # Final column renaming/reordering & saving to file #

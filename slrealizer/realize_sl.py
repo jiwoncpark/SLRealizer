@@ -46,7 +46,7 @@ class SLRealizer(object):
         # Source table df
         self.sourceTable = None
         # Source table column list
-        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'trace', 'e1', 'e2',]
+        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2',]
         
     def get_obsInfo(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
@@ -262,6 +262,14 @@ class SLRealizer(object):
         print("Done making the object table with columns: \n", obj.columns.values)
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
+    
+    def make_training_data():
+        raise NotImplementedError
+    
+    def add_time_variability(input_source_path, output_source_path, input_training_data=None):
+        raise NotImplementedError
+        
+   
 
 # TODO need to debug past this point.
            

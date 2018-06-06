@@ -16,7 +16,7 @@ if __name__=='__main__':
     output_nonlens_source_path = os.path.join(data_path, 'nonlens_source_table.csv')
     output_nonlens_object_path = os.path.join(data_path, 'nonlens_object_table.csv')
     
-    db = pd.read_csv(catalog_f).query('(u_trace < 5.12)').sample(20000, random_state=123).reset_index(drop=True)
+    db = pd.read_csv(catalog_f).sample(20000, random_state=123).reset_index(drop=True)
     obs = pd.read_csv(observation_f)\
             .query("(expMJD < 62450) & (filter != 'y')")\
             .reset_index(drop=True)
