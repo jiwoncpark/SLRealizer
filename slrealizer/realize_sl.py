@@ -267,14 +267,19 @@ class SLRealizer(object):
     
     def add_time_variability(self, input_source_path, output_source_path, observation_cutoff=np.inf):
         """
-        Takes a source table and adds the intrinsic quasar flux 
-        variability over time to the 'apMag' column
+        Takes a source table and adds the intrinsic time
+        variability of quasar fluxes to the 'apMag' column
         using the generative model introduced in MacLeod et al (2010)
+        up to an optional cutoff in the observation date
         
         Keyword arguments:
         input_source_path -- path of input source table to be altered
         output_source_path -- path of output source table containing time variability
         observation_cutoff (optional) -- date in MJD of last observation
+        
+        Returns:
+        a new source table reflecting the 'apMag' update
+        and the observation date downsampling if any
         """
         import gc
         import time
