@@ -263,14 +263,93 @@ class SLRealizer(object):
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
     
-    def make_training_data():
-        raise NotImplementedError
+    #def make_training_data(self, source_path, data_path, ):   
     
-    def add_time_variability(input_source_path, output_source_path, input_training_data=None):
-        raise NotImplementedError
+    def add_time_variability(self, input_source_path, output_source_path, observation_cutoff=np.inf):
+        """
+        Takes a source table and adds the intrinsic quasar flux 
+        variability over time to the 'apMag' column
+        using the generative model introduced in MacLeod et al (2010)
         
-   
-
+        Keyword arguments:
+        input_source_path -- path of input source table to be altered
+        output_source_path -- path of output source table containing time variability
+        observation_cutoff (optional) -- date in MJD of last observation
+        """
+        import gc
+        import time
+        
+        start = time.time()
+        # Query out unneeded observation times
+        src = pd.read_csv(input_source_path).query('MJD < @observation_cutoff').copy()
+        
+        NUM_TIMES = src['ccdVisitId'].nunique()
+        NUM_OBJECTS = src['objectId'].nunique()
+        
+        #########################
+        # Adding useful columns #
+        #########################
+        
+        # Set MJD relative to zero
+        src['MJD'] = src['MJD'] - np.min(src['MJD'].values)
+        # Map ccdVisitId to integers starting from 0
+        sorted_obs_id = np.sort(src['ccdVisitId'].unique())
+        time_map = dict(zip(sorted_obs_id, range(NUM_TIMES)))
+        src['time_index'] = src['ccdVisitId'].map(time_map).astype(int)
+        # Add a column of time elapsed since last observation, d_time
+        src.sort_values(['objectId', 'MJD'], axis=0, inplace=True)
+        src['d_time'] = src['MJD'] - src['MJD'].shift(+1)
+        src['d_time'].fillna(0.0, inplace=True)
+        src['d_time'] = np.clip(src['d_time'], a_min=0.0, a_max=None)
+        gc.collect()
+        
+        ##############################
+        # Computing time variability #
+        ##############################
+        
+        # Parameters of the generative model (hand-picked)
+        MU = 0.0
+        TAU = np.power(10.0, 2.4)
+        S_INF = 0.15 # mag
+        
+        # Get a portable slice consisting only of necessary arrays
+        src_timevar = src[['objectId', 'time_index', 'd_time', 'apMag', ]].copy()
+        # Add a column to store the variability and initialize to zero
+        src_timevar['intrinsic_mag'] = 0.0
+        # Pivot to get time sequence to be horizontal
+        src_timepivot = src_timevar.pivot_table(index=['objectId'], 
+                                                columns=['time_index'], 
+                                                values=['d_time', 'apMag', 'intrinsic_mag'])
+        # Update 'intrinsic_mag' column
+        for t in range(1, NUM_TIMES - 1):
+            src_timepivot['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1]*np.exp(-src_timepivot['d_time'][t]/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t]/TAU)),
+                                                                 scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t]/TAU)))
+        # Add computed variability to 'apMag' column
+        src_timepivot['apMag'] = src_timepivot['apMag'] + src_timepivot['intrinsic_mag']
+        # Drop columns we'll no longer use
+        src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
+        # Pivot the time sequence back, to be vertical
+        src_timepivot = src_timepivot.stack()
+        # Replace magnitudes
+        src['apMag'] = src_timepivot['apMag'].values
+        gc.collect()
+        
+        #####################################################
+        # Final column renaming/reordering & saving to file #
+        #####################################################
+        # Reorder columns
+        src = src[self.sourceCols]
+        gc.collect()
+        
+        src.set_index('objectId', inplace=True)
+        src.to_csv(output_source_path)
+        end = time.time()
+        
+        print("Done making the source table with intrinsic quasar time variability with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
+        
+        if self.DEBUG:
+            return src
+        
 # TODO need to debug past this point.
            
     # after merging, change this one to deblend_test
