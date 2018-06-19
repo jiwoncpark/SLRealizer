@@ -296,14 +296,14 @@ class SLRealizer(object):
         #########################
         
         # Set MJD relative to zero
-        src['MJD'] = src['MJD'] - np.min(src['MJD'].values)
+        src['MJD_diff'] = src['MJD'] - np.min(src['MJD'].values)
         # Map ccdVisitId to integers starting from 0
         sorted_obs_id = np.sort(src['ccdVisitId'].unique())
         time_map = dict(zip(sorted_obs_id, range(NUM_TIMES)))
         src['time_index'] = src['ccdVisitId'].map(time_map).astype(int)
         # Add a column of time elapsed since last observation, d_time
-        src.sort_values(['objectId', 'MJD'], axis=0, inplace=True)
-        src['d_time'] = src['MJD'] - src['MJD'].shift(+1)
+        src.sort_values(['objectId', 'MJD', 'MJD_diff'], axis=0, inplace=True)
+        src['d_time'] = src['MJD_diff'] - src['MJD_diff'].shift(+1)
         src['d_time'].fillna(0.0, inplace=True)
         src['d_time'] = np.clip(src['d_time'], a_min=0.0, a_max=None)
         gc.collect()
