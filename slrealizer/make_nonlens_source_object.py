@@ -16,9 +16,9 @@ if __name__=='__main__':
     output_nonlens_source_path = os.path.join(data_path, 'nonlens_source_table.csv')
     output_nonlens_object_path = os.path.join(data_path, 'nonlens_object_table.csv')
     
-    db = pd.read_csv(catalog_f).sample(2000, random_state=123).reset_index(drop=True)
+    db = pd.read_csv(catalog_f).sample(156, random_state=123).reset_index(drop=True)
     obs = pd.read_csv(observation_f)\
-            .query("(expMJD < 60150) & (filter != 'y')")\
+            .query("(expMJD < 60000) & (filter != 'y')")\
             .reset_index(drop=True)
     realizer = SDSSRealizer(observation=obs, catalog=db, debug=False)
 

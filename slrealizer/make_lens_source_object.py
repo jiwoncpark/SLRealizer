@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import galsim
 from om10 import DB
@@ -22,10 +26,11 @@ if __name__=='__main__':
     output_lens_tvar_source_path = os.path.join(data_path, 'lens_tvar_source_table.csv')
 
     db = DB(catalog=catalog_f)
-    db.select_random(maglim=23.3, area=10000, IQ=0.75)
+    db.select_random(maglim=23.3, area=1000, IQ=0.75)
     db.paint(synthetic=True)
+    print("Number of lenses: ", len(db.sample))
     obs = pd.read_csv(observation_f)\
-            .query("(expMJD < 62450) & (filter != 'y')")\
+            .query("(expMJD < 60000) & (filter != 'y')")\
             .reset_index(drop=True)
     realizer = OM10Realizer(observation=obs, catalog=db, debug=False)
 
