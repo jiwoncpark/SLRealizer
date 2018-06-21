@@ -1,6 +1,6 @@
-#from __future__ import absolute_import
-#from __future__ import division
-#from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 from realize_sl import SLRealizer
 from utils.constants import *
@@ -291,11 +291,13 @@ class OM10Realizer(SLRealizer):
         src.rename(columns={'obsHistID': 'ccdVisitId', 'LENSID': 'objectId', 'expMJD': 'MJD',}, inplace=True)
         src = src[self.sourceCols]
         gc.collect()
+        print("Number of observations: ", src['MJD'].nunique())
+        print("Number of lenses: ", src['objectId'].nunique())
         
         src.set_index('objectId', inplace=True)
         src.to_csv(save_file)
         end = time.time()
-        
+
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
         
         self.sourceTable = src

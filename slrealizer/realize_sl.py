@@ -1,5 +1,5 @@
-#from __future__ import absolute_import
-#from __future__ import division
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import numpy as np
@@ -223,6 +223,7 @@ class SLRealizer(object):
         Generates the object table from the given source table at sourceTablePath
         by averaging the properties for each filter, and saves it as objectTablePath.
         """
+        import time
         
         if objectTablePath is None:
             raise ValueError("Must provide save path of the output object table.")
@@ -236,6 +237,8 @@ class SLRealizer(object):
             obj = self.sourceTable.copy()
         else:
             raise ValueError("Must provide a source table path or generate a source table at least once using this Realizer object.")
+
+        start = time.time()
         
         obj.drop(['ccdVisitId', 'psf_fwhm'], axis=1, inplace=True)
         # Define (filter-nonspecific) properties to go in object table columns
@@ -256,16 +259,19 @@ class SLRealizer(object):
         for b in 'ugriz':
             obj[b + '_' + 'x'] = obj[b + '_' + 'x'] - obj['r_x']
             obj[b + '_' + 'y'] = obj[b + '_' + 'y'] - obj['r_y']
+        end = time.time()
         
         # Save as csv file
         obj.to_csv(objectTablePath, index=False)
-        print("Done making the object table with columns: \n", obj.columns.values)
+        print("Done making the object table in %0.2f seconds." %(end-start))
+        if self.DEBUG:
+            print("Object table columns: ", obj.columns)
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
     
     #def make_training_data(self, source_path, data_path, ):   
     
-    def add_time_variability(self, input_source_path, output_source_path, observation_cutoff=np.inf):
+    def add_time_variability(self, input_source_path, output_source_path):
         """
         Takes a source table and adds the intrinsic time
         variability of quasar fluxes to the 'apMag' column
@@ -275,7 +281,6 @@ class SLRealizer(object):
         Keyword arguments:
         input_source_path -- path of input source table to be altered
         output_source_path -- path of output source table containing time variability
-        observation_cutoff (optional) -- date in MJD of last observation
         
         Returns:
         a new source table reflecting the 'apMag' update
@@ -286,10 +291,12 @@ class SLRealizer(object):
         
         start = time.time()
         # Query out unneeded observation times
-        src = pd.read_csv(input_source_path).query('MJD < @observation_cutoff').copy()
+        src = pd.read_csv(input_source_path)
         
-        NUM_TIMES = src['ccdVisitId'].nunique()
+        NUM_TIMES = src['MJD'].nunique()
         NUM_OBJECTS = src['objectId'].nunique()
+        if self.DEBUG:
+            print(NUM_TIMES, NUM_OBJECTS)
         
         #########################
         # Adding useful columns #
@@ -298,11 +305,13 @@ class SLRealizer(object):
         # Set MJD relative to zero
         src['MJD_diff'] = src['MJD'] - np.min(src['MJD'].values)
         # Map ccdVisitId to integers starting from 0
-        sorted_obs_id = np.sort(src['ccdVisitId'].unique())
+        sorted_obs_id = np.sort(src['MJD'].unique())
         time_map = dict(zip(sorted_obs_id, range(NUM_TIMES)))
-        src['time_index'] = src['ccdVisitId'].map(time_map).astype(int)
+        src['time_index'] = src['MJD'].map(time_map).astype(int)
+        if self.DEBUG:
+            print("0 times: ", src['time_index'].nunique())
         # Add a column of time elapsed since last observation, d_time
-        src.sort_values(['objectId', 'MJD', 'MJD_diff'], axis=0, inplace=True)
+        src.sort_values(['objectId', 'filter', 'MJD', 'MJD_diff'], axis=0, inplace=True)
         src['d_time'] = src['MJD_diff'] - src['MJD_diff'].shift(+1)
         src['d_time'].fillna(0.0, inplace=True)
         src['d_time'] = np.clip(src['d_time'], a_min=0.0, a_max=None)
@@ -319,12 +328,16 @@ class SLRealizer(object):
         
         # Get a portable slice consisting only of necessary arrays
         src_timevar = src[['objectId', 'time_index', 'd_time', 'apMag', ]].copy()
+        if self.DEBUG:
+            print("1 times: ",  src_timevar['time_index'].nunique())
         # Add a column to store the variability and initialize to zero
         src_timevar['intrinsic_mag'] = 0.0
         # Pivot to get time sequence to be horizontal
         src_timepivot = src_timevar.pivot_table(index=['objectId'], 
                                                 columns=['time_index'], 
                                                 values=['d_time', 'apMag', 'intrinsic_mag'])
+        if self.DEBUG:
+            print("2 times: ", src_timepivot.shape)
         # Update 'intrinsic_mag' column
         for t in range(1, NUM_TIMES - 1):
             src_timepivot['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1]*np.exp(-src_timepivot['d_time'][t]/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t]/TAU)),
@@ -345,6 +358,8 @@ class SLRealizer(object):
         # Reorder columns
         src = src[self.sourceCols]
         gc.collect()
+        print("Number of observations: ", src['MJD'].nunique())
+        print("Number of objects: ", src['objectId'].nunique())
         
         src.set_index('objectId', inplace=True)
         src.to_csv(output_source_path)

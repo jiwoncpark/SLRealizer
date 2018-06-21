@@ -1,6 +1,6 @@
-#from __future__ import absolute_import
-#from __future__ import division
-#from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 from realize_sl import SLRealizer
 from utils.constants import *
@@ -124,6 +124,8 @@ class SDSSRealizer(SLRealizer):
                             'mE2': 'e2'}, inplace=True)
         src.drop(['mRrCc', 'offsetRa', 'offsetDec', 'fiveSigmaDepth'], axis=1, inplace=True)
         gc.collect()
+        print("Number of observations: ", src['MJD'].nunique())
+        print("Number of nonlenses: ", src['objectId'].nunique())
         
         src = src[self.sourceCols]
         src.set_index('objectId', inplace=True)
