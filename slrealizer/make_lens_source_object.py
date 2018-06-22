@@ -24,15 +24,16 @@ if __name__=='__main__':
     output_lens_source_path = os.path.join(data_path, 'lens_source_table.csv')
     output_lens_object_path = os.path.join(data_path, 'lens_object_table.csv')
     output_lens_tvar_source_path = os.path.join(data_path, 'lens_tvar_source_table.csv')
+    output_lens_tvar_object_path = os.path.join(data_path, 'lens_tvar_object_table.csv')
 
     db = DB(catalog=catalog_f)
-    db.select_random(maglim=23.3, area=1000, IQ=0.75)
+    db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
     db.paint(synthetic=True)
     
     obs = pd.read_csv(observation_f)\
-            .query("(expMJD < 61000) & (filter != 'y')")\
+            .query("(expMJD < 65000) & (filter != 'y')")\
             .reset_index(drop=True)
-    realizer = OM10Realizer(observation=obs, catalog=db, debug=True)
+    realizer = OM10Realizer(observation=obs, catalog=db, debug=False)
 
     realizer.make_source_table_vectorized(save_file=output_lens_source_path)
     realizer.make_object_table(sourceTablePath=output_lens_source_path,
@@ -41,4 +42,5 @@ if __name__=='__main__':
     # Optionally add time variability
     realizer.add_time_variability(input_source_path=output_lens_source_path,
                                   output_source_path=output_lens_tvar_source_path)
-    
+    realizer.make_object_table(sourceTablePath=output_lens_tvar_source_path,
+                               objectTablePath=output_lens_tvar_object_path)
