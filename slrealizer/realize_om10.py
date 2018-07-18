@@ -194,7 +194,6 @@ class OM10Realizer(SLRealizer):
         ####################################
         
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth']-22.5)/5.0 # because Fb = 5 \sigma_b
-        src['apMagErr'] = scale_mag_as_flux(mag=src['fiveSigmaDepth'], flux_scale=0.2)
         src['sigmaSqPSF'] = np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
         # Arbitrarily set REFF_T to 1.0
         #src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
@@ -235,7 +234,10 @@ class OM10Realizer(SLRealizer):
         # Get total flux
         fluxCols = ['q_flux_' + str(q) for q in range(4)] + ['lens_flux']
         src['apFlux'] = src[fluxCols].sum(axis=1)
+        
+        # Propagate to get error on magnitude
         src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
+        src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['apFlux']
 
         # Calculate flux ratios (for moment calculation)
         src['lensFluxRatio'] = src['lens_flux']/src['apFlux']
