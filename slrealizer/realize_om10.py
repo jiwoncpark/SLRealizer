@@ -170,7 +170,7 @@ class OM10Realizer(SLRealizer):
         
         lensMagCols = [b + '_SDSS_lens' for b in 'ugriz']
         qMagCols = [b + '_SDSS_quasar' for b in 'ugriz']
-        saveCols = lensMagCols + qMagCols + ['REFF_T', 'NIMG', 'LENSID']
+        saveCols = lensMagCols + qMagCols + ['REFF_T', 'NIMG', 'LENSID', 'ELLIP', 'PHIE']
         saveValues = [catalogAstropy[c] for c in saveCols]
         saveColDict = dict(zip(saveCols, saveValues))
         collapsedColDict = get_1D_columns(multidimColNames=['MAG', 'XIMG', 'YIMG'], table=catalogAstropy)
@@ -198,7 +198,8 @@ class OM10Realizer(SLRealizer):
         # Arbitrarily set REFF_T to 1.0
         #src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
         src['sigmaSqLens'] = np.power(hlr_to_sigma(1.0), 2.0)
-        src.rename(columns={'FWHMeff': 'psf_fwhm'}, inplace=True) 
+        src['minor_to_major'] = np.power((1.0 - src['ELLIP'])/(1.0 + src['ELLIP']), 0.5) # q parameter in galsim.shear
+        src.rename(columns={'FWHMeff': 'psf_fwhm', 'PHIE': 'beta'}, inplace=True) # beta parameter in galsim.shear 
         src.drop(['fiveSigmaDepth', 'REFF_T'], axis=1, inplace=True)
         gc.collect()
         
@@ -254,9 +255,15 @@ class OM10Realizer(SLRealizer):
             
         # SECOND MOMENTS
         # Initialize with lens contributions
-        src['Ixx'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['sigmaSqLens'] + np.power(src['x'], 2.0)) 
-        src['Iyy'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['sigmaSqLens'] + np.power(src['y'], 2.0))
-        src['Ixy'] = src['lensFluxRatio']*src['x']*src['y']
+        src['lam1'] = src['sigmaSqLens']/src['minor_to_major']
+        src['lam2'] = src['sigmaSqLens']*src['minor_to_major']
+        src['lens_Ixx'] = src['lam1']*np.power(np.cos(src['beta']), 2.0) + src['lam2']*np.power(np.sin(src['beta']), 2.0)
+        src['lens_Iyy'] = src['lam1']*np.power(np.sin(src['beta']), 2.0) + src['lam2']*np.power(np.cos(src['beta']), 2.0)
+        src['lens_Ixy'] = (src['lam1'] - src['lam2'])*np.cos(src['beta'])*np.sin(src['beta'])
+        src['Ixx'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['lens_Ixx'] + np.power(src['x'], 2.0)) 
+        src['Iyy'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['lens_Iyy'] + np.power(src['y'], 2.0))
+        src['Ixy'] = src['lensFluxRatio']*(src['lens_Ixy'] - src['x']*src['y'])
+        src.drop(['lam1', 'lam2', 'lens_Ixx', 'lens_Iyy', 'lens_Ixy'], axis=1, inplace=True)
         # Add quasar contributions
         for q in range(4):
             src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0) + src['sigmaSqPSF'])
