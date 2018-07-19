@@ -199,8 +199,9 @@ class OM10Realizer(SLRealizer):
         #src['sigmaSqLens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
         src['sigmaSqLens'] = np.power(hlr_to_sigma(1.0), 2.0)
         src['minor_to_major'] = np.power((1.0 - src['ELLIP'])/(1.0 + src['ELLIP']), 0.5) # q parameter in galsim.shear
-        src.rename(columns={'FWHMeff': 'psf_fwhm', 'PHIE': 'beta'}, inplace=True) # beta parameter in galsim.shear 
-        src.drop(['fiveSigmaDepth', 'REFF_T'], axis=1, inplace=True)
+        src['beta'] = np.radians(src['PHIE']) # beta parameter in galsim.shear 
+        src.rename(columns={'FWHMeff': 'psf_fwhm'}, inplace=True) 
+        src.drop(['fiveSigmaDepth', 'REFF_T', 'PHIE'], axis=1, inplace=True)
         gc.collect()
         
         ###############################
