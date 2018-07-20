@@ -24,7 +24,8 @@ if __name__=='__main__':
     realizer = SDSSRealizer(observation=obs, catalog=db, debug=False)
 
     realizer.make_source_table_vectorized(save_path=output_nonlens_source_path)
-    realizer.make_object_table(sourceTablePath=output_nonlens_source_path,
+    realizer.make_object_table(include_std=True,
+                               sourceTablePath=output_nonlens_source_path,
                                objectTablePath=output_nonlens_object_path)
 
     

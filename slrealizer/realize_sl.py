@@ -217,13 +217,14 @@ class SLRealizer(object):
         if self.DEBUG:
             return df
 
-    def make_object_table(self, objectTablePath, sourceTablePath=None):
+    def make_object_table(self, objectTablePath, sourceTablePath=None, include_std=False):
 
         """
         Generates the object table from the given source table at sourceTablePath
         by averaging the properties for each filter, and saves it as objectTablePath.
         """
         import time
+        import gc
         
         if objectTablePath is None:
             raise ValueError("Must provide save path of the output object table.")
@@ -248,11 +249,20 @@ class SLRealizer(object):
         obj = obj.pivot_table(values=keepCols, index=[obj.index, 'MJD'], columns='filter', aggfunc='first')
         # Collapse multi-indexed column using filter_property formatting
         obj.columns = obj.columns.map('{0[1]}_{0[0]}'.format)
+        gc.collect()
         
         #if self.DEBUG: print(obj.columns.values)
         
-        # Take mean of properties across observed times for each object
-        obj = obj.reset_index().drop('MJD', axis=1).groupby('objectId', sort=False).mean()
+        # Take mean, optional std of properties across observed times for each object
+        obj = obj.reset_index().drop('MJD', axis=1).groupby('objectId', sort=False)
+        means = obj.mean()
+        if include_std:
+            stds = obj.std()
+            obj = means.join(stds, lsuffix='', rsuffix='-std')
+        else:
+            obj = means
+        gc.collect()
+        
         # Drop examples with missing values
         obj.dropna(how='any', inplace=True)
         # Get x, y values relative to the r-band
