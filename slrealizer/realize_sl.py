@@ -333,31 +333,27 @@ class SLRealizer(object):
         
         # Parameters of the generative model (hand-picked)
         MU = 0.0
-        TAU = np.power(10.0, 2.4)
-        S_INF = 0.15 # mag
+        TAU = 20.0 #np.power(10.0, 2.4) # days
+        S_INF = 0.14 # mag
         
         # Get a portable slice consisting only of necessary arrays
         src_timevar = src[['objectId', 'time_index', 'd_time', 'apMag', ]].copy()
-        if self.DEBUG:
-            print("1 times: ",  src_timevar['time_index'].nunique())
         # Add a column to store the variability and initialize to zero
         src_timevar['intrinsic_mag'] = 0.0
         # Pivot to get time sequence to be horizontal
         src_timepivot = src_timevar.pivot_table(index=['objectId'], 
                                                 columns=['time_index'], 
                                                 values=['d_time', 'apMag', 'intrinsic_mag'])
-        if self.DEBUG:
-            print("2 times: ", src_timepivot.shape)
         # Update 'intrinsic_mag' column
-        for t in range(1, NUM_TIMES - 1):
-            src_timepivot['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1]*np.exp(-src_timepivot['d_time'][t]/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t]/TAU)),
-                                                                 scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t]/TAU)))
+        for t in range(1, NUM_TIMES):
+            src_timepivot.loc[:]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
+                                                                 scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t].values/TAU)))
         # Add computed variability to 'apMag' column
         src_timepivot['apMag'] = src_timepivot['apMag'] + src_timepivot['intrinsic_mag']
         # Drop columns we'll no longer use
         src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
         # Pivot the time sequence back, to be vertical
-        src_timepivot = src_timepivot.stack()
+        src_timepivot = src_timepivot.stack(dropna=False)
         # Replace magnitudes
         src['apMag'] = src_timepivot['apMag'].values
         gc.collect()
