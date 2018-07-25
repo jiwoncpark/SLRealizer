@@ -238,7 +238,6 @@ class OM10Realizer(SLRealizer):
         src['apFlux'] = src[fluxCols].sum(axis=1)
         
         # Propagate to get error on magnitude
-        src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
         src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['apFlux']
 
         # Calculate flux ratios (for moment calculation)
@@ -288,11 +287,11 @@ class OM10Realizer(SLRealizer):
         # Adding noise #
         ################
         
-        if not self.DEBUG:
-            src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
-            src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
-            src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
-            src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
+        src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
+        src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
+        src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
         
         #####################################################
         # Final column renaming/reordering & saving to file #

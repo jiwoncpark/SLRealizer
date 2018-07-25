@@ -107,6 +107,7 @@ class SDSSRealizer(SLRealizer):
         # Unit conversion #
         ###################
         src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth'] - 22.5)/5.0
+        src['modelFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
         src['x'] = np.cos(np.deg2rad(src['offsetDec']*3600.0))*src['offsetRa']
         src['y'] = src['offsetDec']
         src['trace'] = src['mRrCc']*(self.sdss_pixel_scale**2.0) + 2.0*np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
