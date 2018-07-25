@@ -44,7 +44,7 @@ class SLRealizer(object):
         self.nx, self.ny = 49, 49 
         
         # Source table df
-        self.sourceTable = None
+        self.source_table = None
         # Source table column list
         self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2', 'e', 'phi', ]
         
@@ -281,10 +281,10 @@ class SLRealizer(object):
     
     #def make_training_data(self, source_path, data_path, ):   
     
-    def add_time_variability(self, input_source_path, output_source_path):
+    def add_time_variability(self, magnitude_type='q_apMag', save_output=True, output_source_path=None, input_source_path=None):
         """
         Takes a source table and adds the intrinsic time
-        variability of quasar fluxes to the 'apMag' column
+        variability of quasar fluxes to the magnitude_type column
         using the generative model introduced in MacLeod et al (2010)
         up to an optional cutoff in the observation date
         
@@ -293,15 +293,29 @@ class SLRealizer(object):
         output_source_path -- path of output source table containing time variability
         
         Returns:
-        a new source table reflecting the 'apMag' update
+        a new source table reflecting the magnitude_type update
         and the observation date downsampling if any
         """
         import gc
         import time
         
         start = time.time()
-        src = pd.read_csv(input_source_path)
+        if input_source_path is None:
+            try:
+                print("Reading in the most recent source table...")
+                src = self.source_table
+            except ValueError:
+                print("Realizer has not generated a source table yet.")
+        else:
+            try:
+                print("Reading in the source table at %s" %input_source_path)
+                src = pd.read_csv(input_source_path)
+            except ValueError:
+                print("Please input a valid path to the source table.")
         
+        if magnitude_type not in src.columns:
+            raise ValueError("Column for adding time variability doesn't exist.")
+            
         if self.DEBUG:
             NUM_TIMES = src['MJD'].nunique()
             NUM_OBJECTS = src['objectId'].nunique()
@@ -314,7 +328,7 @@ class SLRealizer(object):
             # Adding useful columns #
             #########################
             # Filter-specific version of src with only the columns we need
-            src_timevar = src.query('filter == @b')[['filter', 'objectId', 'MJD', 'apMag', ]].copy()
+            src_timevar = src.query('filter == @b')[['filter', 'objectId', 'MJD', magnitude_type, ]].copy()
             # Total number of time steps in this filter
             NUM_TIMES_FILTER = src_timevar['MJD'].nunique()
             # Set MJD relative to zero
@@ -342,7 +356,7 @@ class SLRealizer(object):
             # Pivot to get time sequence to be horizontal
             src_timepivot = src_timevar.pivot_table(index=['filter', 'objectId'], 
                                                     columns=['time_index',], 
-                                                    values=['d_time', 'apMag', 'intrinsic_mag', ])
+                                                    values=['d_time', magnitude_type, 'intrinsic_mag', ])
             # Update 'intrinsic_mag' column
             for t in range(1, NUM_TIMES_FILTER):
                 src_timepivot.loc[b, :]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
@@ -351,8 +365,8 @@ class SLRealizer(object):
             ########################
             # Final column sorting #
             ########################
-            # Add computed variability to 'apMag' column
-            src_timepivot['apMag'] = src_timepivot['apMag'] + src_timepivot['intrinsic_mag']    
+            # Add computed variability to magnitude_type column
+            src_timepivot[magnitude_type] = src_timepivot[magnitude_type] + src_timepivot['intrinsic_mag']    
             # Pivot the time sequence back, to be vertical
             src_timepivot = src_timepivot.stack(dropna=False)
             # Drop columns we'll no longer use
@@ -361,15 +375,13 @@ class SLRealizer(object):
             src_timepivot.reset_index(inplace=True)
             src_timepivot.sort_values(by=['filter', 'objectId', 'time_index'], inplace=True)
             # Store filter-specific apMag values 
-            apMag_filter[b] = src_timepivot['apMag'].values
+            apMag_filter[b] = src_timepivot[magnitude_type].values
             gc.collect()
 
         # Update apMag in source table, filter by filter
         for b in 'ugriz':
-            src.loc[src['filter']==b, 'apMag'] = apMag_filter[b]
+            src.loc[src['filter']==b, magnitude_type] = apMag_filter[b]
             
-        # Reorder columns
-        src = src[self.sourceCols]
         gc.collect()
         if self.DEBUG:
             print("Result of adding time variability: ")
@@ -377,14 +389,15 @@ class SLRealizer(object):
             print("Number of objects: ", src['objectId'].nunique())
         
         src.set_index('objectId', inplace=True)
-        src.to_csv(output_source_path)
         end = time.time()
         
-        print("Done making the source table with intrinsic quasar time variability with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
-        
-        if self.DEBUG:
-            return src
-        
+        print("Done adding time variability with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
+        if save_output:
+            print("Saving the new source table with time variability at %s" %output_source_path)
+            src.to_csv(output_source_path)
+            
+        return src
+    
 # TODO need to debug past this point.
            
     # after merging, change this one to deblend_test

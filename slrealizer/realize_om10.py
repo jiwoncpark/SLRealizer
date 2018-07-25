@@ -155,7 +155,7 @@ class OM10Realizer(SLRealizer):
         
         return self.as_super.create_source_row(derivedProps=derivedProps, objectId=objectId, obsInfo=obsInfo)
     
-    def make_source_table_vectorized(self, save_file):
+    def make_source_table_vectorized(self, output_source_path, include_time_variability):
         from astropy.table import Table, Column
         import pandas as pd
         import gc # need this to optimize memory usage
@@ -202,6 +202,7 @@ class OM10Realizer(SLRealizer):
         src['beta'] = np.radians(src['PHIE']) # beta parameter in galsim.shear 
         src.rename(columns={'FWHMeff': 'psf_fwhm'}, inplace=True) 
         src.drop(['fiveSigmaDepth', 'REFF_T', 'PHIE'], axis=1, inplace=True)
+        src.rename(columns={'obsHistID': 'ccdVisitId', 'LENSID': 'objectId', 'expMJD': 'MJD',}, inplace=True)
         gc.collect()
         
         ###############################
@@ -232,14 +233,30 @@ class OM10Realizer(SLRealizer):
         # Set fluxes of nonexistent quasar images to zero
         src.loc[src['NIMG'] == 2, ['q_flux_2', 'q_flux_3']] = 0.0
         src.loc[src['NIMG'] == 3, ['q_flux_3']] = 0.0
-            
-        # Get total flux
-        fluxCols = ['q_flux_' + str(q) for q in range(4)] + ['lens_flux']
-        src['apFlux'] = src[fluxCols].sum(axis=1)
         
+        # Get total flux of just quasars
+        q_flux_cols = ['q_flux_' + str(q) for q in range(4)]
+        src['q_apFlux'] = src[q_flux_cols].sum(axis=1)
+        # Convert to magnitude
+        src['q_apMag'] = from_flux_to_mag(src['q_apFlux'], from_unit='nMgy')
+        
+        if include_time_variability:
+            self.source_table = src
+            src = self.add_time_variability(magnitude_type='q_apMag',
+                                            save_output=False, output_source_path=None, input_source_path=None)
+            src.reset_index(inplace=True)
+        
+        # Concert total quasar magnitude back to flux
+        src['q_apFlux'] = from_mag_to_flux(src['q_apMag'], to_unit='nMgy')
+        # Get total flux
+        src['apFlux'] = src[['q_apFlux', 'lens_flux']].sum(axis=1)
+        # Add flux noise
+        src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        # Get total magnitude
+        src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
         # Propagate to get error on magnitude
         src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['apFlux']
-
+        
         # Calculate flux ratios (for moment calculation)
         src['lensFluxRatio'] = src['lens_flux']/src['apFlux']
         for q in range(4):
@@ -252,7 +269,9 @@ class OM10Realizer(SLRealizer):
         for q in range(4):
             src['x'] += src['qFluxRatio_' + str(q)]*src['XIMG_' + str(q)]
             src['y'] += src['qFluxRatio_' + str(q)]*src['YIMG_' + str(q)]
-            
+        src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
+        src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
+        
         # SECOND MOMENTS
         # Initialize with lens contributions
         src['lam1'] = src['sigmaSqLens']/src['minor_to_major']
@@ -273,6 +292,7 @@ class OM10Realizer(SLRealizer):
 
         # Get trace and ellipticities
         src['trace'] = src['Ixx'] + src['Iyy']
+        src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
         if self.DEBUG: src['det'] = src['Ixx']*src['Iyy'] - np.power(src['Ixy'], 2.0)
         src['e1'] = (src['Ixx'] - src['Iyy'])/src['trace']
         src['e2'] = 2.0*src['Ixy']/src['trace']
@@ -283,36 +303,26 @@ class OM10Realizer(SLRealizer):
         for q in range(4):
             src.drop(['MAG_%d'%q] + ['XIMG_%d'%q] + ['YIMG_%d'%q] + ['qFluxRatio_%d'%q], axis=1, inplace=True)
         gc.collect()
-        
-        ################
-        # Adding noise #
-        ################
-        
-        src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
-        src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
-        src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
-        src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
-        src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
-        
-        #####################################################
-        # Final column renaming/reordering & saving to file #
-        #####################################################
-        
-        src.rename(columns={'obsHistID': 'ccdVisitId', 'LENSID': 'objectId', 'expMJD': 'MJD',}, inplace=True)
+
+        ############################################
+        # Final column reordering & saving to file #
+        ############################################
         src = src[self.sourceCols]
-        gc.collect()
-        print("Number of observations: ", src['MJD'].nunique())
-        print("Number of lenses: ", src['objectId'].nunique())
-        
         src.set_index('objectId', inplace=True)
-        src.to_csv(save_file)
+        src.to_csv(output_source_path)
+        gc.collect()
         end = time.time()
+        
+        if self.DEBUG:
+            print("Result of making source table: ")
+            print("Number of observations: ", src['MJD'].nunique())
+            print("Number of lenses: ", src['objectId'].nunique())
 
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
-        
         self.sourceTable = src
         if self.DEBUG:
             return src
-        
+    
+    #def add_time_variability INHERITED
     #def make_source_table INHERITED
     #def compare_truth_vs_emulated INHERITED
