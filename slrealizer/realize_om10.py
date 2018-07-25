@@ -276,6 +276,7 @@ class OM10Realizer(SLRealizer):
         if self.DEBUG: src['det'] = src['Ixx']*src['Iyy'] - np.power(src['Ixy'], 2.0)
         src['e1'] = (src['Ixx'] - src['Iyy'])/src['trace']
         src['e2'] = 2.0*src['Ixy']/src['trace']
+        src['e'], src['phi'] = e1e2_to_ephi(src['e1'], src['e2'])
         
         # Remove remaining unused columns
         src.drop(['lensFluxRatio', 'lens_mag', 'q_mag', 'sigmaSqLens', 'sigmaSqPSF', 'NIMG',], axis=1, inplace=True)

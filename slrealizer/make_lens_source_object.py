@@ -38,7 +38,7 @@ if __name__=='__main__':
 
     realizer.make_source_table_vectorized(save_file=output_lens_source_path)
     
-    realizer.make_object_table(include_std=False,
+    realizer.make_object_table(include_std=True,
                                sourceTablePath=output_lens_source_path,
                                objectTablePath=output_lens_object_path)
     
@@ -46,6 +46,6 @@ if __name__=='__main__':
     # Optionally add time variability
     realizer.add_time_variability(input_source_path=output_lens_source_path,
                                   output_source_path=output_lens_tvar_source_path)
-    realizer.make_object_table(include_std=False,
+    realizer.make_object_table(include_std=True,
                                sourceTablePath=output_lens_tvar_source_path,
                                objectTablePath=output_lens_tvar_object_path)

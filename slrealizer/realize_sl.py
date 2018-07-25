@@ -46,7 +46,7 @@ class SLRealizer(object):
         # Source table df
         self.sourceTable = None
         # Source table column list
-        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2',]
+        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2', 'e', 'phi', ]
         
     def get_obsInfo(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:

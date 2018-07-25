@@ -123,6 +123,7 @@ class SDSSRealizer(SLRealizer):
                             'modelFlux': 'apFlux',
                             'mE1': 'e1',
                             'mE2': 'e2'}, inplace=True)
+        src['e'], src['phi'] = e1e2_to_ephi(src['e1'], src['e2'])
         src.drop(['mRrCc', 'offsetRa', 'offsetDec', 'fiveSigmaDepth'], axis=1, inplace=True)
         gc.collect()
         print("Number of observations: ", src['MJD'].nunique())
