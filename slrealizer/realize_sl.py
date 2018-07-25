@@ -300,72 +300,81 @@ class SLRealizer(object):
         import time
         
         start = time.time()
-        # Query out unneeded observation times
         src = pd.read_csv(input_source_path)
         
-        NUM_TIMES = src['MJD'].nunique()
-        NUM_OBJECTS = src['objectId'].nunique()
         if self.DEBUG:
+            NUM_TIMES = src['MJD'].nunique()
+            NUM_OBJECTS = src['objectId'].nunique()
             print(NUM_TIMES, NUM_OBJECTS)
         
-        #########################
-        # Adding useful columns #
-        #########################
-        
-        # Set MJD relative to zero
-        src['MJD_diff'] = src['MJD'] - np.min(src['MJD'].values)
-        # Map ccdVisitId to integers starting from 0
-        sorted_obs_id = np.sort(src['MJD'].unique())
-        time_map = dict(zip(sorted_obs_id, range(NUM_TIMES)))
-        src['time_index'] = src['MJD'].map(time_map).astype(int)
-        if self.DEBUG:
-            print("0 times: ", src['time_index'].nunique())
-        # Add a column of time elapsed since last observation, d_time
-        src.sort_values(['objectId', 'filter', 'MJD', 'MJD_diff'], axis=0, inplace=True)
-        src['d_time'] = src['MJD_diff'] - src['MJD_diff'].shift(+1)
-        src['d_time'].fillna(0.0, inplace=True)
-        src['d_time'] = np.clip(src['d_time'], a_min=0.0, a_max=None)
-        gc.collect()
-        
-        ##############################
-        # Computing time variability #
-        ##############################
-        
-        # Parameters of the generative model (hand-picked)
-        MU = 0.0
-        TAU = 20.0 #np.power(10.0, 2.4) # days
-        S_INF = 0.14 # mag
-        
-        # Get a portable slice consisting only of necessary arrays
-        src_timevar = src[['objectId', 'time_index', 'd_time', 'apMag', ]].copy()
-        # Add a column to store the variability and initialize to zero
-        src_timevar['intrinsic_mag'] = 0.0
-        # Pivot to get time sequence to be horizontal
-        src_timepivot = src_timevar.pivot_table(index=['objectId'], 
-                                                columns=['time_index'], 
-                                                values=['d_time', 'apMag', 'intrinsic_mag'])
-        # Update 'intrinsic_mag' column
-        for t in range(1, NUM_TIMES):
-            src_timepivot.loc[:]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
-                                                                 scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t].values/TAU)))
-        # Add computed variability to 'apMag' column
-        src_timepivot['apMag'] = src_timepivot['apMag'] + src_timepivot['intrinsic_mag']
-        # Drop columns we'll no longer use
-        src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
-        # Pivot the time sequence back, to be vertical
-        src_timepivot = src_timepivot.stack(dropna=False)
-        # Replace magnitudes
-        src['apMag'] = src_timepivot['apMag'].values
-        gc.collect()
-        
-        #####################################################
-        # Final column renaming/reordering & saving to file #
-        #####################################################
+        # Filter-specific dictionary of apMag values to replace src apMag
+        apMag_filter = {}
+        for b in 'ugriz':
+            #########################
+            # Adding useful columns #
+            #########################
+            # Filter-specific version of src with only the columns we need
+            src_timevar = src.query('filter == @b')[['filter', 'objectId', 'MJD', 'apMag', ]].copy()
+            # Total number of time steps in this filter
+            NUM_TIMES_FILTER = src_timevar['MJD'].nunique()
+            # Set MJD relative to zero
+            src_timevar['MJD_diff'] = src_timevar['MJD'] - np.min(src_timevar['MJD'].values)
+            # Map ccdVisitId to integers starting from 0
+            sorted_obs_id = np.sort(src_timevar['MJD'].unique())
+            time_map = dict(zip(sorted_obs_id, range(NUM_TIMES_FILTER)))
+            src_timevar['time_index'] = src_timevar['MJD'].map(time_map).astype(int)
+            # Add a column of time elapsed since last observation, d_time
+            src_timevar.sort_values(['objectId', 'filter', 'MJD', 'MJD_diff'], axis=0, inplace=True)
+            src_timevar['d_time'] = src_timevar['MJD_diff'] - src_timevar['MJD_diff'].shift(+1)
+            src_timevar['d_time'].fillna(0.0, inplace=True)
+            src_timevar['d_time'] = np.clip(src_timevar['d_time'], a_min=0.0, a_max=None)
+            gc.collect()
+
+            ##############################
+            # Computing time variability #
+            ##############################
+            # Parameters of the generative model (hand-picked)
+            MU = 0.0
+            TAU = 20.0 #np.power(10.0, 2.4) # days
+            S_INF = 0.14 # mag
+            # Add a column to store the variability and initialize to zero
+            src_timevar['intrinsic_mag'] = 0.0
+            # Pivot to get time sequence to be horizontal
+            src_timepivot = src_timevar.pivot_table(index=['filter', 'objectId'], 
+                                                    columns=['time_index',], 
+                                                    values=['d_time', 'apMag', 'intrinsic_mag', ])
+            # Update 'intrinsic_mag' column
+            for t in range(1, NUM_TIMES_FILTER):
+                src_timepivot.loc[b, :]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
+                                                                               scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t].values/TAU)))
+
+            ########################
+            # Final column sorting #
+            ########################
+            # Add computed variability to 'apMag' column
+            src_timepivot['apMag'] = src_timepivot['apMag'] + src_timepivot['intrinsic_mag']    
+            # Pivot the time sequence back, to be vertical
+            src_timepivot = src_timepivot.stack(dropna=False)
+            # Drop columns we'll no longer use
+            src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
+            # As precaution, sort before storing updated apMag
+            src_timepivot.reset_index(inplace=True)
+            src_timepivot.sort_values(by=['filter', 'objectId', 'time_index'], inplace=True)
+            # Store filter-specific apMag values 
+            apMag_filter[b] = src_timepivot['apMag'].values
+            gc.collect()
+
+        # Update apMag in source table, filter by filter
+        for b in 'ugriz':
+            src.loc[src['filter']==b, 'apMag'] = apMag_filter[b]
+            
         # Reorder columns
         src = src[self.sourceCols]
         gc.collect()
-        print("Number of observations: ", src['MJD'].nunique())
-        print("Number of objects: ", src['objectId'].nunique())
+        if self.DEBUG:
+            print("Result of adding time variability: ")
+            print("Number of observations: ", src['MJD'].nunique())
+            print("Number of objects: ", src['objectId'].nunique())
         
         src.set_index('objectId', inplace=True)
         src.to_csv(output_source_path)

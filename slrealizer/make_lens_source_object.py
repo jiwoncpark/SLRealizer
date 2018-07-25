@@ -27,8 +27,8 @@ if __name__=='__main__':
     output_lens_tvar_object_path = os.path.join(data_path, 'lens_tvar_object_table.csv')
 
     db = DB(catalog=catalog_f)
-    db.select_random(maglim=23.3, area=1000.0, IQ=0.75)
-    #db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
+    #db.select_random(maglim=23.3, area=1000.0, IQ=0.75)
+    db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
     db.paint(synthetic=True)
     
     obs = pd.read_csv(observation_f)\
