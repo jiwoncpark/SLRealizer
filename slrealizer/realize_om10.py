@@ -226,30 +226,36 @@ class OM10Realizer(SLRealizer):
         # Convert magnitudes into fluxes
         src['lens_flux'] = from_mag_to_flux(src['lens_mag'], to_unit='nMgy')
         for q in range(4):
-            src['q_flux_' + str(q)] = from_mag_to_flux(src['q_mag'] +\
-                                                       from_flux_to_mag(np.abs(src['MAG_' + str(q)])),\
-                                                       to_unit='nMgy')
+            src['q_mag_' + str(q)] = src['q_mag'] + from_flux_to_mag(np.abs(src['MAG_' + str(q)]))
+            src['q_flux_' + str(q)] = from_mag_to_flux(src['q_mag_' + str(q)], to_unit='nMgy')
 
         # Set fluxes of nonexistent quasar images to zero
         src.loc[src['NIMG'] == 2, ['q_flux_2', 'q_flux_3']] = 0.0
         src.loc[src['NIMG'] == 3, ['q_flux_3']] = 0.0
         
         # Get total flux of just quasars
-        q_flux_cols = ['q_flux_' + str(q) for q in range(4)]
-        src['q_apFlux'] = src[q_flux_cols].sum(axis=1)
+        #q_flux_cols = ['q_flux_' + str(q) for q in range(4)]
+        #src['q_apFlux'] = src[q_flux_cols].sum(axis=1)
         # Convert to magnitude
-        src['q_apMag'] = from_flux_to_mag(src['q_apFlux'], from_unit='nMgy')
+        #src['q_apMag'] = from_flux_to_mag(src['q_apFlux'], from_unit='nMgy')
         
         if include_time_variability:
-            self.source_table = src
-            src = self.add_time_variability(magnitude_type='q_apMag',
-                                            save_output=False, output_source_path=None, input_source_path=None)
-            src.reset_index(inplace=True)
+            for q in range(4):
+                self.source_table = src
+                src = self.add_time_variability(magnitude_type='q_mag_' + str(q),
+                                                save_output=False, output_source_path=None, input_source_path=None)
+                src.reset_index(inplace=True)
         
-        # Concert total quasar magnitude back to flux
-        src['q_apFlux'] = from_mag_to_flux(src['q_apMag'], to_unit='nMgy')
+        # Convert each quasar magnitude back to flux
+        for q in range(4):
+            src['q_flux_' + str(q)] = from_mag_to_flux(src['q_mag_' + str(q)], to_unit='nMgy')
         # Get total flux
-        src['apFlux'] = src[['q_apFlux', 'lens_flux']].sum(axis=1)
+        q_flux_cols = ['q_flux_' + str(q) for q in range(4)]
+        src['apFlux'] = src[q_flux_cols + ['lens_flux']].sum(axis=1)
+        # Concert total quasar magnitude back to flux
+        #src['q_apFlux'] = from_mag_to_flux(src['q_apMag'], to_unit='nMgy')
+        # Get total flux
+        #src['apFlux'] = src[['q_apFlux', 'lens_flux']].sum(axis=1)
         # Add flux noise
         src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
         # Get total magnitude
