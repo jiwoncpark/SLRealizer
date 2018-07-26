@@ -262,6 +262,7 @@ class OM10Realizer(SLRealizer):
         src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
         # Propagate to get error on magnitude
         src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['apFlux']
+        gc.collect()
         
         # Calculate flux ratios (for moment calculation)
         src['lensFluxRatio'] = src['lens_flux']/src['apFlux']

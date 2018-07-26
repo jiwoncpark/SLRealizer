@@ -254,7 +254,9 @@ class SLRealizer(object):
         #if self.DEBUG: print(obj.columns.values)
         
         # Take mean, optional std of properties across observed times for each object
-        obj = obj.reset_index().drop('MJD', axis=1).groupby('objectId', sort=False)
+        obj.reset_index(inplace=True)
+        obj.drop('MJD', axis=1, inplace=True)
+        obj = obj.groupby('objectId', sort=False)
         means = obj.mean()
         if include_std:
             stds = obj.std()
