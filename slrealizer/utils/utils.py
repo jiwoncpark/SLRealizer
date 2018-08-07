@@ -30,11 +30,11 @@ def hlr_to_sigma(hlr):
 def fwhm_to_sigma(fwhm):
     return fwhm/np.sqrt(8.0*np.log(2.0))
 
-def pixel_to_physical(pixelPos, canvasSize, pixel_scale):
-    return (pixelPos - 0.5*canvasSize - 0.5)*pixel_scale
+def pixel_to_physical(pixelPos, canvas_size, pixel_scale):
+    return (pixelPos - 0.5*canvas_size - 0.5)*pixel_scale
 
-def physical_to_pixel(physicalPos, canvasSize, pixel_scale):
-    return physicalPos/pixel_scale + 0.5*canvasSize + 0.5
+def physical_to_pixel(physicalPos, canvas_size, pixel_scale):
+    return physicalPos/pixel_scale + 0.5*canvas_size + 0.5
 
 def scale_mag_as_flux(mag, flux_scale=1.0):
     """

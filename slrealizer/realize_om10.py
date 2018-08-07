@@ -10,13 +10,14 @@ import galsim
 
 class OM10Realizer(SLRealizer):
     
-    def __init__(self, observation, catalog, debug=False):
+    def __init__(self, observation, catalog, debug=False, remove_random=False):
         #super(OM10Realizer, self).__init__(observation) # Didn't work for some reason
         self.as_super = super(OM10Realizer, self)
         self.as_super.__init__(observation)
         self.catalog = catalog
         self.num_systems = len(self.catalog.sample)
         self.DEBUG = debug
+        self.remove_random = remove_random
         
         np.random.seed(self.seed)
         
@@ -65,6 +66,18 @@ class OM10Realizer(SLRealizer):
         return galsimInput
     
     def _om10_to_lsst(self, obsInfo, lensInfo):
+        """Converts OM10 column values into LSST source table format
+        using analytical mooment calculation
+
+        Keyword arguments:
+        obsInfo -- dictionary containing the observation conditions
+        lensInfo -- dictionary containing the lens properties
+        
+        Returns:
+        A dictionary (named derivedProps) containing properties that 
+        can be used to propagate one row of the source table
+        """
+        
         derivedProps = {}
         
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
@@ -137,14 +150,49 @@ class OM10Realizer(SLRealizer):
         return self.as_super.draw_system(galsimInput=galsimInput, obsInfo=obsInfo, save_dir=save_dir)
     
     def estimate_hsm(self, obsInfo, lensInfo):
+        """
+        Performs GalSim's HSM shape estimation on the image
+        rendered with lens properties in lensInfo
+        under the observation conditions in obsInfo
+        
+        Keyword arguments:
+        obsInfo -- dictionary containing the observation conditions
+        lensInfo -- dictionary containing the lens properties 
+        
+        Returns
+        a dictionary containing the shape information 
+        numerically derived by HSM
+        """
         galsim_img = self.draw_system(lensInfo=lensInfo, obsInfo=obsInfo, save_dir=None)
         return self.as_super.estimate_hsm(galsim_img=galsim_img)
     
     def draw_emulated_system(self, obsInfo, lensInfo):
+        """
+        Draws the emulated system, i.e. draws the aggregate system
+        from properties HSM derived from the image, which was in turn
+        drawn from the catalog's truth properties.
+        Only runs when DEBUG == True.
+        
+        Returns
+        a GalSim Image object of the emulated system
+        """
         hsmOutput = self.estimate_hsm(obsInfo, lensInfo)
         return self.as_super.draw_emulated_system(hsmOutput)
     
     def create_source_row(self, obsInfo, lensInfo, use_hsm=False):
+        '''
+        Returns a dictionary of lens system's properties
+        computed the image of one lens system and the observation conditions,
+        which makes up a row of the source table.
+
+        Keyword arguments:
+        image -- a Numpy array of the lens system's image
+        obsInfo -- a row of the observation history df
+        
+        Returns
+        A dictionary with properties derived from HSM estimation
+        (See code for which properties)
+        '''
         objectId = lensInfo['LENSID']
         if use_hsm:
             derivedProps = self.estimate_hsm(obsInfo, lensInfo)
@@ -156,6 +204,17 @@ class OM10Realizer(SLRealizer):
         return self.as_super.create_source_row(derivedProps=derivedProps, objectId=objectId, obsInfo=obsInfo)
     
     def make_source_table_vectorized(self, output_source_path, include_time_variability):
+        """
+        Generates the source table and saves it as a csv file.
+
+        Keyword arguments:
+        output_source_path -- save path for the output source table
+        include_time_variability -- whether to include intrinsic quasar variability
+        
+        Returns (only if self.DEBUG == True):
+        a Pandas dataframe of the source table
+        """
+        
         from astropy.table import Table, Column
         import pandas as pd
         import gc # need this to optimize memory usage
@@ -257,7 +316,8 @@ class OM10Realizer(SLRealizer):
         # Get total flux
         #src['apFlux'] = src[['q_apFlux', 'lens_flux']].sum(axis=1)
         # Add flux noise
-        src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        if not self.remove_random:
+            src['apFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
         # Get total magnitude
         src['apMag'] = from_flux_to_mag(src['apFlux'], from_unit='nMgy')
         # Propagate to get error on magnitude
@@ -276,8 +336,9 @@ class OM10Realizer(SLRealizer):
         for q in range(4):
             src['x'] += src['qFluxRatio_' + str(q)]*src['XIMG_' + str(q)]
             src['y'] += src['qFluxRatio_' + str(q)]*src['YIMG_' + str(q)]
-        src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
-        src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
+        if not self.remove_random:
+            src['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['x'])
+            src['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), src['y']) 
         
         # SECOND MOMENTS
         # Initialize with lens contributions
@@ -299,8 +360,8 @@ class OM10Realizer(SLRealizer):
 
         # Get trace and ellipticities
         src['trace'] = src['Ixx'] + src['Iyy']
-        src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
-        if self.DEBUG: src['det'] = src['Ixx']*src['Iyy'] - np.power(src['Ixy'], 2.0)
+        #src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
+        #if self.DEBUG: src['det'] = src['Ixx']*src['Iyy'] - np.power(src['Ixy'], 2.0)
         src['e1'] = (src['Ixx'] - src['Iyy'])/src['trace']
         src['e2'] = 2.0*src['Ixy']/src['trace']
         src['e'], src['phi'] = e1e2_to_ephi(src['e1'], src['e2'])
@@ -315,15 +376,18 @@ class OM10Realizer(SLRealizer):
         # Final column reordering & saving to file #
         ############################################
         src = src[self.sourceCols]
+        out_num_lenses = src['objectId'].nunique()
+        out_num_times = src['MJD'].nunique()
         src.set_index('objectId', inplace=True)
+        
         src.to_csv(output_source_path)
         gc.collect()
         end = time.time()
         
         if self.DEBUG:
             print("Result of making source table: ")
-            print("Number of observations: ", src['MJD'].nunique())
-            print("Number of lenses: ", src['objectId'].nunique())
+            print("Number of observations: ", out_num_times)
+            print("Number of lenses: ", out_num_lenses)
 
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
         self.sourceTable = src

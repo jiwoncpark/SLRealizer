@@ -24,9 +24,8 @@ class SLRealizer(object):
     """
     Class equipped with utility functions
     for making the LSST-like object and source tables
-    inherited by child classes which are associated with a specific
-    non-LSST catalogs, e.g. child class OM10Realizer converts
-    the OM10 catalog into an LSST catalog
+    inherited by child classes which are associated with a specific non-LSST catalog, 
+    e.g. the child class OM10Realizer converts the OM10 catalog into a mock LSST catalog
     """
 
     def __init__(self, observation):
@@ -102,7 +101,8 @@ class SLRealizer(object):
         under the observation conditions obsInfo
         
         Returns
-        a dictionary (named hsmOutput) of the shape info relevant to drawing the emulated image
+        a dictionary of the lesn properties, 
+        which can be used to draw the emulated image
         """
         hsmOutput = {}
                 
@@ -152,9 +152,8 @@ class SLRealizer(object):
         which makes up a row of the source table.
 
         Keyword arguments:
-        image -- a Numpy array of the lens system's image
+        derivedProps -- derived lens properties 
         obsInfo -- a row of the observation history df
-        manual_error -- if True, adds some predefined noise (default: True)
         
         Returns
         A dictionary with properties derived from HSM estimation
@@ -163,7 +162,7 @@ class SLRealizer(object):
         histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
         
         derivedProps['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
-        if not self.DEBUG:
+        if not self.remove_random:
             derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
             derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
             derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
