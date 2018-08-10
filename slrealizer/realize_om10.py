@@ -347,17 +347,20 @@ class OM10Realizer(SLRealizer):
         src['lens_Ixx'] = src['lam1']*np.power(np.cos(src['beta']), 2.0) + src['lam2']*np.power(np.sin(src['beta']), 2.0)
         src['lens_Iyy'] = src['lam1']*np.power(np.sin(src['beta']), 2.0) + src['lam2']*np.power(np.cos(src['beta']), 2.0)
         src['lens_Ixy'] = (src['lam1'] - src['lam2'])*np.cos(src['beta'])*np.sin(src['beta'])
-        src['Ixx'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['lens_Ixx'] + np.power(src['x'], 2.0)) 
-        src['Iyy'] = src['lensFluxRatio']*(src['sigmaSqPSF'] + src['lens_Iyy'] + np.power(src['y'], 2.0))
+        src['Ixx'] = src['lensFluxRatio']*(src['lens_Ixx'] + np.power(src['x'], 2.0)) 
+        src['Iyy'] = src['lensFluxRatio']*(src['lens_Iyy'] + np.power(src['y'], 2.0))
         src['Ixy'] = src['lensFluxRatio']*(src['lens_Ixy'] - src['x']*src['y'])
         src.drop(['lam1', 'lam2', 'lens_Ixx', 'lens_Iyy', 'lens_Ixy'], axis=1, inplace=True)
         # Add quasar contributions
         for q in range(4):
-            src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0) + src['sigmaSqPSF'])
-            src['Iyy'] += src['qFluxRatio_' + str(q)]*(np.power(src['YIMG_' + str(q)] - src['y'], 2.0) + src['sigmaSqPSF'])
+            src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0))
+            src['Iyy'] += src['qFluxRatio_' + str(q)]*(np.power(src['YIMG_' + str(q)] - src['y'], 2.0))
             src['Ixy'] += src['qFluxRatio_' + str(q)]*(src['XIMG_' + str(q)] - src['x'])\
                                                      *(src['YIMG_' + str(q)] - src['y'])
-
+        # Add PSF
+        src['Ixx'] += src['sigmaSqPSF']
+        src['Iyy'] += src['sigmaSqPSF']
+                
         # Get trace and ellipticities
         src['trace'] = src['Ixx'] + src['Iyy']
         #src['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), src['trace'])
