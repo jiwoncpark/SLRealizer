@@ -11,6 +11,14 @@ import galsim
 
 class SDSSRealizer(SLRealizer):
     
+    """
+    
+    A class that realizes objects in the SDSS DR catalog
+    under the given observation conditions, 
+    into LSST DRP Source and Object catalogs
+    
+    """
+    
     def __init__(self, observation, catalog, debug=False, add_moment_noise=True, add_flux_noise=True):
         #super(SDSSRealizer, self).__init__(observation) # Didn't work for some reason
         self.as_super = super(SDSSRealizer, self)

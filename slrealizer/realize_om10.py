@@ -12,7 +12,15 @@ import gc # need this to optimize memory usage
 
 class OM10Realizer(SLRealizer):
     
-    def __init__(self, observation, catalog, debug=False):
+    """
+    
+    A class that realizes objects in the OM10 mock quasar catalog
+    under the given observation conditions, 
+    into LSST DRP Source and Object catalogs
+    
+    """
+    
+    def __init__(self, observation, catalog, debug=False, add_moment_noise=True, add_flux_noise=True):
         #super(OM10Realizer, self).__init__(observation) # Didn't work for some reason
         self.as_super = super(OM10Realizer, self)
         self.as_super.__init__(observation, add_moment_noise=add_moment_noise, add_flux_noise=add_flux_noise)

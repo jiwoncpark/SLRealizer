@@ -22,10 +22,12 @@ from astropy.utils.console import ProgressBar
 class SLRealizer(object):
 
     """
+    
     Class equipped with utility functions
     for making the LSST-like object and source tables
     inherited by child classes which are associated with a specific non-LSST catalog, 
     e.g. the child class OM10Realizer converts the OM10 catalog into a mock LSST catalog
+    
     """
 
     def __init__(self, observation, add_moment_noise, add_flux_noise):
@@ -225,21 +227,21 @@ class SLRealizer(object):
         if self.DEBUG:
             return df
 
-    def make_object_table(self, objectTablePath, sourceTablePath=None, include_std=False):
+    def make_object_table(self, object_table_path, source_table_path=None, include_std=False):
 
         """
-        Generates the object table from the given source table at sourceTablePath
-        by averaging the properties for each filter, and saves it as objectTablePath.
+        Generates the object table from the given source table at source_table_path
+        by averaging the properties for each filter, and saves it as object_table_path.
         """
         import time
         import gc
         
-        if objectTablePath is None:
+        if object_table_path is None:
             raise ValueError("Must provide save path of the output object table.")
         
-        if sourceTablePath is not None:
-            print("Reading in the source table at %s ..." %sourceTablePath)
-            obj = pd.read_csv(sourceTablePath)
+        if source_table_path is not None:
+            print("Reading in the source table at %s ..." %source_table_path)
+            obj = pd.read_csv(source_table_path)
             obj.set_index('objectId', inplace=True)
         elif self.sourceTable is not None:            
             print("Reading in Pandas Dataframe of most recent source table generated... ")
@@ -282,7 +284,7 @@ class SLRealizer(object):
         end = time.time()
         
         # Save as csv file
-        obj.to_csv(objectTablePath, index=False)
+        obj.to_csv(object_table_path, index=False)
         print("Done making the object table in %0.2f seconds." %(end-start))
         if self.DEBUG:
             print("Object table columns: ", obj.columns)

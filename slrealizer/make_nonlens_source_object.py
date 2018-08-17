@@ -8,6 +8,10 @@ from realize_sdss import SDSSRealizer
 from utils.utils import *
 
 if __name__=='__main__':
+    """
+    An annotated version of this script can be found in
+    demo/Example+SLRealizer+Usage.ipynb.
+    """
     data_path = os.path.join(os.environ['SLREALIZERDIR'], 'data')
     catalog_f = os.path.join(data_path, 'sdss_processed.csv')
     observation_f = os.path.join(data_path, 'twinkles_observation_history.csv')
@@ -25,7 +29,7 @@ if __name__=='__main__':
 
     realizer.make_source_table_vectorized(save_path=output_nonlens_source_path)
     realizer.make_object_table(include_std=True,
-                               sourceTablePath=output_nonlens_source_path,
-                               objectTablePath=output_nonlens_object_path)
+                               source_table_path=output_nonlens_source_path,
+                               object_table_path=output_nonlens_object_path)
 
     
