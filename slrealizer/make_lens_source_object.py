@@ -25,14 +25,14 @@ if __name__=='__main__':
     output_lens_object_path = os.path.join(data_path, 'lens_object_table.csv')
 
     db = DB(catalog=catalog_f)
-    #db.select_random(maglim=23.3, area=1000.0, IQ=0.75)
-    db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
+    db.select_random(maglim=23.3, area=100.0, IQ=0.75)
+    #db.select_random(maglim=23.3, area=1.e8, IQ=0.75)
     db.paint(synthetic=True)
     
     obs = pd.read_csv(observation_f)\
             .query("(expMJD < 65000) & (filter != 'y')")\
             .reset_index(drop=True)
-    realizer = OM10Realizer(observation=obs, catalog=db, debug=False)
+    realizer = OM10Realizer(observation=obs, catalog=db, debug=False, add_moment_noise=True, add_flux_noise=True)
 
     realizer.make_source_table_vectorized(output_source_path=output_lens_source_path,
                                           include_time_variability=True)

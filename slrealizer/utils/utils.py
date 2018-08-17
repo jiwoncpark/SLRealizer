@@ -42,21 +42,21 @@ def scale_mag_as_flux(mag, flux_scale=1.0):
     """
     return mag - 2.5*np.log10(flux_scale)
 
-def from_flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
+def flux_to_mag(flux, zeropoint_mag=0.0, from_unit=None, to_unit=None):
     if from_unit=='nMgy':
         zeropoint_mag=22.5
     return zeropoint_mag-2.5*np.log10(flux)
 
-def from_mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
+def mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
     if to_unit=='nMgy':
         zeropoint_mag=22.5
     return np.power(10.0, -0.4*(mag - zeropoint_mag))
 
-def add_noise(mean, stdev, measurement=1.0):
+def add_noise(mean, stdev, shape=None, measurement=1.0):
     """
-    Given a mean and a standard deviation of a measurement, add a noise to the data
+    Given a mean and a standard deviation of a measurement, adds noise to the data
     """
-    return measurement*np.random.normal(loc=mean, scale=stdev)
+    return measurement*np.random.normal(loc=mean, scale=stdev, size=shape)
 
 '''
 def return_coordinate(first_moment_x, first_moment_y):

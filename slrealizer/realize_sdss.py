@@ -11,16 +11,16 @@ import galsim
 
 class SDSSRealizer(SLRealizer):
     
-    def __init__(self, observation, catalog, debug=False):
+    def __init__(self, observation, catalog, debug=False, add_moment_noise=True, add_flux_noise=True):
         #super(SDSSRealizer, self).__init__(observation) # Didn't work for some reason
         self.as_super = super(SDSSRealizer, self)
-        self.as_super.__init__(observation)
+        self.as_super.__init__(observation, add_moment_noise=add_moment_noise, add_flux_noise=add_flux_noise)
         self.catalog = catalog
         self.num_systems = len(self.catalog)
         self.DEBUG = debug
         self.sdss_pixel_scale = 0.396 #arcsec/pixel
         
-    def get_lensInfo(self, objID=None, rownum=None):
+    def get_lens_info(self, objID=None, rownum=None):
         if objID is not None and rownum is not None:
             raise ValueError("Need to define either objID or rownum, not both.")
         
@@ -29,39 +29,39 @@ class SDSSRealizer(SLRealizer):
         elif rownum is not None:
             return self.catalog.loc[rownum]
     
-    def _sdss_to_galsim(self, lensInfo, band):
+    def _sdss_to_galsim(self, lens_info, band):
         raise NotImplementedError
     
-    def _sdss_to_lsst(self, obsInfo, lensInfo):
+    def _sdss_to_lsst(self, obs_info, lens_info):
         raise NotImplementedError
     
-    def draw_system(self, obsInfo, lensInfo, save_dir=None):
+    def draw_system(self, obs_info, lens_info, save_dir=None):
         raise NotImplementedError
         
-    def estimate_hsm(self, obsInfo, lensInfo):
+    def estimate_hsm(self, obs_info, lens_info):
         raise NotImplementedError
     
-    def draw_emulated_system(self, obsInfo, lensInfo):
+    def draw_emulated_system(self, obs_info, lens_info):
         raise NotImplementedError
     
-    def create_source_row(self, obsInfo, lensInfo, use_hsm=False):
+    def create_source_row(self, obs_info, lens_info, use_hsm=False):
         
-        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        histID, MJD, band, PSF_FWHM, sky_mag = obs_info
         row = {}
         
         row['filter'] = band
         row['ccdVisitId'] = histID
         row['MJD'] = MJD
         row['psf_fwhm'] = PSF_FWHM
-        row['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0
+        row['apFluxErr'] = mag_to_flux(sky_mag-22.5)/5.0
         
-        row['objectId'] = lensInfo['objectId']
-        row['apFlux'] = lensInfo['modelFlux_' + band]
-        row['x'] = np.cos(np.deg2rad(lensInfo['offsetDec_' + band]*3600.0)) * lensInfo['offsetRa_' + band]
-        row['y'] = lensInfo['offsetDec_' + band]
-        row['trace'] = lensInfo['mRrCc_' + band]*(self.sdss_pixel_scale)**2.0 + 2.0*fwhm_to_sigma(PSF_FWHM)**2.0
-        row['e1'] = lensInfo['mE1_' + band]
-        row['e2'] = lensInfo['mE2_' + band]
+        row['objectId'] = lens_info['objectId']
+        row['apFlux'] = lens_info['modelFlux_' + band]
+        row['x'] = np.cos(np.deg2rad(lens_info['offsetDec_' + band]*3600.0)) * lens_info['offsetRa_' + band]
+        row['y'] = lens_info['offsetDec_' + band]
+        row['trace'] = lens_info['mRrCc_' + band]*(self.sdss_pixel_scale)**2.0 + 2.0*fwhm_to_sigma(PSF_FWHM)**2.0
+        row['e1'] = lens_info['mE1_' + band]
+        row['e2'] = lens_info['mE2_' + band]
         
         return row
     
@@ -103,15 +103,31 @@ class SDSSRealizer(SLRealizer):
             src.drop([p + '_' + b for b in 'ugriz'], axis=1, inplace=True)
         gc.collect()
         
-        ###################
-        # Unit conversion #
-        ###################
-        src['apFluxErr'] = from_mag_to_flux(src['fiveSigmaDepth'] - 22.5)/5.0
-        src['modelFlux'] += add_noise(0.0, src['apFluxErr']) # flux rms not skyEr
+        ################
+        # Adding noise #
+        ################
+        src['apFluxErr'] = mag_to_flux(src['fiveSigmaDepth'] - 22.5)/5.0
+        if self.add_flux_noise:
+            src['modelFlux'] += add_noise(mean=0.0, 
+                                          stdev=src['apFluxErr'],
+                                          shape=src['apFluxErr'].shape) # flux rms not skyEr
         src['x'] = np.cos(np.deg2rad(src['offsetDec']*3600.0))*src['offsetRa']
         src['y'] = src['offsetDec']
         src['trace'] = src['mRrCc']*(self.sdss_pixel_scale**2.0) + 2.0*np.power(fwhm_to_sigma(src['FWHMeff']), 2.0)
-        src['apMag'] = from_flux_to_mag(src['modelFlux'], from_unit='nMgy')
+        if self.add_moment_noise:
+            src['x'] += add_noise(mean=get_first_moment_err(), 
+                                  stdev=get_first_moment_err_std(), 
+                                  shape=src['x'].shape,
+                                  measurement=src['x'])
+            src['y'] += add_noise(mean=get_first_moment_err(), 
+                                  stdev=get_first_moment_err_std(), 
+                                  shape=src['y'].shape,
+                                  measurement=src['y'])
+            src['trace'] += add_noise(mean=get_second_moment_err(), 
+                                     stdev=get_second_moment_err_std(), 
+                                     shape=src['trace'].shape,
+                                     measurement=src['trace'])
+        src['apMag'] = flux_to_mag(src['modelFlux'], from_unit='nMgy')
         src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['modelFlux']
         
         #####################################################
@@ -123,13 +139,13 @@ class SDSSRealizer(SLRealizer):
                             'modelFlux': 'apFlux',
                             'mE1': 'e1',
                             'mE2': 'e2'}, inplace=True)
-        src['e'], src['phi'] = e1e2_to_ephi(src['e1'], src['e2'])
+        src['e_final'], src['phi_final'] = e1e2_to_ephi(src['e1'], src['e2'])
         src.drop(['mRrCc', 'offsetRa', 'offsetDec', 'fiveSigmaDepth'], axis=1, inplace=True)
         gc.collect()
         print("Number of observations: ", src['MJD'].nunique())
         print("Number of nonlenses: ", src['objectId'].nunique())
         
-        src = src[self.sourceCols]
+        src = src[self.source_columns]
         src.set_index('objectId', inplace=True)
         src.to_csv(save_path)
         end = time.time()

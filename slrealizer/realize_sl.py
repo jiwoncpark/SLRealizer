@@ -28,14 +28,13 @@ class SLRealizer(object):
     e.g. the child class OM10Realizer converts the OM10 catalog into a mock LSST catalog
     """
 
-    def __init__(self, observation):
+    def __init__(self, observation, add_moment_noise, add_flux_noise):
         """
         Reads in a lens sample catalog and observation data.
         We assume lenses are OM10 lenses and observation file is a pandas df
         """
         self.observation = observation
         self.num_obs = len(self.observation)
-        self.seed = 123
         
         # GalSim drawImage params
         self.fft_params = galsim.GSParams(maximum_fft_size=10240)
@@ -45,9 +44,19 @@ class SLRealizer(object):
         # Source table df
         self.source_table = None
         # Source table column list
-        self.sourceCols = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2', 'e', 'phi', ]
+        self.source_columns = ['MJD', 'ccdVisitId', 'objectId', 'filter', 'psf_fwhm', 'x', 'y', 'apFlux', 'apFluxErr', 'apMag', 'apMagErr', 'trace', 'e1', 'e2', 'e_final', 'phi_final', ]
         
-    def get_obsInfo(self, obsID=None, rownum=None):
+        # Controlling randomness
+        self.add_moment_noise = add_moment_noise
+        self.add_flux_noise = add_flux_noise
+        if not self.add_flux_noise and not self.add_moment_noise:
+            self.remove_random = True
+        else:
+            self.remove_random = False
+        self.seed = 123
+        np.random.seed(self.seed)
+        
+    def get_obs_info(self, obsID=None, rownum=None):
         if obsID is not None and rownum is not None:
             raise ValueError("Need to define either obsID or rownum, not both.")
         
@@ -56,25 +65,25 @@ class SLRealizer(object):
         elif rownum is not None:
             return self.observation.loc[rownum]
     
-    def _get_lensInfo(self, lensID):
+    def _get_lens_info(self, lensID):
         # This function will depend on the format of each lens catalog
         raise NotImplementedError
         
-    def draw_system(self, galsimInput, obsInfo, save_dir=None):
+    def draw_system(self, galsimInput, obs_info, save_dir=None):
         '''
         Draws all objects of the given lens system
         in the given observation conditions using GalSim
 
         Keyword arguments:
-        lensInfo -- a row of the OM10 DB
-        obsInfo -- a row of the observation history df
+        lens_info -- a row of the OM10 DB
+        obs_info -- a row of the observation history df
         save_dir -- directory in which to save the image
 
         Returns:
         A GalSim object of the aggregate system used to render
         the image
         '''
-        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        histID, MJD, band, PSF_FWHM, sky_mag = obs_info
 
         # Lens galaxy
         galaxy = galsim.Gaussian(half_light_radius=galsimInput['half_light_radius'],\
@@ -98,7 +107,7 @@ class SLRealizer(object):
     def estimate_hsm(self, galsim_img):
         """
         Performs GalSim's HSM shape estimation on the galsim_img 
-        under the observation conditions obsInfo
+        under the observation conditions obs_info
         
         Returns
         a dictionary of the lesn properties, 
@@ -145,7 +154,7 @@ class SLRealizer(object):
         emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')
         return emulatedImg
     
-    def create_source_row(self, derivedProps, objectId, obsInfo):
+    def create_source_row(self, derivedProps, objectId, obs_info):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
@@ -153,13 +162,13 @@ class SLRealizer(object):
 
         Keyword arguments:
         derivedProps -- derived lens properties 
-        obsInfo -- a row of the observation history df
+        obs_info -- a row of the observation history df
         
         Returns
         A dictionary with properties derived from HSM estimation
         (See code for which properties)
         '''
-        histID, MJD, band, PSF_FWHM, sky_mag = obsInfo
+        histID, MJD, band, PSF_FWHM, sky_mag = obs_info
         
         derivedProps['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
         if not self.remove_random:
@@ -184,7 +193,7 @@ class SLRealizer(object):
         start = time.time()
         print("Began making the source catalog.")
         
-        df = pd.DataFrame(columns=self.sourceCols)
+        df = pd.DataFrame(columns=self.source_columns)
         #ellipticity_upper_limit = desc.slrealizer.get_ellipticity_cut()
         print("Number of systems: %d, number of observations: %d" %(self.num_systems, self.num_obs))
         
@@ -192,14 +201,14 @@ class SLRealizer(object):
         with ProgressBar(self.num_obs) as bar:
             for j in xrange(self.num_obs):
                 for i in xrange(self.num_systems):
-                    row = self.create_source_row(lensInfo=self.get_lensInfo(rownum=i),
-                                                 obsInfo=self.observation.loc[j],
+                    row = self.create_source_row(lens_info=self.get_lens_info(rownum=i),
+                                                 obs_info=self.observation.loc[j],
                                                  use_hsm=use_hsm)
                     if row == None:
                         hsm_failed += 1
                     else:
                         # FIXIT try not to use list comprehension...
-                        vals_arr = np.array([row[c] for c in self.sourceCols])
+                        vals_arr = np.array([row[c] for c in self.source_columns])
                         df.loc[len(df)] = vals_arr
                 bar.update()
         df.set_index('objectId', inplace=True)
@@ -280,23 +289,17 @@ class SLRealizer(object):
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
     
-    #def make_training_data(self, source_path, data_path, ):   
-    
-    def add_time_variability(self, magnitude_type='q_apMag', save_output=True, output_source_path=None, input_source_path=None):
+    def include_quasar_variability(self, save_output=False, input_source_path=None, output_source_path=None):
         """
-        Takes a source table and adds the intrinsic time
-        variability of quasar fluxes to the magnitude_type column
+        Takes a source table and adds the intrinsic variability of the quasar images
         using the generative model introduced in MacLeod et al (2010)
-        up to an optional cutoff in the observation date
         
         Keyword arguments:
-        input_source_path -- path of input source table to be altered
-        output_source_path -- path of output source table containing time variability
-        
-        Returns:
-        a new source table reflecting the magnitude_type update
-        and the observation date downsampling if any
+        save_output -- whether to save the output to disk [default: False]
+        input_source_path -- path of input source table to be altered [default: None]
+        output_source_path -- path of output source table containing time variability [default: None]
         """
+        
         import gc
         import time
         
@@ -313,75 +316,74 @@ class SLRealizer(object):
                 src = pd.read_csv(input_source_path)
             except ValueError:
                 print("Please input a valid path to the source table.")
-        
-        if magnitude_type not in src.columns:
-            raise ValueError("Column for adding time variability doesn't exist.")
             
         if self.DEBUG:
             NUM_TIMES = src['MJD'].nunique()
             NUM_OBJECTS = src['objectId'].nunique()
             print(NUM_TIMES, NUM_OBJECTS)
         
-        # Filter-specific dictionary of apMag values to replace src apMag
-        apMag_filter = {}
-        for b in 'ugriz':
-            #########################
-            # Adding useful columns #
-            #########################
-            # Filter-specific version of src with only the columns we need
-            src_timevar = src.query('filter == @b')[['filter', 'objectId', 'MJD', magnitude_type, ]].copy()
-            # Total number of time steps in this filter
-            NUM_TIMES_FILTER = src_timevar['MJD'].nunique()
-            # Set MJD relative to zero
-            src_timevar['MJD_diff'] = src_timevar['MJD'] - np.min(src_timevar['MJD'].values)
-            # Map ccdVisitId to integers starting from 0
-            sorted_obs_id = np.sort(src_timevar['MJD'].unique())
-            time_map = dict(zip(sorted_obs_id, range(NUM_TIMES_FILTER)))
-            src_timevar['time_index'] = src_timevar['MJD'].map(time_map).astype(int)
-            # Add a column of time elapsed since last observation, d_time
-            src_timevar.sort_values(['objectId', 'filter', 'MJD', 'MJD_diff'], axis=0, inplace=True)
-            src_timevar['d_time'] = src_timevar['MJD_diff'] - src_timevar['MJD_diff'].shift(+1)
-            src_timevar['d_time'].fillna(0.0, inplace=True)
-            src_timevar['d_time'] = np.clip(src_timevar['d_time'], a_min=0.0, a_max=None)
-            gc.collect()
+        for q in range(4):
+            magnitude_type = 'q_mag_' + str(q)
+            # Filter-specific dictionary of apMag values to replace src apMag
+            apMag_filter = {}
+            for b in 'ugriz':
+                #########################
+                # Adding useful columns #
+                #########################
+                # Filter-specific version of src with only the columns we need
+                src_timevar = src.query('filter == @b')[['filter', 'objectId', 'MJD', magnitude_type, ]].copy()
+                # Total number of time steps in this filter
+                NUM_TIMES_FILTER = src_timevar['MJD'].nunique()
+                # Set MJD relative to zero
+                src_timevar['MJD_diff'] = src_timevar['MJD'] - np.min(src_timevar['MJD'].values)
+                # Map ccdVisitId to integers starting from 0
+                sorted_obs_id = np.sort(src_timevar['MJD'].unique())
+                time_map = dict(zip(sorted_obs_id, range(NUM_TIMES_FILTER)))
+                src_timevar['time_index'] = src_timevar['MJD'].map(time_map).astype(int)
+                # Add a column of time elapsed since last observation, d_time
+                src_timevar.sort_values(['objectId', 'filter', 'MJD', 'MJD_diff'], axis=0, inplace=True)
+                src_timevar['d_time'] = src_timevar['MJD_diff'] - src_timevar['MJD_diff'].shift(+1)
+                src_timevar['d_time'].fillna(0.0, inplace=True)
+                src_timevar['d_time'] = np.clip(src_timevar['d_time'], a_min=0.0, a_max=None)
+                gc.collect()
 
-            ##############################
-            # Computing time variability #
-            ##############################
-            # Parameters of the generative model (hand-picked)
-            MU = 0.0
-            TAU = 20.0 #np.power(10.0, 2.4) # days
-            S_INF = 0.14 # mag
-            # Add a column to store the variability and initialize to zero
-            src_timevar['intrinsic_mag'] = 0.0
-            # Pivot to get time sequence to be horizontal
-            src_timepivot = src_timevar.pivot_table(index=['filter', 'objectId'], 
-                                                    columns=['time_index',], 
-                                                    values=['d_time', magnitude_type, 'intrinsic_mag', ])
-            # Update 'intrinsic_mag' column
-            for t in range(1, NUM_TIMES_FILTER):
-                src_timepivot.loc[b, :]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
-                                                                               scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t].values/TAU)))
+                ##############################
+                # Computing time variability #
+                ##############################
+                # Parameters of the generative model (hand-picked)
+                MU = 0.0
+                TAU = 20.0 #np.power(10.0, 2.4) # days
+                S_INF = 0.14 # mag
+                # Add a column to store the variability and initialize to zero
+                src_timevar['intrinsic_mag'] = 0.0
+                # Pivot to get time sequence to be horizontal
+                src_timepivot = src_timevar.pivot_table(index=['filter', 'objectId'], 
+                                                        columns=['time_index',], 
+                                                        values=['d_time', magnitude_type, 'intrinsic_mag', ])
+                # Update 'intrinsic_mag' column
+                for t in range(1, NUM_TIMES_FILTER):
+                    src_timepivot.loc[b, :]['intrinsic_mag'][t] = np.random.normal(loc=src_timepivot['intrinsic_mag'][t - 1].values*np.exp(-src_timepivot['d_time'][t].values/TAU) + MU*(1.0 - np.exp(-src_timepivot['d_time'][t].values/TAU)),
+                                                                                   scale=0.5*S_INF**2.0*(1.0 - np.exp(-2.0*src_timepivot['d_time'][t].values/TAU)))
 
-            ########################
-            # Final column sorting #
-            ########################
-            # Add computed variability to magnitude_type column
-            src_timepivot[magnitude_type] = src_timepivot[magnitude_type] + src_timepivot['intrinsic_mag']    
-            # Pivot the time sequence back, to be vertical
-            src_timepivot = src_timepivot.stack(dropna=False)
-            # Drop columns we'll no longer use
-            src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
-            # As precaution, sort before storing updated apMag
-            src_timepivot.reset_index(inplace=True)
-            src_timepivot.sort_values(by=['filter', 'objectId', 'time_index'], inplace=True)
-            # Store filter-specific apMag values 
-            apMag_filter[b] = src_timepivot[magnitude_type].values
-            gc.collect()
+                ########################
+                # Final column sorting #
+                ########################
+                # Add computed variability to magnitude_type column
+                src_timepivot[magnitude_type] = src_timepivot[magnitude_type] + src_timepivot['intrinsic_mag']    
+                # Pivot the time sequence back, to be vertical
+                src_timepivot = src_timepivot.stack(dropna=False)
+                # Drop columns we'll no longer use
+                src_timepivot.drop(['intrinsic_mag', 'd_time'], axis=1, inplace=True)
+                # As precaution, sort before storing updated apMag
+                src_timepivot.reset_index(inplace=True)
+                src_timepivot.sort_values(by=['filter', 'objectId', 'time_index'], inplace=True)
+                # Store filter-specific apMag values 
+                apMag_filter[b] = src_timepivot[magnitude_type].values
+                gc.collect()
 
-        # Update apMag in source table, filter by filter
-        for b in 'ugriz':
-            src.loc[src['filter']==b, magnitude_type] = apMag_filter[b]
+            # Update apMag in source table, filter by filter
+            for b in 'ugriz':
+                src.loc[src['filter']==b, magnitude_type] = apMag_filter[b]
             
         gc.collect()
         if self.DEBUG:
@@ -397,41 +399,81 @@ class SLRealizer(object):
             print("Saving the new source table with time variability at %s" %output_source_path)
             src.to_csv(output_source_path)
             
-        return src
+        self.source_table = src
     
-# TODO need to debug past this point.
-           
-    # after merging, change this one to deblend_test
-    def deblend(self, lensID=None, null_deblend=True):
+    def _include_moments(self):
         """
-        Given a lens system, this method deblends the source and plots the process of deblending.
-
-        Parameters
-        ---------
-        lensID : int
-        OM10 lens ID which can be used to identify the lensed system
-        
-        null_deblend : bool
-        If true, assumes null deblender. Working deblender is currently not being supported
+        Adds columns of first and second moments (analytically computed)
+        to self.source_table
         """
-
-        if null_deblend is False:
-            print('Sorry, working deblender is not being supported.')
-            return
         
-        # Keep randomly selecting epochs until we get one that is not in the 'y' filter:
-        filter = 'y'
-        while filter == 'y':
-            randomIndex = random.randint(0, 200)
-            filter = self.observation[randomIndex][1]
-        image2 = desc.slrealizer.plot_all_objects(self.observation[randomIndex], self.catalog.get_lens(lensID))
-        print('##################### PLOTTING ALL SOURCES ##################################')
-        desc.slrealizer.show_color_map(image2)
-        flux, first_moment_x, first_moment_y, covariance_matrix = desc.slrealizer.null_deblend(image2)
-        print('first:', flux, first_moment_x, first_moment_y, covariance_matrix)
-        image = desc.slrealizer.null_deblend_plot(flux, first_moment_x, first_moment_y, covariance_matrix)
-        print('##################### AFTER NULL DEBLENDING ##################################')
-        desc.slrealizer.show_color_map(image)
+        src = self.source_table
+        
+        # Calculate flux ratios (for weighted moments)
+        src['lensFluxRatio'] = src['lens_flux']/src['apFlux']
+        for q in range(4):
+            src['qFluxRatio_' + str(q)] = src['q_flux_' + str(q)]/src['apFlux']
+        src.drop(['lens_flux'] + ['q_flux_' + str(q) for q in range(4)], axis=1, inplace=True)
+        
+        #################
+        # FIRST MOMENTS #
+        #################
+        src['x'], src['y'] = 0.0, 0.0
+        for q in range(4):
+            src['x'] += src['qFluxRatio_' + str(q)]*src['XIMG_' + str(q)]
+            src['y'] += src['qFluxRatio_' + str(q)]*src['YIMG_' + str(q)]
+        if self.add_moment_noise:
+            src['x'] += add_noise(mean=get_first_moment_err(), 
+                                  stdev=get_first_moment_err_std(), 
+                                  shape=src['x'].shape,
+                                  measurement=src['x'])
+            src['y'] += add_noise(mean=get_first_moment_err(), 
+                                  stdev=get_first_moment_err_std(), 
+                                  shape=src['y'].shape,
+                                  measurement=src['y'])
+        ##################
+        # SECOND MOMENTS #
+        ##################
+        # Read in lens shape parameters
+        src['minor_to_major'] = np.power((1.0 - src['e'])/(1.0 + src['e']), 0.5) # q parameter in galsim.shear
+        src['beta'] = np.radians(src['beta']) # beta parameter in galsim.shear 
+         # Arbitrarily set REFF_T to 1.0
+        #src['sigmasq_lens'] = np.power(hlr_to_sigma(src['REFF_T']), 2.0)
+        src['sigmasq_lens'] = np.power(hlr_to_sigma(1.0), 2.0)
+        
+        # Initialize with lens contributions
+        src['lam1'] = src['sigmasq_lens']/src['minor_to_major']
+        src['lam2'] = src['sigmasq_lens']*src['minor_to_major']
+        src['lens_Ixx'] = src['lam1']*np.power(np.cos(src['beta']), 2.0) + src['lam2']*np.power(np.sin(src['beta']), 2.0)
+        src['lens_Iyy'] = src['lam1']*np.power(np.sin(src['beta']), 2.0) + src['lam2']*np.power(np.cos(src['beta']), 2.0)
+        src['lens_Ixy'] = (src['lam1'] - src['lam2'])*np.cos(src['beta'])*np.sin(src['beta'])
+        src['Ixx'] = src['lensFluxRatio']*(src['lens_Ixx'] + np.power(src['x'], 2.0)) 
+        src['Iyy'] = src['lensFluxRatio']*(src['lens_Iyy'] + np.power(src['y'], 2.0))
+        src['Ixy'] = src['lensFluxRatio']*(src['lens_Ixy'] - src['x']*src['y'])
+        src.drop(['lam1', 'lam2', 'lens_Ixx', 'lens_Iyy', 'lens_Ixy'], axis=1, inplace=True)
+        # Add quasar contributions
+        for q in range(4):
+            src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0))
+            src['Iyy'] += src['qFluxRatio_' + str(q)]*(np.power(src['YIMG_' + str(q)] - src['y'], 2.0))
+            src['Ixy'] += src['qFluxRatio_' + str(q)]*(src['XIMG_' + str(q)] - src['x'])\
+                                                     *(src['YIMG_' + str(q)] - src['y'])
+        # Add PSF
+        src['sigmasq_psf'] = np.power(fwhm_to_sigma(src['psf_fwhm']), 2.0)
+        src['Ixx'] += src['sigmasq_psf']
+        src['Iyy'] += src['sigmasq_psf']
+                
+        # Get trace and ellipticities
+        src['trace'] = src['Ixx'] + src['Iyy']
+        if self.add_moment_noise:
+            src['trace'] += add_noise(mean=get_second_moment_err(), 
+                                      stdev=get_second_moment_err_std(), 
+                                      shape=src['trace'].shape,
+                                      measurement=src['trace'])
+        src['e1'] = (src['Ixx'] - src['Iyy'])/src['trace']
+        src['e2'] = 2.0*src['Ixy']/src['trace']
+        src['e_final'], src['phi_final'] = e1e2_to_ephi(src['e1'], src['e2'])
+        
+        self.source_table = src
     
     def compare_truth_vs_emulated(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   
@@ -455,7 +497,7 @@ class SLRealizer(object):
         obs_rownum = random.randint(0, self.num_obs)
         
         # Render the truth image
-        truth_img = self.draw_system(self.get_lensInfo(lensID=lensID, rownum=rownum),\
+        truth_img = self.draw_system(self.get_lens_info(lensID=lensID, rownum=rownum),\
                                     self.get_observation(rownum=obs_rownum),\
                                     save_dir)
         
