@@ -11,7 +11,7 @@ import galsim
 import gc # need this to optimize memory usage
 
 class OM10Realizer(SLRealizer):
-    
+
     """
     
     A class that realizes objects in the OM10 mock quasar catalog
@@ -31,12 +31,12 @@ class OM10Realizer(SLRealizer):
     def get_lens_info(self, objID=None, rownum=None):
         if objID is not None and rownum is not None:
             raise ValueError("Need to define either objID or rownum, not both.")
-        
+
         if objID is not None:
             return self.catalog['objectId'] # Don't use this (?)
         elif rownum is not None:
             return self.catalog.sample[rownum]
-       
+
     def _om10_to_galsim(self, lens_info, band):
         """
         Converts OM10's column values into GalSim terms
@@ -58,20 +58,20 @@ class OM10Realizer(SLRealizer):
         beta  = lens_info['PHIE'] * galsim.degrees # PHIE is in degrees
         
         galsimInput={'flux': flux,
-                       'half_light_radius': hlr,
-                       'e': e,
-                       'beta': beta,
-                       'num_objects': lens_info['NIMG']}
+                     'half_light_radius': hlr,
+                     'e': e,
+                     'beta': beta,
+                     'num_objects': lens_info['NIMG']}
         
         for obj in xrange(lens_info['NIMG']):
             obj_mag = lens_info[band + '_SDSS_quasar']\
-                      + flux_to_mag(abs(lens_info['MAG'][obj]))
+            + flux_to_mag(abs(lens_info['MAG'][obj]))
                       #+ flux_to_mag(lens_info['MAG'][obj] + get_filter_AB_offset())
             galsimInput['flux_'+str(obj)] = mag_to_flux(obj_mag, to_unit='nMgy') # don't subtract AB offset?
             galsimInput['xy_'+str(obj)] = lens_info['XIMG'][obj], lens_info['YIMG'][obj]
             
         return galsimInput
-    
+
     def _om10_to_lsst(self, obs_info, lens_info):
         """Converts OM10 column values into LSST source table format
         using analytical mooment calculation
@@ -81,82 +81,63 @@ class OM10Realizer(SLRealizer):
         lens_info -- dictionary containing the lens properties
         
         Returns:
-        A dictionary (named derivedProps) containing properties that 
+        A dictionary (named derived_params) containing properties that 
         can be used to propagate one row of the source table
         """
         
-        derivedProps = {}
+        histID, MJD, band, psf_fwhm, five_sigma_depth = obs_info
         
-        histID, MJD, band, PSF_FWHM, sky_mag = obs_info
-        
+        # Initialize parameter dictionary
         numQuasars = lens_info['NIMG']
         lens_mag = lens_info[band + '_SDSS_lens']
         lens_flux = mag_to_flux(lens_mag, to_unit='nMgy')
         q_mag_arr = lens_info[band + '_SDSS_quasar'] + flux_to_mag(np.abs(np.array(lens_info['MAG'][:numQuasars])))
         q_flux_arr = mag_to_flux(q_mag_arr, to_unit='nMgy')
         q_tot_flux = np.sum(q_flux_arr)
-        derivedProps['apFlux'] = lens_flux + q_tot_flux
-        derivedProps['apMag'] = flux_to_mag(derivedProps['apFlux'], from_unit='nMgy')
         
-        #TODO
-        derivedProps['apMag'] = 0.0
-        derivedProps['apMagErr'] = 0.0
+        derived_params = {'psf_fwhm': psf_fwhm,
+                          'lens_flux': lens_flux,
+                          'apFlux': lens_flux + q_tot_flux,
+                          'e': lens_info['ELLIP'],
+                          'beta': lens_info['PHIE'], }
         
-        #################################
-        # Analytical moment calculation #
-        #################################
-        
-        # Flux ratios weight the moment contributions from the lens and each quasar image
-        lensFluxRatio = lens_flux/derivedProps['apFlux']
-        qFluxRatios = q_flux_arr/derivedProps['apFlux']
-        
-        # Slice x, y positions to number of quasars
-        lens_info['XIMG'] = lens_info['XIMG'][:numQuasars]
-        lens_info['YIMG'] = lens_info['YIMG'][:numQuasars]
-        
-        # Convert Gaussian FWHM, HLR to sigma of the covariance matrix
-        sigmasq_psf = fwhm_to_sigma(PSF_FWHM)**2.0
-        sigmaSqLens = hlr_to_sigma(lens_info['REFF_T'])**2.0
-        
-        # Compute first moment contributions from the lens and each quasar image
-        lensIxContrib = lensIyContrib = 0.0 # because lens is centered at (0, 0)
-        qIxContrib = qFluxRatios*lens_info['XIMG']
-        qIyContrib = qFluxRatios*lens_info['YIMG']
-        derivedProps['x'] = lensIxContrib + np.sum(qIxContrib)
-        derivedProps['y'] = lensIyContrib + np.sum(qIyContrib)
-        
-        # Compute second moment contributions from the lens and each quasar image
-        lensIxxContrib = lensFluxRatio*(sigmasq_psf + sigmaSqLens + derivedProps['x']**2.0)
-        lensIyyContrib = lensFluxRatio*(sigmasq_psf + sigmaSqLens + derivedProps['y']**2.0)
-        lensIxyContrib = lensFluxRatio*derivedProps['x']*derivedProps['y'] # because lens is centered at (0, 0)
-        qIxxContrib = qFluxRatios*((lens_info['XIMG'] - derivedProps['x'])**2.0 + sigmasq_psf)
-        qIyyContrib = qFluxRatios*((lens_info['YIMG'] - derivedProps['y'])**2.0 + sigmasq_psf)
-        qIxyContrib = qFluxRatios*(lens_info['XIMG'] - derivedProps['x'])*(lens_info['YIMG'] - derivedProps['y'])
-        
-        # Add to get total second moments
-        Ixx = lensIxxContrib + np.sum(qIxxContrib)
-        Iyy = lensIyyContrib + np.sum(qIyyContrib)
-        Ixy = lensIxyContrib + np.sum(qIxyContrib)
-        derivedProps['trace'] = Ixx + Iyy
-        if self.DEBUG: derivedProps['det'] = Ixx*Iyy - Ixy**2.0
-        
-        # Compute ellipticities from second moments
-        denom = Ixx + Iyy #+ 2.0*(Ixx*Iyy - Ixy**2.0)**0.5 # uncommenting gives g1, g2 
-        derivedProps['e1'] = (Ixx - Iyy)/denom
-        derivedProps['e2'] = 2.0*Ixy/denom
-        
-        if self.DEBUG:
-            derivedProps['Ixx'] = Ixx
-            derivedProps['Iyy'] = Iyy
-            derivedProps['Ixy'] = Ixy
-        
-        return derivedProps
+        # Set fluxes of nonexistent quasar images to zero
+        if numQuasars < 4:
+            q_flux_arr[numQuasars - 1:] = 0.0
+
+        # Further populate dictionary with quasar-related parameters
+        for q in range(4):
+            derived_params['q_flux_%d' %q] = q_flux_arr[q]
+            derived_params['XIMG_%d' %q] = lens_info['XIMG'][q]
+            derived_params['YIMG_%d' %q] = lens_info['YIMG'][q]
+
+        # Include moment-related keys to dictionary
+        derived_params = self._include_moments(inplace=False, input_dict=derived_params)
+
+        # Add flux noise
+        apFluxErr = mag_to_flux((five_sigma_depth - 22.5)/5.0)
+        derived_params['apFluxErr'] = apFluxErr
+        if self.add_flux_noise:
+            derived_params['apFlux'] += add_noise(mean=0.0, stdev=apFluxErr)
+
+        # Get total magnitude
+        derived_params['apMag'] = flux_to_mag(derived_params['apFlux'], from_unit='nMgy')
+
+        # Propagate to get error on magnitude
+        derived_params['apMagErr'] = (2.5/np.log(10.0)) * apFluxErr / derived_params['apFlux']
+
+        # Remove remaining unused keys
+        keys_to_remove = set(derived_params.keys()) - set(self.source_columns)
+        for k in keys_to_remove:
+            derived_params.pop(k, None)
+
+        return derived_params
             
-    def draw_system(self, obs_info, lens_info, save_dir=None):
+    def draw_system(self, obs_info, lens_info, save_path=None):
         galsimInput = self._om10_to_galsim(lens_info, obs_info['filter'])
-        return self.as_super.draw_system(galsimInput=galsimInput, obs_info=obs_info, save_dir=save_dir)
-    
-    def estimate_hsm(self, obs_info, lens_info):
+        return self.as_super.draw_system(galsimInput=galsimInput, obs_info=obs_info, save_path=save_path)
+
+    def estimate_parameters(self, obs_info, lens_info, method="raw_numerical"):
         """
         Performs GalSim's HSM shape estimation on the image
         rendered with lens properties in lens_info
@@ -165,14 +146,16 @@ class OM10Realizer(SLRealizer):
         Keyword arguments:
         obs_info -- dictionary containing the observation conditions
         lens_info -- dictionary containing the lens properties 
+        method -- one of "hsm" (GalSim's HSM shape estimator) or 
+                  "raw_numerical" (a native numerical moment calculator) [default: "raw_numerical"]
         
         Returns
         a dictionary containing the shape information 
         numerically derived by HSM
         """
-        galsim_img = self.draw_system(lens_info=lens_info, obs_info=obs_info, save_dir=None)
-        return self.as_super.estimate_hsm(galsim_img=galsim_img)
-    
+        galsim_img = self.draw_system(lens_info=lens_info, obs_info=obs_info, save_path=None)
+        return self.as_super.estimate_parameters(galsim_img=galsim_img, method=method)
+
     def draw_emulated_system(self, obs_info, lens_info):
         """
         Draws the emulated system, i.e. draws the aggregate system
@@ -185,8 +168,8 @@ class OM10Realizer(SLRealizer):
         """
         hsmOutput = self.estimate_hsm(obs_info, lens_info)
         return self.as_super.draw_emulated_system(hsmOutput)
-    
-    def create_source_row(self, obs_info, lens_info, use_hsm=False):
+
+    def create_source_row(self, obs_info, lens_info, method="analytical"):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
@@ -195,21 +178,24 @@ class OM10Realizer(SLRealizer):
         Keyword arguments:
         image -- a Numpy array of the lens system's image
         obs_info -- a row of the observation history df
+        method -- how to calculate the moments, one of "analytical", "raw_numerical", and "hsm"
+                  (for details about "raw_numerical" vs. "hsm", see method estimate_parameters)
         
         Returns
         A dictionary with properties derived from HSM estimation
         (See code for which properties)
         '''
+
         objectId = lens_info['LENSID']
-        if use_hsm:
-            derivedProps = self.estimate_hsm(obs_info, lens_info)
-            if derivedProps is None:
-                return None
+        if method == "analytical":
+            derived_params = self._om10_to_lsst(obs_info=obs_info, lens_info=lens_info)
         else:
-            derivedProps = self._om10_to_lsst(obs_info=obs_info, lens_info=lens_info)
-        
-        return self.as_super.create_source_row(derivedProps=derivedProps, objectId=objectId, obs_info=obs_info)
-    
+            derived_params = self.estimate_parameters(obs_info, lens_info, method=method)
+            if derived_params is None:
+                return None
+
+        return self.as_super.create_source_row(derived_params=derived_params, objectId=objectId, obs_info=obs_info)
+
     def make_source_table_vectorized(self, output_source_path, include_time_variability):
         """
         Generates the source table and saves it as a csv file.
@@ -228,9 +214,9 @@ class OM10Realizer(SLRealizer):
         
         if include_time_variability:
             self.include_quasar_variability(save_output=False)
-        self.source_table.reset_index(inplace=True)
+            self.source_table.reset_index(inplace=True)
         src = self.source_table
-        
+
         # Convert each quasar magnitude back to flux
         for q in range(4):
             src['q_flux_' + str(q)] = mag_to_flux(src['q_mag_' + str(q)], to_unit='nMgy')
@@ -244,15 +230,13 @@ class OM10Realizer(SLRealizer):
         # Add flux noise
         src['apFluxErr'] = mag_to_flux(src['fiveSigmaDepth']-22.5)/5.0 # because Fb = 5 \sigma_b
         if self.add_flux_noise:
-            src['apFlux'] += add_noise(mean=0.0, 
-                                       stdev=src['apFluxErr'], 
-                                       shape=src['apFluxErr'].shape)
+            src['apFlux'] += add_noise(mean=0.0, stdev=src['apFluxErr'], shape=src['apFluxErr'].shape)
         # Get total magnitude
         src['apMag'] = flux_to_mag(src['apFlux'], from_unit='nMgy')
         # Propagate to get error on magnitude
         src['apMagErr'] = (2.5/np.log(10.0)) * src['apFluxErr'] / src['apFlux']
         gc.collect()
-            
+
         # Remove remaining unused columns
         src.drop(['lensFluxRatio', 'lens_mag', 'q_mag', 'sigmasq_lens', 'sigmasq_psf', 'NIMG',], axis=1, inplace=True)
         for q in range(4):
@@ -269,8 +253,8 @@ class OM10Realizer(SLRealizer):
             print("Result of making source table: ")
             print("Number of observations: ", out_num_times)
             print("Number of lenses: ", out_num_lenses)
-        src.set_index('objectId', inplace=True)
         
+        src.set_index('objectId', inplace=True)
         src.to_csv(output_source_path)
         gc.collect()
         end = time.time()
@@ -279,7 +263,7 @@ class OM10Realizer(SLRealizer):
         self.sourceTable = src
         if self.DEBUG:
             return src
-    
+
     def _preformat_source_table(self):
         """
         Initializes self.source_table with the column conventions
@@ -317,12 +301,12 @@ class OM10Realizer(SLRealizer):
         ##############################################
         #src.drop(['fiveSigmaDepth', ], axis=1, inplace=True)
         src.rename(columns={'obsHistID': 'ccdVisitId',
-                            'LENSID': 'objectId',
-                            'expMJD': 'MJD',
-                            'FWHMeff': 'psf_fwhm',
-                            'ELLIP': 'e',
-                            'PHIE': 'beta',
-                             }, inplace=True)
+            'LENSID': 'objectId',
+            'expMJD': 'MJD',
+            'FWHMeff': 'psf_fwhm',
+            'ELLIP': 'e',
+            'PHIE': 'beta',
+            }, inplace=True)
         gc.collect()
         
         # Set unused band magnitudes to zero, to
@@ -350,9 +334,9 @@ class OM10Realizer(SLRealizer):
         src.loc[src['NIMG'] == 3, ['q_flux_3']] = 0.0
         
         self.source_table = src
-    
+
         
-    
+
     #def add_time_variability INHERITED
-    #def make_source_table INHERITED
+    #def make_source_table_rowbyrow INHERITED
     #def compare_truth_vs_emulated INHERITED

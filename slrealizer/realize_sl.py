@@ -6,18 +6,9 @@ import numpy as np
 from utils.utils import *
 from utils.constants import *
 import pandas as pd
-import matplotlib.pyplot as plt
-import pylab
-import matplotlib
-#import skimage
 import random
-#import corner
-#import dropbox
-#import extract_corner
 import om10
 import galsim
-from astropy.utils.console import ProgressBar
-#from corner import corner
 
 class SLRealizer(object):
 
@@ -68,10 +59,10 @@ class SLRealizer(object):
             return self.observation.loc[rownum]
     
     def _get_lens_info(self, lensID):
-        # This function will depend on the format of each lens catalog
+        ''' This function will depend on the format of each lens catalog '''
         raise NotImplementedError
         
-    def draw_system(self, galsimInput, obs_info, save_dir=None):
+    def draw_system(self, galsimInput, obs_info, save_path=None):
         '''
         Draws all objects of the given lens system
         in the given observation conditions using GalSim
@@ -79,7 +70,7 @@ class SLRealizer(object):
         Keyword arguments:
         lens_info -- a row of the OM10 DB
         obs_info -- a row of the observation history df
-        save_dir -- directory in which to save the image
+        save_path -- path in which to save the image
 
         Returns:
         A GalSim object of the aggregate system used to render
@@ -100,45 +91,68 @@ class SLRealizer(object):
         psf = galsim.Gaussian(flux=1.0, fwhm=PSF_FWHM)
         galsim_obj = galsim.Convolve([galaxy, psf], gsparams=self.fft_params)
         galsim_img = galsim_obj.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale)
-        if save_dir is not None:
+        if save_path is not None:
             plt.imshow(galsim_img.array, interpolation='none', aspect='auto')
-            plt.savefig(save_dir+'before_deblend.png')
+            plt.savefig(save_path)
             plt.close()
         return galsim_img
         
-    def estimate_hsm(self, galsim_img):
+    def estimate_parameters(self, galsim_img, method="raw_numerical"):
         """
-        Performs GalSim's HSM shape estimation on the galsim_img 
+        Performs shape estimati on on the galsim_img 
+        using either GalSim's HSM shape estimator or 
+        a native numerical moment calculator
         under the observation conditions obs_info
         
+        Keyword arguments:
+        galsim_img -- GalSim's Image object on which parameters will be estimated
+        method -- one of "hsm" (GalSim's HSM shape estimator) or 
+                  "raw_numerical" (a native numerical moment calculator) [default: "raw"]
+        
         Returns
-        a dictionary of the lesn properties, 
+        a dictionary of the lens properties, 
         which can be used to draw the emulated image
         """
-        hsmOutput = {}
-                
-        #shape_info = galsim_img.FindAdaptiveMom()
-        try:
-            shape_info = galsim_img.FindAdaptiveMom(guess_sig=self.pixel_scale*10.0)
-        except:
-            #print "HSM failed"
-            return None
-        
-        # Calculate the real position from the arbitrary pixel position
-        pixelCenter = galsim.PositionD(x=shape_info.moments_centroid.x, y=shape_info.moments_centroid.y)
-        hsmOutput['x'], hsmOutput['y'] = pixel_to_physical(shape_info.moments_centroid.x, self.nx, self.pixel_scale),\
-                                         pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
-        
-        hsmOutput['apFlux'] = float(np.sum(galsim_img.array))
-        if self.DEBUG:
-            hsmOutput['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
-            hsmOutput['det'] = (shape_info.moments_sigma * self.pixel_scale)**4.0
-        hsmOutput['trace'] = 2.0*galsim_img.calculateMomentRadius(center=pixelCenter, rtype='trace')**2.0
-        hsmOutput['e1'] = shape_info.observed_shape.e1
-        hsmOutput['e2'] = shape_info.observed_shape.e2
-        return hsmOutput
+        estimated_params = {}
+        if method == "hsm":       
+            try:
+                shape_info = galsim_img.FindAdaptiveMom(guess_sig=self.pixel_scale*10.0)
+            except:
+                #print "HSM failed"
+                return None
+
+            # Calculate the real position from the arbitrary pixel position
+            pixelCenter = galsim.PositionD(x=shape_info.moments_centroid.x, y=shape_info.moments_centroid.y)
+            estimated_params['x'], estimated_params['y'] = pixel_to_physical(shape_info.moments_centroid.x, self.nx, self.pixel_scale),\
+                                             pixel_to_physical(shape_info.moments_centroid.y, self.ny, self.pixel_scale)
+
+            estimated_params['apFlux'] = float(np.sum(galsim_img.array))
+            if self.DEBUG:
+                estimated_params['hlr'] = galsim_img.calculateHLR(center=pixelCenter)
+                estimated_params['det'] = (shape_info.moments_sigma * self.pixel_scale)**4.0
+            estimated_params['trace'] = 2.0*galsim_img.calculateMomentRadius(center=pixelCenter, rtype='trace')**2.0
+            estimated_params['e1'] = shape_info.observed_shape.e1
+            estimated_params['e2'] = shape_info.observed_shape.e2
+            estimated_params['e_final'] = shape_info.observed_shape.e
+            estimated_params['phi_final'] = shape_info.observed_shape.beta
+        elif method == "raw_numerical":
+            image_array = galsim_img.array
+            Ix, Iy = get_first_moments_from_image(image_array, self.pixel_scale)
+            Ixx, Ixy, Iyy = get_second_moments_from_image(image_array, self.pixel_scale)
+            estimated_params['apFlux'] = np.sum(image_array)
+            estimated_params['x'] = Ix
+            estimated_params['y'] = Iy
+            trace = Ixx + Iyy
+            estimated_params['e1'] = (Ixx - Iyy)/trace
+            estimated_params['e2'] = 2.0*Ixy/trace
+            estimated_params['trace'] = trace
+            estimated_params['e_final'], estimated_params['phi_final'] = e1e2_to_ephi(estimated_params['e1'], estimated_params['e2'])
+        else:
+            raise ValueError("Please enter a valid method, either 'hsm' or 'raw_numerical'")
+
+        return estimated_params
     
-    def draw_emulated_system(self, hsmOutput):
+    def draw_emulated_system(self, estimated_params):
         """
         Draws the emulated system, i.e. draws the aggregate system
         from properties HSM derived from the image, which was in turn
@@ -150,20 +164,20 @@ class SLRealizer(object):
         """
         if not self.DEBUG:
             raise ValueError("Only runs in debug mode")
-        system = galsim.Gaussian(flux=hsmOutput['apFlux'], half_light_radius=hsmOutput['hlr'])\
-                       .shift(float(hsmOutput['x']), float(hsmOutput['y']))\
-                       .shear(e1=hsmOutput['e1'], e2=hsmOutput['e2'])
+        system = galsim.Gaussian(flux=estimated_params['apFlux'], half_light_radius=estimated_params['hlr'])\
+                       .shift(float(estimated_params['x']), float(estimated_params['y']))\
+                       .shear(e1=estimated_params['e1'], e2=estimated_params['e2'])
         emulatedImg = system.drawImage(nx=self.nx, ny=self.ny, scale=self.pixel_scale, method='no_pixel')
         return emulatedImg
     
-    def create_source_row(self, derivedProps, objectId, obs_info):
+    def create_source_row(self, derived_params, objectId, obs_info):
         '''
         Returns a dictionary of lens system's properties
         computed the image of one lens system and the observation conditions,
         which makes up a row of the source table.
 
         Keyword arguments:
-        derivedProps -- derived lens properties 
+        derived_params -- derived lens properties 
         obs_info -- a row of the observation history df
         
         Returns
@@ -172,25 +186,43 @@ class SLRealizer(object):
         '''
         histID, MJD, band, PSF_FWHM, sky_mag = obs_info
         
-        derivedProps['apFluxErr'] = from_mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
-        if not self.remove_random:
-            derivedProps['trace'] += add_noise(get_second_moment_err(), get_second_moment_err_std(), derivedProps['trace'])
-            derivedProps['x'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['x'])
-            derivedProps['y'] += add_noise(get_first_moment_err(), get_first_moment_err_std(), derivedProps['y']) 
-            derivedProps['apFlux'] += add_noise(0.0, derivedProps['apFluxErr']) # flux rms not skyErr
+        derived_params['apFluxErr'] = mag_to_flux(sky_mag-22.5)/5.0 # because Fb = 5 \sigma_b
+        if self.add_moment_noise:
+            derived_params['trace'] += add_noise(mean=get_second_moment_err(), 
+                                               stdev=get_second_moment_err_std(), 
+                                               measurement=derived_params['trace'])
+            derived_params['x'] += add_noise(mean=get_first_moment_err(), 
+                                           stdev=get_first_moment_err_std(), 
+                                           measurement=derived_params['x'])
+            derived_params['y'] += add_noise(mean=get_first_moment_err(), 
+                                           stdev=get_first_moment_err_std(), 
+                                           measurement=derived_params['y']) 
+        if self.add_flux_noise:
+            derived_params['apFlux'] += add_noise(mean=0.0, 
+                                                stdev=derived_params['apFluxErr']) # flux rms not skyErr
+        derived_params['apMag'] = flux_to_mag(derived_params['apFlux'], from_unit='nMgy')
+        derived_params['apMagErr'] = (2.5/np.log(10.0)) * derived_params['apFluxErr']/derived_params['apFlux']
         
-        row = {'MJD': MJD, 'ccdVisitId': histID, 'filter': band, 'x': derivedProps['x'], 'y': derivedProps['y'],
-               'apFlux': derivedProps['apFlux'], 'apFluxErr': derivedProps['apFluxErr'],
-               'trace': derivedProps['trace'],
-               'e1': derivedProps['e1'], 'e2': derivedProps['e2'], 'psf_fwhm': PSF_FWHM, 'objectId': objectId}
+        row = {'MJD': MJD, 'ccdVisitId': histID, 'filter': band, 'x': derived_params['x'], 'y': derived_params['y'],
+               'apFlux': derived_params['apFlux'], 'apFluxErr': derived_params['apFluxErr'], 
+               'apMag': derived_params['apMag'], 'apMagErr': derived_params['apMagErr'],
+               'trace': derived_params['trace'],
+               'e1': derived_params['e1'], 'e2': derived_params['e2'], 
+               'e_final': derived_params['e_final'], 'phi_final': derived_params['phi_final'],
+               'psf_fwhm': PSF_FWHM, 'objectId': objectId}
         return row
 
-    def make_source_table(self, save_file, use_hsm=False):
+    def make_source_table_rowbyrow(self, save_file, method="analytical"):
         import time
         """
         Returns a source table generated from all the lens systems in the catalog
         under all the observation conditions in the observation history,
         and saves it as a .csv file.
+
+        Keyword arguments:
+        save_file -- path into which output source table will be saved
+        method -- how to calculate moments for each row
+                  (See method estimate_parameters for details about each option)         
         """
         start = time.time()
         print("Began making the source catalog.")
@@ -200,27 +232,27 @@ class SLRealizer(object):
         print("Number of systems: %d, number of observations: %d" %(self.num_systems, self.num_obs))
         
         hsm_failed = 0
-        with ProgressBar(self.num_obs) as bar:
-            for j in xrange(self.num_obs):
-                for i in xrange(self.num_systems):
-                    row = self.create_source_row(lens_info=self.get_lens_info(rownum=i),
-                                                 obs_info=self.observation.loc[j],
-                                                 use_hsm=use_hsm)
-                    if row == None:
-                        hsm_failed += 1
-                    else:
-                        # FIXIT try not to use list comprehension...
-                        vals_arr = np.array([row[c] for c in self.source_columns])
-                        df.loc[len(df)] = vals_arr
-                bar.update()
+        
+        for j in xrange(self.num_obs):
+            for i in xrange(self.num_systems):
+                row = self.create_source_row(lens_info=self.get_lens_info(rownum=i),
+                                             obs_info=self.observation.loc[j],
+                                             method=method)
+                if row == None:
+                    hsm_failed += 1
+                else:
+                    df = df.append(row, ignore_index=True)
+        
+        df = df.infer_objects()
+        df = df[self.source_columns]
         df.set_index('objectId', inplace=True)
         df.to_csv(save_file, index=True)
         
         end = time.time()
-        if use_hsm:
+        if method == 'hsm':
             print("Done making the source table which has %d row(s) in %0.2f hours, after getting %d errors from HSM failure." %(len(df), (end - start)/3600.0, hsm_failed))
         else:
-            print("Done making the source table with analytical moments in %0.2f hours." %((end - start)/3600.0))
+            print("Done making the source table with %s method in %0.2f minutes." %(method, (end - start)/60.0))
 #        desc.slrealizer.dropbox_upload(dir, 'source_catalog_new.csv')
 
         self.sourceTable = df
@@ -286,8 +318,8 @@ class SLRealizer(object):
         # Save as csv file
         obj.to_csv(object_table_path, index=False)
         print("Done making the object table in %0.2f seconds." %(end-start))
-        if self.DEBUG:
-            print("Object table columns: ", obj.columns)
+        #if self.DEBUG:
+            #print("Object table columns: ", obj.columns)
 
         #desc.slrealizer.dropbox_upload(save_dir, 'object_catalog_new.csv') #this uploads to the desc account
     
@@ -403,19 +435,42 @@ class SLRealizer(object):
             
         self.source_table = src
     
-    def _include_moments(self):
+    def _include_moments(self, inplace=True, input_dict=None):
         """
         Adds columns of first and second moments (analytically computed)
-        to self.source_table
+        to self.source_table (if inplace=True) or some other dictionary
+
+        Keyword arguments:
+        inplace -- whether to alter the self.source_table. 
+                   If input_dict is None, will be assumed to be True. [default: True]
+        input_dict -- object of type dict that will be used to compute the moments.
+                      If inplace is True, will be ignored. [default: None]
+
+        Returns (only if inplace is False):
+        a new dictionary that is a version of the original input_dict with
+        moment-related columns added
         """
         
-        src = self.source_table
+        return_dict = False
+        if inplace or input_dict is None:
+            src = self.source_table
+        elif input_dict is not None:
+            is_dictionary = (type(input_dict) is dict)
+            valid_columns = ['lens_flux', 'apFlux', 'e', 'beta', 'psf_fwhm'] 
+            valid_columns += [value + '_%d' %idx for value in ['q_flux', 'XIMG', 'YIMG'] for idx in range(4)]
+            has_valid_columns = all(col in input_dict for col in valid_columns)
+            if is_dictionary and has_valid_columns:
+               src = input_dict
+               return_dict = True
+            else:
+                raise ValueError("Keyword input_dict must be a dictionary and contain all the required keys.")
         
         # Calculate flux ratios (for weighted moments)
         src['lensFluxRatio'] = src['lens_flux']/src['apFlux']
         for q in range(4):
             src['qFluxRatio_' + str(q)] = src['q_flux_' + str(q)]/src['apFlux']
-        src.drop(['lens_flux'] + ['q_flux_' + str(q) for q in range(4)], axis=1, inplace=True)
+        if not return_dict:
+            src.drop(['lens_flux'] + ['q_flux_' + str(q) for q in range(4)], axis=1, inplace=True)
         
         #################
         # FIRST MOMENTS #
@@ -452,7 +507,8 @@ class SLRealizer(object):
         src['Ixx'] = src['lensFluxRatio']*(src['lens_Ixx'] + np.power(src['x'], 2.0)) 
         src['Iyy'] = src['lensFluxRatio']*(src['lens_Iyy'] + np.power(src['y'], 2.0))
         src['Ixy'] = src['lensFluxRatio']*(src['lens_Ixy'] - src['x']*src['y'])
-        src.drop(['lam1', 'lam2', 'lens_Ixx', 'lens_Iyy', 'lens_Ixy'], axis=1, inplace=True)
+        if not return_dict:
+            src.drop(['lam1', 'lam2', 'lens_Ixx', 'lens_Iyy', 'lens_Ixy'], axis=1, inplace=True)
         # Add quasar contributions
         for q in range(4):
             src['Ixx'] += src['qFluxRatio_' + str(q)]*(np.power(src['XIMG_' + str(q)] - src['x'], 2.0))
@@ -475,7 +531,11 @@ class SLRealizer(object):
         src['e2'] = 2.0*src['Ixy']/src['trace']
         src['e_final'], src['phi_final'] = e1e2_to_ephi(src['e1'], src['e2'])
         
-        self.source_table = src
+        if inplace:
+            self.source_table = src
+
+        if return_dict:
+            return src
     
     def compare_truth_vs_emulated(self, lensID=None, rownum=None, save_dir=None):
         """                                                                                                                   
@@ -507,8 +567,8 @@ class SLRealizer(object):
         fig, axes = plt.subplots(2, figsize=(5, 10))
         axes[0].imshow(truth_img.array, interpolation='none', aspect='auto')
         axes[0].set_title("TRUE MODEL IMAGE")
-        hsmOutput = self.estimate_hsm(image=truth_img, observation=self.observation.loc[obs_rownum])
-        emulated_img = self.draw_emulated_system(hsmOutput)
+        estimated_params = self.estimate_hsm(image=truth_img, observation=self.observation.loc[obs_rownum])
+        emulated_img = self.draw_emulated_system(estimated_params)
         axes[1].imshow(img.array, interpolation='none', aspect='auto')
         axes[1].set_title("EMULATED IMAGE")
         if save_dir is not None:
