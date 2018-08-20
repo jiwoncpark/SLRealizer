@@ -97,7 +97,15 @@ def mag_to_flux(mag, zeropoint_mag=0.0, from_unit=None, to_unit=None):
 
 def add_noise(mean, stdev, shape=None, measurement=1.0):
     """
-    Given a mean and a standard deviation of a measurement, adds noise to the data
+    Given a mean and a standard deviation of a measurement, adds Gaussian noise to the data
+    
+    Keyword arguments:
+    mean -- the mean of Gaussian
+    stdev -- the standard deviation of Gaussian
+    shape -- the array shape of noise to be returned
+             If None, returns a scalar noise [default: None]
+    measurement -- scaling factor, for adding fractional errors. 
+                   If 1.0, error is absolute. [default: 1.0]
     """
     return measurement*np.random.normal(loc=mean, scale=stdev, size=shape)
 
