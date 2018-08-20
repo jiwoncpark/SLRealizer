@@ -1,0 +1,42 @@
+[NbConvertApp] Converting notebook Test+Shape+Estimation.ipynb to notebook
+[NbConvertApp] Executing notebook with kernel: lsst
+Traceback (most recent call last):
+  File "/home/jwp/.local/bin/jupyter-nbconvert", line 11, in <module>
+    sys.exit(main())
+  File "/home/jwp/.local/lib/python2.7/site-packages/jupyter_core/application.py", line 266, in launch_instance
+    return super(JupyterApp, cls).launch_instance(argv=argv, **kwargs)
+  File "/home/jwp/.local/lib/python2.7/site-packages/traitlets/config/application.py", line 658, in launch_instance
+    app.start()
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/nbconvertapp.py", line 325, in start
+    self.convert_notebooks()
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/nbconvertapp.py", line 493, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/nbconvertapp.py", line 464, in convert_single_notebook
+    output, resources = self.export_single_notebook(notebook_filename, resources, input_buffer=input_buffer)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/nbconvertapp.py", line 393, in export_single_notebook
+    output, resources = self.exporter.from_filename(notebook_filename, resources=resources)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/exporters/exporter.py", line 174, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/exporters/exporter.py", line 192, in from_file
+    return self.from_notebook_node(nbformat.read(file_stream, as_version=4), resources=resources, **kw)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/exporters/notebook.py", line 31, in from_notebook_node
+    nb_copy, resources = super(NotebookExporter, self).from_notebook_node(nb, resources, **kw)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/exporters/exporter.py", line 134, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/exporters/exporter.py", line 311, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/preprocessors/base.py", line 47, in __call__
+    return self.preprocess(nb, resources)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/preprocessors/execute.py", line 257, in preprocess
+    cwd=path)
+  File "/home/jwp/.local/lib/python2.7/site-packages/nbconvert/preprocessors/execute.py", line 237, in start_new_kernel
+    km.start_kernel(**kwargs)
+  File "/home/jwp/.local/lib/python2.7/site-packages/jupyter_client/manager.py", line 245, in start_kernel
+    kernel_cmd = self.format_kernel_cmd(extra_arguments=extra_arguments)
+  File "/home/jwp/.local/lib/python2.7/site-packages/jupyter_client/manager.py", line 169, in format_kernel_cmd
+    cmd = self.kernel_spec.argv + extra_arguments
+  File "/home/jwp/.local/lib/python2.7/site-packages/jupyter_client/manager.py", line 81, in kernel_spec
+    self._kernel_spec = self.kernel_spec_manager.get_kernel_spec(self.kernel_name)
+  File "/home/jwp/.local/lib/python2.7/site-packages/jupyter_client/kernelspec.py", line 236, in get_kernel_spec
+    raise NoSuchKernel(kernel_name)
+jupyter_client.kernelspec.NoSuchKernel: No such kernel named lsst
