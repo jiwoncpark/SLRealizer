@@ -8,10 +8,10 @@ before_install:
     - sudo apt-get install -y libffi-dev
 
     # Add appropriate directories to various paths.
-    #- export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
-    #- export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
-    #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
-    #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
+    - export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
+    - export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
+    - export PATH=$HOME/bin:$PYHOME/bin:$PATH
+    - export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
 
 install:
     - pip install -r requirements.txt
