@@ -1,6 +1,6 @@
 <img src="https://i.imgur.com/AKdUANu.png" width="150" href="https://github.com/LSSTDESC/SLRealizer/">
 
-<a href='https://travis-ci.org/jiwoncpark/SLRealizer'>
+<a href='https://travis-ci.com/jiwoncpark/SLRealizer'>
 <img src='https://travis-ci.com/jiwoncpark/SLRealizer.svg?branch=develop'></a>
 
 Catalog-level simulation of LSST DM stack measurements of
