@@ -1,7 +1,7 @@
 <img src="https://i.imgur.com/AKdUANu.png" width="150" href="https://github.com/LSSTDESC/SLRealizer/">
 
-<a href='https://travis-ci.org/LSSTDESC/SLRealizer'>
-<img src='https://secure.travis-ci.org/LSSTDESC/SLRealizer.png?branch=master'></a>
+<a href='https://travis-ci.org/jiwoncpark/SLRealizer'>
+<img src='https://travis-ci.com/jiwoncpark/SLRealizer.svg?branch=develop'></a>
 
 Catalog-level simulation of LSST DM stack measurements of
 gravitationally-lensed quasars.
