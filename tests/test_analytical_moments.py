@@ -6,52 +6,6 @@ realizer_path = os.path.join(os.environ['SLREALIZERDIR'], 'slrealizer')
 sys.path.insert(0, realizer_path)
 from utils.utils import *
 
-def get_first_moments_from_image(image_array, pixel_scale):
-    """ 
-    Returns the first moments in arcsec units numerically computed from
-    an image on a pixel grid
-    
-    Keyword arguments:
-    image_array -- a numpy image array
-    pixel_scale -- scale factor for the image in arcsec/pixel
- 
-    Returns:
-    a tuple of the first moments Ix, Iy in arcsec
-    """
-    nx, ny = image_array.shape
-    offset = np.array([(nx - 1)/2, (ny - 1)/2]).reshape(2, 1, 1)
-    pixel_grid = np.indices([nx, ny]) - offset # shape (2, nx, ny)
-    x_coords = pixel_grid[1, :, :] * pixel_scale
-    y_coords = pixel_grid[0, :, :] * pixel_scale
-    total_flux = np.sum(image_array)
-    Ix = np.sum(image_array * x_coords) / total_flux 
-    Iy = np.sum(image_array * y_coords) / total_flux 
-    return Ix, Iy
-
-def get_second_moments_from_image(image_array, pixel_scale):
-    """ 
-    Returns the second moments in arcsec units numerically computed from
-    an image on a pixel grid
-    
-    Keyword arguments:
-    image_array -- a numpy image array
-    pixel_scale -- scale factor for the image in arcsec/pixel
- 
-    Returns:
-    a tuple of the second moments Ixx, Ixy, Iyy in arcsec
-    """
-    nx, ny = image_array.shape
-    Ix, Iy = get_first_moments_from_image(image_array, pixel_scale=1.0)
-    offset = np.array([(ny - 1)/2 + Iy, (nx - 1)/2 + Ix]).reshape(2, 1, 1)
-    pixel_grid = np.indices([ny, nx]) - offset # shape (2, nx, ny)
-    x_coords = pixel_grid[1, :, :] * pixel_scale
-    y_coords = pixel_grid[0, :, :] * pixel_scale
-    total_flux = np.sum(image_array)
-    Ixx = np.sum(image_array * np.power(x_coords, 2.0)) / total_flux 
-    Ixy = np.sum(image_array * x_coords * y_coords) / total_flux 
-    Iyy = np.sum(image_array * np.power(y_coords, 2.0)) / total_flux 
-    return Ixx, Ixy, Iyy
-
 class AnalyticalTest(unittest.TestCase):  
     """Tests the analytical equations used for calculating moments."""
     

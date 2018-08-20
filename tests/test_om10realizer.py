@@ -3,26 +3,24 @@
 
 # ======================================================================
 from __future__ import print_function
-import os, unittest
-import galsim
+import unittest
 from om10 import DB
 import os
+import shutil
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 import sys
 realizer_path = os.path.join(os.environ['SLREALIZERDIR'], 'slrealizer')
 sys.path.insert(0, realizer_path)
 from realize_om10 import OM10Realizer
 from utils.utils import *
-#from realize_sl import SLRealizer
 # ======================================================================
 
 class OM10RealizerTest(unittest.TestCase):
 
     """
-    Tests the OM10 Realizer subclass.
+    Tests the OM10Realizer subclass.
     
     NOTE
     Execute these tests with:
@@ -33,17 +31,22 @@ class OM10RealizerTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Input catalogs
         data_dir = os.path.join(os.environ['SLREALIZERDIR'], 'data')
-        tests_dir = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_output')
         input_object_catalog = os.path.join(data_dir, 'test_catalog.fits')
         input_observation_catalog = os.path.join(data_dir, 'twinkles_observation_history.csv')
 
+        # Output catalogs
+        output_dir = os.path.join(os.environ['SLREALIZERDIR'], 'tests', 'test_output', 'test_om10realizer')
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
         output_paths = {
-        'rowbyrow_analytical_path': os.path.join(tests_dir, 'rowbyrow_ana_source.csv'),
-        'rowbyrow_hsm_numerical_path': os.path.join(tests_dir, 'rowbyrow_hsm_num_source.csv'),
-        'rowbyrow_raw_numerical_path': os.path.join(tests_dir, 'rowbyrow_raw_num_source.csv'),
-        'vectorized_path': os.path.join(tests_dir, 'vectorized_source.csv'),
-        'object_path': os.path.join(tests_dir, 'object.csv'),
+        'rowbyrow_analytical_path': os.path.join(output_dir, 'rowbyrow_ana_source.csv'),
+        'rowbyrow_hsm_numerical_path': os.path.join(output_dir, 'rowbyrow_hsm_num_source.csv'),
+        'rowbyrow_raw_numerical_path': os.path.join(output_dir, 'rowbyrow_raw_num_source.csv'),
+        'vectorized_path': os.path.join(output_dir, 'vectorized_source.csv'),
+        'object_path': os.path.join(output_dir, 'object.csv'),
         }
 
         for k, v in output_paths.items():
@@ -60,7 +63,6 @@ class OM10RealizerTest(unittest.TestCase):
     def test_om10_to_galsim(self):
         """ Tests whether _om10_to_galsim method runs """
         self.realizer._om10_to_galsim(lens_info=self.lens_info, band=self.obs_info['filter'])
-
 
     def test_draw_system(self):
         """ Tests whether draw_system method runs """ 
@@ -90,7 +92,7 @@ class OM10RealizerTest(unittest.TestCase):
         self.realizer.make_source_table_rowbyrow(save_file=self.rowbyrow_raw_numerical_path, method="raw_numerical")
         self.realizer.make_source_table_rowbyrow(save_file=self.rowbyrow_hsm_numerical_path, method="hsm")
 
-    def test_vectorized_source_table(self):
+    def test_make_source_table_analytical(self):
         """ 
         Tests whether make_source_table_vectorized run and
         whether make_source_table_rowbyrow runs with method = 'analytical',
@@ -99,7 +101,7 @@ class OM10RealizerTest(unittest.TestCase):
         rowbyrow = self.realizer.make_source_table_rowbyrow(save_file=self.rowbyrow_analytical_path, method="analytical")
         vectorized = self.realizer.make_source_table_vectorized(output_source_path=self.vectorized_path, include_time_variability=False)
 
-        print(rowbyrow.dtypes, vectorized.dtypes)
+        #print(rowbyrow.dtypes, vectorized.dtypes)
 
         # Select only the columns with numeric values, and turn into Numpy array
         rowbyrow_float = rowbyrow.select_dtypes(include=[np.number]).values

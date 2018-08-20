@@ -52,7 +52,7 @@ class SDSSRealizer(SLRealizer):
     def draw_emulated_system(self, obs_info, lens_info):
         raise NotImplementedError
     
-    def create_source_row(self, obs_info, lens_info, use_hsm=False):
+    def create_source_row(self, obs_info, lens_info, method="analytical"):
         
         histID, MJD, band, PSF_FWHM, sky_mag = obs_info
         row = {}
@@ -73,7 +73,7 @@ class SDSSRealizer(SLRealizer):
         
         return row
     
-    def make_source_table_vectorized(self, save_path):
+    def make_source_table_vectorized(self, save_file):
         import gc # need this to optimize memory usage
         import time
         
@@ -155,7 +155,7 @@ class SDSSRealizer(SLRealizer):
         
         src = src[self.source_columns]
         src.set_index('objectId', inplace=True)
-        src.to_csv(save_path)
+        src.to_csv(save_file)
         end = time.time()
         
         print("Done making the source table with %d row(s) in %0.2f seconds using vectorization." %(len(src), end-start))
