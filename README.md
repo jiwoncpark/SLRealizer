@@ -1,7 +1,7 @@
 <img src="https://i.imgur.com/AKdUANu.png" width="150" href="https://github.com/LSSTDESC/SLRealizer/">
 
-<a href='https://travis-ci.com/jiwoncpark/SLRealizer'>
-<img src='https://travis-ci.com/jiwoncpark/SLRealizer.svg?branch=develop'></a>
+<a href='https://travis-ci.org/LSSTDESC/SLRealizer'>
+<img src='https://secure.travis-ci.com/LSSTDESC/SLRealizer.svg?branch=master'></a>
 
 Catalog-level simulation of LSST DM stack measurements of
 gravitationally-lensed quasars.
@@ -79,6 +79,7 @@ SLRealizer/
 
 ## People
 * [Phil Marshall](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@drphilmarshall) (SLAC)
+* [Ji Won Park] (https://github.com/LSSTDESC/SLRealizer/issues/new?body=@jiwoncpark) (Stanford)
 * [Jenny Kim](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@jennykim1016) (Stanford)
 * [Mike Baumer](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@mbaumer) (SLAC)
 * [Steve Kahn](https://github.com/LSSTDESC/SLRealizer/issues/new?body=@stevkahn) (SLAC)
