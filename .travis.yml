@@ -6,6 +6,7 @@ python:
 before_install:
     # Non-pip dependency for cffi
     - sudo apt-get install -y libffi-dev
+    - sudo apt-get install -y python-dev libfftw3-dev libav-tools libeigen3-dev
 
     # Add appropriate directories to various paths.
     - export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
