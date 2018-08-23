@@ -61,8 +61,16 @@ target/
 # Ipython Notebook
 .ipynb_checkpoints
 
+# Practice Notebooks
+*/practice_notebook.ipynb
+
 # Backup files
 *~
 
 # LensPop trash
 *.pkl
+
+# Data
+*.csv
+*.txt
+*.fits
