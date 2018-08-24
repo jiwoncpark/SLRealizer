@@ -1,15 +1,6 @@
-future>=0.15
-setuptools>=38
-pip==9.0.3
-pybind11>=2.2
-astropy>=2.0
-numpy>=1.13
-pandas>=0.20
-nose
 scikit-learn
-matplotlib
 corner
+git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
 om10
 scipy
-galsim
-git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
+

@@ -11,23 +11,27 @@ compiler:
 
 before_install:
     # Add appropriate directories to various paths.
-    - export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
+    #- export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
     #- export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
     #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
     #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
 
-    - sudo apt-get -qq update
-    # Non-pip dependency for cffi
-    - sudo apt-get install -y libffi-dev
+    - "sudo apt-get -qq update"
+    # Non-pip dependency
+    - "sudo apt-get install -y libffi-dev libssl-dev python-dev"
     # GalSim dependencies
-    - sudo apt-get install -y python-dev libfftw3-dev libav-tools libeigen3-dev cmake
+    - "echo which cmake"
+    - "sudo apt-get install -ylibfftw3-dev libav-tools libeigen3-dev cmake"
+    # Install GalSim
+    - "sudo pip install galsim"
    
 cache:
     ccache: true
     pip: true
 
 install:
-    - pip install -U -r requirements.txt
+    # SLRealizer dependencies
+    - "sudo pip install -U -r requirements.txt"
 
 script: 
     - "python tests/test_analytical_moments.py"
