@@ -6,7 +6,7 @@ setup(
     version='0.2.1',
     author='Phil Marshall',
     author_email='dr.phil.marshall@gmail.com',
-    package_dir={'':'slrealizer'}
+    package_dir={'':'slrealizer'},
     packages=find_packages('slrealizer'),
     license='LICENSE.md',
     description='Catalog-level realization of simulated gravitational lenses.',

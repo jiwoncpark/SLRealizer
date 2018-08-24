@@ -16,19 +16,14 @@ before_install:
     #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
     #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
     #- "export PIP_TARGET=$PYHOME/include/python$TRAVIS_PYTHON_VERSION{a:0:3}"
-    - "echo ~"
-    - "echo $HOME"
-    - "python -m site --user-site"
-    - "python -m site --user-base"
 
     - "sudo apt-get -qq update"
     # Non-pip dependency
     - "sudo apt-get install -y libffi-dev libssl-dev python-dev"
     - "sudo pip install --user requests[security]"
     # GalSim dependencies
-    - "which cmake"
     - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
-    - "sudo pip install --user pybind11"
+    #- "sudo pip install --user pybind11"
     # Install GalSim
     - "sudo pip install --user galsim"
    
@@ -41,12 +36,16 @@ install:
     - "sudo pip install --user -r requirements.txt"
 
 script:
-    - "python -m site"
+    - "python -c 'import galsim; galsim.__file__'"
+    - "python -c 'import numpy; numpy.__file__'"
     - "python setup.py install"
+    - "pwd"
     - "source configure.sh"
-    - "python tests/test_analytical_moments.py"
-    - "python tests/test_om10realizer.py"
-    - "python tests/test_sdssrealizer.py"
+    - "cd slrealizer/tests"
+    - "python test_analytical_moments.py"
+    - "python test_om10realizer.py"
+    - "python test_sdssrealizer.py"
+    - "pwd"
 
 after_success:
     - codecov
