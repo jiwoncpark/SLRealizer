@@ -11,20 +11,25 @@ compiler:
 
 before_install:
     # Add appropriate directories to various paths.
-    - "export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}"
+    #- "export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}"
     #- export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
     #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
     #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
-    - "export PIP_TARGET=$PYHOME/include/python$TRAVIS_PYTHON_VERSION{a:0:3}"
+    #- "export PIP_TARGET=$PYHOME/include/python$TRAVIS_PYTHON_VERSION{a:0:3}"
+    - "echo ~"
+    - "echo $HOME"
+    - "python -m site --user-site"
+    - "python -m site --user-base"
 
     - "sudo apt-get -qq update"
     # Non-pip dependency
     - "sudo apt-get install -y libffi-dev libssl-dev python-dev"
     # GalSim dependencies
+    - "which cmake"
     - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
-    - "sudo pip install pybind11"
+    - "sudo pip install --user pybind11"
     # Install GalSim
-    - "sudo pip install galsim"
+    - "sudo pip install --user galsim"
    
 cache:
     ccache: true
@@ -32,7 +37,7 @@ cache:
 
 install:
     # SLRealizer dependencies
-    - "sudo pip install -U -r requirements.txt"
+    - "sudo pip install --user -r requirements.txt"
 
 script: 
     - "python tests/test_analytical_moments.py"
