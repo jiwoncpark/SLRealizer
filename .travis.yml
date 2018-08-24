@@ -3,18 +3,24 @@ language: python
 python:
     - 2.7
 
+virtualenv:
+    system_site_packages: true
+
+compiler:
+    - g++
+
 before_install:
     # Add appropriate directories to various paths.
     - export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}
-    - export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
-    - export PATH=$HOME/bin:$PYHOME/bin:$PATH
-    - export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
+    #- export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
+    #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
+    #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
 
     - sudo apt-get -qq update
     # Non-pip dependency for cffi
     - sudo apt-get install -y libffi-dev
     # GalSim dependencies
-    - sudo apt-get install -y python-dev libfftw3-dev libav-tools libeigen3-dev
+    - sudo apt-get install -y python-dev libfftw3-dev libav-tools libeigen3-dev cmake
    
 cache:
     ccache: true
