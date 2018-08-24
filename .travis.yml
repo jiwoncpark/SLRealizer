@@ -23,9 +23,10 @@ before_install:
     - "sudo pip install --user requests[security]"
     # GalSim dependencies
     - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
-    #- "sudo pip install --user pybind11"
+    - "sudo pip install --user pybind11"
     # Install GalSim
     - "sudo pip install --user galsim"
+    - "python -c 'import galsim; galsim.__file__'"
    
 cache:
     ccache: true
