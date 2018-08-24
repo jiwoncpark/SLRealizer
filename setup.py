@@ -6,7 +6,8 @@ setup(
     version='0.2.1',
     author='Phil Marshall',
     author_email='dr.phil.marshall@gmail.com',
-    packages=find_packages(),
+    package_dir={'':'slrealizer'}
+    packages=find_packages('slrealizer'),
     license='LICENSE.md',
     description='Catalog-level realization of simulated gravitational lenses.',
     long_description=open("README.md").read(),
@@ -20,18 +21,14 @@ setup(
         "matplotlib>=2.2.2",
         "astropy >= 2.0",
         "pandas >= 0.20",
-        "om10"
-    ],
-    package_dir={''},
+        "om10"],
     include_package_data=True,
-    package_data={'': ['data/*']},
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
-    ],
-    keywords='physics',
+        'Programming Language :: Python'],
+    keywords='physics'
 )
