@@ -14,13 +14,18 @@ before_install:
     #- "export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}"
     #- export PYTHONPATH=$PYHOME/lib/python$TRAVIS_PYTHON_VERSION/site-packages/:$PYTHONPATH
     #- export PATH=$HOME/bin:$PYHOME/bin:$PATH
-    #- export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
+    - "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib"
+    - "export LIBRARY_PATH=$LIBRARY_PATH:$HOME/.local/lib"
+    - "echo $LD_LIBRARY_PATH"
+    - "echo $LIBRARY_PATH"
     #- "export PIP_TARGET=$PYHOME/include/python$TRAVIS_PYTHON_VERSION{a:0:3}"
 
     - "sudo apt-get -qq update"
     # Non-pip dependency
     - "sudo apt-get install -y libffi-dev libssl-dev python-dev"
-    - "sudo pip install --user requests[security]"
+    - "sudo pip install --user pyOpenSSL ndg-httpsclient pyasn1"
+    - "sudo pip install --user urllib3[secure] --upgrade"
+    - "sudo pip install --user requests[security] --upgrade"
     # GalSim dependencies
     - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
     - "sudo pip install --user pybind11"
