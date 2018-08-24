@@ -24,6 +24,7 @@ before_install:
     - "sudo apt-get -qq update"
     # Non-pip dependency
     - "sudo apt-get install -y libffi-dev libssl-dev python-dev"
+    - "sudo pip install --user requests[security]"
     # GalSim dependencies
     - "which cmake"
     - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
@@ -39,7 +40,10 @@ install:
     # SLRealizer dependencies
     - "sudo pip install --user -r requirements.txt"
 
-script: 
+script:
+    - "python -m site"
+    - "python setup.py install"
+    - "source configure.sh"
     - "python tests/test_analytical_moments.py"
     - "python tests/test_om10realizer.py"
     - "python tests/test_sdssrealizer.py"
