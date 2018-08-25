@@ -9,6 +9,11 @@ virtualenv:
 compiler:
     - g++
 
+branches:
+    only:
+    - git-pages
+    - /.*/
+
 before_install:
     # Add appropriate directories to various paths.
     #- "export PYHOME=$HOME/virtualenv/python${TRAVIS_PYTHON_VERSION}"
