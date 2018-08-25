@@ -1,3 +1,3 @@
-include *.fits
-include *.csv
-include *.md
+recursive-include *.fits
+recursive-include *.csv
+recursive-include *.md
