@@ -1,3 +1,4 @@
+matplotlib
 scikit-learn
 corner
 git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
