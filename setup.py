@@ -17,7 +17,7 @@ setup(
         "numpy>=1.13",
         "future>=0.15",
         "matplotlib>=2.2.2",
-        "astropy=2.0",
+        "astropy",
         "pandas>=0.20",
         "om10"],
     include_package_data=True,

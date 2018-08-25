@@ -44,7 +44,7 @@ script:
     - "python -c 'import numpy; numpy.__file__'"
     - "python setup.py install"
     - "pwd"
-    - "python demo/call_thisdoer.py"
+    - "python slrealizer/demo/call_thisdoer.py"
     #- "cd tests"
     #- "python test_analytical_moments.py"
     #- "python test_om10realizer.py"
