@@ -16,10 +16,8 @@ branches:
 
 before_install:
     # Add appropriate directories to various paths.
-    - "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib"
+    #- "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib"
     - "export LIBRARY_PATH=$LIBRARY_PATH:$HOME/.local/lib"
-    - "echo $LD_LIBRARY_PATH"
-    - "echo $LIBRARY_PATH"
 
     - "sudo apt-get -qq update"
     # Non-pip dependency
@@ -40,13 +38,14 @@ cache:
 
 install:
     # SLRealizer dependencies
-    - "sudo pip install --user -r requirements.txt"
+    - "pip install --user -r requirements.txt"
 
 script:
     - "python -c 'import numpy; numpy.__file__'"
     - "python setup.py install"
     - "pwd"
-    - "cd slrealizer/tests"
+    - "python demo/call_thisdoer.py"
+    #- "cd tests"
     #- "python test_analytical_moments.py"
     #- "python test_om10realizer.py"
     #- "python test_sdssrealizer.py"
