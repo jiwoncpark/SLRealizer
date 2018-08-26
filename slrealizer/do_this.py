@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 class ThisDoer:
     def __init__(self, what):
         self.what = what
