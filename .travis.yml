@@ -17,7 +17,7 @@ branches:
 before_install:
     # Add appropriate directories to various paths.
     #- "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib"
-    - "export LIBRARY_PATH=$LIBRARY_PATH:$HOME/.local/lib"
+    #- "export LIBRARY_PATH=$LIBRARY_PATH:$HOME/.local/lib"
 
     - "sudo apt-get -qq update"
     # Non-pip dependency
@@ -26,11 +26,11 @@ before_install:
     - "pip install --user urllib3[secure] --upgrade"
     - "pip install --user requests[security] --upgrade"
     # GalSim dependencies
-    #- "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
-    #- "pip install --user pybind11"
+    - "sudo apt-get install -y libfftw3-dev libav-tools libeigen3-dev cmake"
+    - "pip install --user pybind11"
     # Install GalSim
-    #- "pip install --user galsim"
-    #- "python -c 'import galsim; galsim.__file__'"
+    - "pip install --user galsim"
+    - "python -c 'import galsim; galsim.__file__'"
    
 cache:
     ccache: true
@@ -46,8 +46,8 @@ script:
     - "pwd"
     - "python -c 'from slrealizer.do_this import ThisDoer'"
     - "python slrealizer/demo/call_thisdoer.py"
-    #- "cd tests"
-    #- "python test_analytical_moments.py"
+    - "cd tests"
+    - "python test_analytical_moments.py"
     #- "python test_om10realizer.py"
     #- "python test_sdssrealizer.py"
     - "pwd"

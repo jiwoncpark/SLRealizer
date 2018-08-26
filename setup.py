@@ -13,14 +13,14 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type='text/markdown',
     url='https://github.com/LSSTDESC/SLRealizer',
-#    install_requires=[
-#        "pip==9.0.3",
-#        "numpy>=1.13",
-#        "future>=0.15",
-#        "matplotlib>=2.2.2",
-#        "astropy==2.0.7",
-#        "pandas>=0.20",
-#        "om10"],
+    install_requires=[
+        "pip==9.0.3",
+        "numpy>=1.13",
+        "future>=0.15",
+        "matplotlib>=2.2.2",
+        "astropy==2.0.7",
+        "pandas>=0.20",
+        "om10"],
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',
