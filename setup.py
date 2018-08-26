@@ -1,12 +1,14 @@
 from setuptools import setup, find_packages
 
+#print(find_packages('.'))
+
 setup(
     name='slrealizer',
     version='0.2.1',
     author='Phil Marshall',
     author_email='dr.phil.marshall@gmail.com',
     package_dir={'':'slrealizer'},
-    packages=find_packages(''),
+    packages=find_packages('.'),
     license='LICENSE.md',
     description='Catalog-level realization of simulated gravitational lenses.',
     long_description=open("README.md").read(),
