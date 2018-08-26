@@ -46,7 +46,7 @@ script:
     - "pwd"
     - "python -c 'from slrealizer.do_this import ThisDoer'"
     - "python slrealizer/demo/call_thisdoer.py"
-    - "cd tests"
+    - "cd slrealizer/tests"
     - "python test_analytical_moments.py"
     #- "python test_om10realizer.py"
     #- "python test_sdssrealizer.py"
