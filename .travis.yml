@@ -41,7 +41,7 @@ install:
     - "pip install --user -r requirements.txt"
 
 script:
-    - "python -c 'import numpy; numpy.__file__'"
+    #- "python -c 'import numpy; numpy.__file__'"
     - "python setup.py install"
     - "pwd"
     - "python -c 'from slrealizer.do_this import ThisDoer'"

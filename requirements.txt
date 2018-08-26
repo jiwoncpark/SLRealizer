@@ -1,6 +1,6 @@
-matplotlib
-scikit-learn
-corner
-git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
-om10
-scipy
+#matplotlib
+#scikit-learn
+#corner
+#git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
+#om10
+#scipy
