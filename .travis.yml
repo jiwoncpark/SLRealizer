@@ -31,6 +31,8 @@ before_install:
     # Install GalSim
     #- "pip install --user galsim"
     #- "python -c 'import galsim; galsim.__file__'"
+
+    - "p
    
 cache:
     ccache: true

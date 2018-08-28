@@ -2,5 +2,5 @@ matplotlib
 scikit-learn
 corner
 git+git://github.com/drphilmarshall/lenspop.git#egg=lenspop
-om10
+git+git://github.com/drphilmarshall/OM10.git#egg=om10
 scipy
