@@ -43,7 +43,7 @@ install:
 script:
     #- "python -c 'import numpy; numpy.__file__'"
     - "python setup.py install"
-    - "python -c 'slrealizer/test_paint.py'"
+    - "python slrealizer/test_paint.py"
     #- "pwd"
     #- "python -c 'from slrealizer.do_this import ThisDoer'"
     #- "python slrealizer/demo/call_thisdoer.py"
